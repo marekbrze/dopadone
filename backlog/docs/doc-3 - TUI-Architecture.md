@@ -55,11 +55,21 @@ internal/tui/
 ├── model.go            # FocusColumn enum and state definitions (AreaState)
 ├── tui.go              # Exported New() function for program creation
 ├── messages.go         # Message types for async data loading
-├── commands.go         # Loader commands using service layer interfaces
-                         # - LoadAreasCmd: AreaServiceInterface.List()
-                         # - LoadSubareasCmd: SubareaServiceInterface.ListByArea()
-                         # - LoadProjectsCmd: ProjectServiceInterface.ListBySubareaRecursive()
-                         # - LoadTasksCmd: TaskServiceInterface.ListByProject()
+├── commands.go         # Loader and CRUD commands using service layer interfaces
+                          # Loader commands (Task-38):
+                          # - LoadAreasCmd: AreaServiceInterface.List()
+                          # - LoadSubareasCmd: SubareaServiceInterface.ListByArea()
+                          # - LoadProjectsCmd: ProjectServiceInterface.ListBySubareaRecursive()
+                          # - LoadTasksCmd: TaskServiceInterface.ListByProject()
+                          # CRUD commands (Task-39):
+                          # - CreateSubareaCmd: SubareaServiceInterface.Create()
+                          # - CreateProjectCmd: ProjectServiceInterface.Create()
+                          # - CreateTaskCmd: TaskServiceInterface.Create()
+                          # - CreateAreaCmd: AreaServiceInterface.Create()
+                          # - UpdateAreaCmd: AreaServiceInterface.Update()
+                          # - DeleteAreaCmd: AreaServiceInterface.SoftDelete/HardDelete()
+                          # - ReorderAreasCmd: AreaServiceInterface.ReorderAll()
+                          # - LoadAreaStatsCmd: AreaServiceInterface.GetStats()
 ├── constants.go        # Named constants for TUI (no magic numbers)
 ├── app_test.go         # Unit tests for app functionality
 ├── messages_test.go    # Unit tests for message types
@@ -428,6 +438,56 @@ func LoadProjectsCmd(projectSvc service.ProjectServiceInterface, subareaID *stri
 
 Similar pattern for: LoadSubareasCmd, LoadTasksCmd
 
+### CRUD Commands
+
+All CRUD commands use service layer interfaces for data modifications:
+
+```go
+func CreateAreaCmd(areaSvc service.AreaServiceInterface, name string, color domain.Color) tea.Cmd {
+    return func() tea.Msg {
+        area, err := areaSvc.Create(context.Background(), name, color)
+        if err != nil {
+            return AreaCreatedMsg{Err: err}
+        }
+        return AreaCreatedMsg{Area: area}
+    }
+}
+
+func UpdateAreaCmd(areaSvc service.AreaServiceInterface, id string, name string, color domain.Color) tea.Cmd {
+    return func() tea.Msg {
+        area, err := areaSvc.Update(context.Background(), id, name, color)
+        if err != nil {
+            return AreaUpdatedMsg{Err: err}
+        }
+        return AreaUpdatedMsg{Area: area}
+    }
+}
+
+func DeleteAreaCmd(areaSvc service.AreaServiceInterface, id string, hard bool) tea.Cmd {
+    return func() tea.Msg {
+        var err error
+        if hard {
+            err = areaSvc.HardDelete(context.Background(), id)
+        } else {
+            err = areaSvc.SoftDelete(context.Background(), id)
+        }
+        if err != nil {
+            return AreaDeletedMsg{Err: err}
+        }
+        return AreaDeletedMsg{ID: id}
+    }
+}
+```
+
+Similar pattern for: CreateSubareaCmd, CreateProjectCmd, CreateTaskCmd, ReorderAreasCmd, LoadAreaStatsCmd
+
+**Benefits**:
+- Services handle business logic and validation
+- Consistent error handling through service layer
+- Easy mocking for tests with service interfaces
+- Type-safe domain operations
+- No converter layer needed (services return domain types)
+
 **Benefits**:
 - Services return domain types directly (no converter layer needed in commands)
 - Consistent error handling through service layer
@@ -780,6 +840,21 @@ Parent task split into 6 subtasks, all completed:
 - Comprehensive test coverage with mocked services (table-driven tests)
 - Removed converter layer from TUI (services return domain types directly)
 - Benefits: Better separation of concerns, easier mocking, centralized business logic
+
+### ✅ Completed: Refactor CRUD Commands to Use Services (Task-39)
+- All 8 CRUD commands refactored to use service layer interfaces
+- CreateSubareaCmd uses SubareaServiceInterface.Create()
+- CreateProjectCmd uses ProjectServiceInterface.Create()
+- CreateTaskCmd uses TaskServiceInterface.Create()
+- CreateAreaCmd uses AreaServiceInterface.Create()
+- UpdateAreaCmd uses AreaServiceInterface.Update()
+- DeleteAreaCmd uses AreaServiceInterface.SoftDelete/HardDelete()
+- ReorderAreasCmd uses AreaServiceInterface.ReorderAll()
+- LoadAreaStatsCmd uses AreaServiceInterface.GetStats()
+- Removed all direct db.Querier usage from commands.go
+- Comprehensive test coverage with mocked services (table-driven tests)
+- All commands follow same pattern: service method calls, domain type returns, no converters needed
+- Benefits: Consistent architecture, easier testing, centralized business logic, type safety
 
 ## Design Decisions
 

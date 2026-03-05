@@ -131,6 +131,7 @@ The TUI interacts with the data layer exclusively through **service interfaces**
 
 All TUI commands (`commands.go`) use service interfaces instead of `db.Querier`:
 
+**Loader Commands (Task-38):**
 ```go
 func LoadAreasCmd(areaSvc service.AreaServiceInterface) tea.Cmd {
     return func() tea.Msg {
@@ -142,6 +143,31 @@ func LoadAreasCmd(areaSvc service.AreaServiceInterface) tea.Cmd {
     }
 }
 ```
+
+**CRUD Commands (Task-39):**
+```go
+func CreateAreaCmd(areaSvc service.AreaServiceInterface, name string, color domain.Color) tea.Cmd {
+    return func() tea.Msg {
+        area, err := areaSvc.Create(context.Background(), name, color)
+        if err != nil {
+            return AreaCreatedMsg{Err: err}
+        }
+        return AreaCreatedMsg{Area: area}
+    }
+}
+
+func UpdateAreaCmd(areaSvc service.AreaServiceInterface, id string, name string, color domain.Color) tea.Cmd {
+    return func() tea.Msg {
+        area, err := areaSvc.Update(context.Background(), id, name, color)
+        if err != nil {
+            return AreaUpdatedMsg{Err: err}
+        }
+        return AreaUpdatedMsg{Area: area}
+    }
+}
+```
+
+Similar patterns for: CreateSubareaCmd, CreateProjectCmd, CreateTaskCmd, DeleteAreaCmd, ReorderAreasCmd, LoadAreaStatsCmd
 
 **Benefits of Service Layer**:
 - **Separation of concerns**: TUI focuses on UI, services handle business logic

@@ -436,15 +436,16 @@ func runProjectsCreate(cmd *cobra.Command, args []string) {
 
 ## Benefits
 
-1. **Separation of Concerns**: Business logic isolated from presentation layer
+1. **Separation of Concerns**: Business logic isolated from presentation layer (CLI and TUI)
 2. **Type Safety**: Domain types prevent invalid states
-3. **Testability**: Service interfaces enable easy mocking/stubbing for tests without database dependencies
+3. **Testability**: Service interfaces enable easy mocking/stubbing for tests without database dependencies (used by both CLI and TUI tests)
 4. **Reusability**: Same service layer can be used by CLI, TUI, and future REST API
 5. **Validation**: Centralized business validation rules
 6. **Error Handling**: Domain-specific errors with proper context
 7. **Maintainability**: Clear boundaries between layers
 8. **Dependency Injection**: Interfaces enable proper DI patterns and flexible component wiring
 9. **Compile-Time Safety**: Interface satisfaction verified at compile time catches errors early
+10. **Clean Architecture**: TUI depends on service interfaces, not database layer (Task-38, Task-39)
 
 ## File Structure
 
@@ -469,6 +470,12 @@ internal/
     task.go       # DB → Domain converters
     subarea.go    # DB → Domain converters
     area.go       # DB → Domain converters
+  
+  tui/
+    app.go         # TUI Model with service interfaces (Task-38)
+    commands.go    # Loader & CRUD commands using services (Task-38, Task-39)
+    mocks/         # Mock services for TUI testing
+      helpers.go   # Mock setup helpers
 
 cmd/projectdb/
   main.go         # ServiceContainer and GetServices()
@@ -477,6 +484,63 @@ cmd/projectdb/
   subareas.go     # CLI commands using SubareaService
   areas.go        # CLI commands using AreaService
 ```
+
+## TUI Integration
+
+The TUI uses service layer interfaces for both data loading and CRUD operations:
+
+### TUI Commands Using Services (Task-38, Task-39)
+
+**Loader Commands (Task-38):**
+- `LoadAreasCmd(areaSvc AreaServiceInterface)` → `List(ctx)`
+- `LoadSubareasCmd(subareaSvc SubareaServiceInterface, areaID)` → `ListByArea(ctx, areaID)`
+- `LoadProjectsCmd(projectSvc ProjectServiceInterface, subareaID)` → `ListBySubareaRecursive(ctx, subareaID)`
+- `LoadTasksCmd(taskSvc TaskServiceInterface, projectID)` → `ListByProject(ctx, projectID)`
+
+**CRUD Commands (Task-39):**
+- `CreateSubareaCmd(subareaSvc SubareaServiceInterface, ...)` → `Create(ctx, ...)`
+- `CreateProjectCmd(projectSvc ProjectServiceInterface, ...)` → `Create(ctx, ...)`
+- `CreateTaskCmd(taskSvc TaskServiceInterface, ...)` → `Create(ctx, ...)`
+- `CreateAreaCmd(areaSvc AreaServiceInterface, ...)` → `Create(ctx, ...)`
+- `UpdateAreaCmd(areaSvc AreaServiceInterface, ...)` → `Update(ctx, ...)`
+- `DeleteAreaCmd(areaSvc AreaServiceInterface, id, hard)` → `SoftDelete(ctx, id)` or `HardDelete(ctx, id)`
+- `ReorderAreasCmd(areaSvc AreaServiceInterface, areaIDs)` → `ReorderAll(ctx, areaIDs)`
+- `LoadAreaStatsCmd(areaSvc AreaServiceInterface, areaID)` → `GetStats(ctx, areaID)`
+
+All TUI commands receive service interfaces as parameters and call service methods without direct database access. Services return domain types directly, eliminating the need for converter logic in the TUI layer.
+
+### TUI Model Structure
+
+```go
+type Model struct {
+    areaSvc     service.AreaServiceInterface
+    subareaSvc  service.SubareaServiceInterface
+    projectSvc  service.ProjectServiceInterface
+    taskSvc     service.TaskServiceInterface
+    // ... other fields
+}
+
+func InitialModel(
+    areaSvc service.AreaServiceInterface,
+    subareaSvc service.SubareaServiceInterface,
+    projectSvc service.ProjectServiceInterface,
+    taskSvc service.TaskServiceInterface,
+) Model {
+    return Model{
+        areaSvc:    areaSvc,
+        subareaSvc: subareaSvc,
+        projectSvc: projectSvc,
+        taskSvc:    taskSvc,
+        // ... other fields
+    }
+}
+```
+
+This pattern enables:
+- Clean architecture boundaries (TUI → Services → Repository → Database)
+- Easy mocking for unit tests
+- No direct database dependency in TUI layer
+- Services return domain types directly (no converter layer in TUI)
 
 ## Testing Strategy
 
