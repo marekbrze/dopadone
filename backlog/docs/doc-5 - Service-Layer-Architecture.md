@@ -91,11 +91,25 @@ func (s *ProjectService) ListAll(ctx context.Context) ([]domain.Project, error)
 func (s *ProjectService) ListByStatus(ctx context.Context, status domain.ProjectStatus) ([]domain.Project, error)
 func (s *ProjectService) ListByPriority(ctx context.Context, priority domain.Priority) ([]domain.Project, error)
 func (s *ProjectService) ListBySubarea(ctx context.Context, subareaID string) ([]domain.Project, error)
+func (s *ProjectService) ListBySubareaRecursive(ctx context.Context, subareaID string) ([]domain.Project, error)
 func (s *ProjectService) ListByParent(ctx context.Context, parentID string) ([]domain.Project, error)
 func (s *ProjectService) Update(ctx context.Context, params UpdateProjectParams) (*domain.Project, error)
 func (s *ProjectService) SoftDelete(ctx context.Context, id string) error
 func (s *ProjectService) HardDelete(ctx context.Context, id string) error
 ```
+
+**ListBySubareaRecursive**: Returns all projects belonging to a subarea, including nested projects whose parent chain leads to the subarea. This method recursively traverses the project hierarchy to find all descendant projects.
+
+- **Performance**: O(n) time complexity where n = total projects
+- **Algorithm**: 
+  1. Loads all non-deleted projects via `ListAll(ctx)`
+  2. Builds a project map for O(1) parent lookups
+  3. Filters projects that belong to the subarea (direct membership or via parent chain)
+- **Edge Cases**: 
+  - Empty subareaID returns empty slice
+  - Orphaned projects (parent doesn't exist) are excluded
+  - Soft-deleted projects are automatically excluded
+- **Use Case**: When displaying all projects in a subarea tree view, this ensures nested projects are included even if they don't have a direct subareaID assignment
 
 #### TaskService
 
