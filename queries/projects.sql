@@ -58,3 +58,9 @@ SELECT id, name, description, goal, status, priority, progress, deadline, color,
 FROM projects
 WHERE priority = ? AND deleted_at IS NULL
 ORDER BY priority DESC, deadline ASC, name ASC;
+
+-- name: DeleteTasksByProjectID :exec
+DELETE FROM tasks WHERE project_id = ?;
+
+-- name: DeleteProjectsByParentID :exec
+DELETE FROM projects WHERE parent_id = ?;

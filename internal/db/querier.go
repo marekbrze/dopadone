@@ -20,9 +20,13 @@ type Querier interface {
 	CreateProject(ctx context.Context, arg CreateProjectParams) (Project, error)
 	CreateSubarea(ctx context.Context, arg CreateSubareaParams) (Subarea, error)
 	CreateTask(ctx context.Context, arg CreateTaskParams) (Task, error)
+	DeleteProjectsByParentID(ctx context.Context, parentID sql.NullString) error
 	DeleteProjectsBySubarea(ctx context.Context, areaID string) error
+	DeleteProjectsBySubareaID(ctx context.Context, subareaID sql.NullString) error
 	DeleteSubareasByArea(ctx context.Context, areaID string) error
 	DeleteTasksByProject(ctx context.Context, areaID string) error
+	DeleteTasksByProjectID(ctx context.Context, projectID string) error
+	DeleteTasksBySubareaID(ctx context.Context, subareaID sql.NullString) error
 	GetAreaByID(ctx context.Context, id string) (GetAreaByIDRow, error)
 	GetProjectByID(ctx context.Context, id string) (Project, error)
 	GetProjectsByStatus(ctx context.Context, status string) ([]Project, error)

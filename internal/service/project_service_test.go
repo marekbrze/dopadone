@@ -238,6 +238,22 @@ func (m *mockProjectQuerier) ListAllSubareas(ctx context.Context) ([]db.Subarea,
 	return nil, nil
 }
 
+func (m *mockProjectQuerier) DeleteProjectsByParentID(ctx context.Context, parentID sql.NullString) error {
+	return nil
+}
+
+func (m *mockProjectQuerier) DeleteProjectsBySubareaID(ctx context.Context, subareaID sql.NullString) error {
+	return nil
+}
+
+func (m *mockProjectQuerier) DeleteTasksBySubareaID(ctx context.Context, subareaID sql.NullString) error {
+	return nil
+}
+
+func (m *mockProjectQuerier) DeleteTasksByProjectID(ctx context.Context, projectID string) error {
+	return nil
+}
+
 func TestProjectService_Create(t *testing.T) {
 	now := time.Now()
 	subareaID := "subarea-1"
@@ -294,7 +310,7 @@ func TestProjectService_Create(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := NewProjectService(tt.mock())
+			svc := NewProjectService(tt.mock(), nil)
 			got, err := svc.Create(context.Background(), tt.params)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ProjectService.Create() error = %v, wantErr %v", err, tt.wantErr)
@@ -353,7 +369,7 @@ func TestProjectService_GetByID(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := NewProjectService(tt.mock())
+			svc := NewProjectService(tt.mock(), nil)
 			got, err := svc.GetByID(context.Background(), tt.id)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ProjectService.GetByID() error = %v, wantErr %v", err, tt.wantErr)
@@ -404,7 +420,7 @@ func TestProjectService_ListAll(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := NewProjectService(tt.mock())
+			svc := NewProjectService(tt.mock(), nil)
 			got, err := svc.ListAll(context.Background())
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ProjectService.ListAll() error = %v, wantErr %v", err, tt.wantErr)
@@ -445,7 +461,7 @@ func TestProjectService_GetStats(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := NewProjectService(tt.mock())
+			svc := NewProjectService(tt.mock(), nil)
 			got, err := svc.GetStats(context.Background(), tt.id)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ProjectService.GetStats() error = %v, wantErr %v", err, tt.wantErr)
@@ -526,7 +542,7 @@ func TestProjectService_ValidateParentHierarchy(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := NewProjectService(tt.mock())
+			svc := NewProjectService(tt.mock(), nil)
 			err := svc.ValidateParentHierarchy(context.Background(), tt.parentID, tt.projectID)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ProjectService.ValidateParentHierarchy() error = %v, wantErr %v", err, tt.wantErr)
@@ -576,7 +592,7 @@ func TestProjectService_ListByPriority(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := NewProjectService(tt.mock())
+			svc := NewProjectService(tt.mock(), nil)
 			got, err := svc.ListByPriority(context.Background(), tt.priority)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ProjectService.ListByPriority() error = %v, wantErr %v", err, tt.wantErr)
@@ -587,4 +603,389 @@ func TestProjectService_ListByPriority(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestProjectService_ListBySubareaRecursive(t *testing.T) {
+	now := time.Now()
+	subareaA := "subarea-a"
+	subareaB := "subarea-b"
+
+	tests := []struct {
+		name      string
+		subareaID string
+		mock      func() *mockProjectQuerier
+		wantCount int
+		wantErr   bool
+		wantIDs   []string
+	}{
+		{
+			name:      "empty subareaID returns empty slice",
+			subareaID: "",
+			mock:      func() *mockProjectQuerier { return &mockProjectQuerier{} },
+			wantCount: 0,
+			wantErr:   false,
+		},
+		{
+			name:      "no projects in database",
+			subareaID: subareaA,
+			mock: func() *mockProjectQuerier {
+				return &mockProjectQuerier{
+					listAllProjectsFunc: func(ctx context.Context) ([]db.Project, error) {
+						return []db.Project{}, nil
+					},
+				}
+			},
+			wantCount: 0,
+			wantErr:   false,
+		},
+		{
+			name:      "direct membership only",
+			subareaID: subareaA,
+			mock: func() *mockProjectQuerier {
+				return &mockProjectQuerier{
+					listAllProjectsFunc: func(ctx context.Context) ([]db.Project, error) {
+						return []db.Project{
+							{
+								ID:        "proj-root-a",
+								SubareaID: sql.NullString{String: subareaA, Valid: true},
+								Status:    "active",
+								Priority:  "high",
+								Progress:  0,
+								CreatedAt: now,
+								UpdatedAt: now,
+							},
+						}, nil
+					},
+				}
+			},
+			wantCount: 1,
+			wantIDs:   []string{"proj-root-a"},
+		},
+		{
+			name:      "nested project via parent",
+			subareaID: subareaA,
+			mock: func() *mockProjectQuerier {
+				return &mockProjectQuerier{
+					listAllProjectsFunc: func(ctx context.Context) ([]db.Project, error) {
+						return []db.Project{
+							{
+								ID:        "proj-root-a",
+								SubareaID: sql.NullString{String: subareaA, Valid: true},
+								Status:    "active",
+								Priority:  "high",
+								Progress:  0,
+								CreatedAt: now,
+								UpdatedAt: now,
+							},
+							{
+								ID:        "proj-child-a1",
+								ParentID:  sql.NullString{String: "proj-root-a", Valid: true},
+								SubareaID: sql.NullString{Valid: false},
+								Status:    "active",
+								Priority:  "medium",
+								Progress:  0,
+								CreatedAt: now,
+								UpdatedAt: now,
+							},
+						}, nil
+					},
+				}
+			},
+			wantCount: 2,
+			wantIDs:   []string{"proj-root-a", "proj-child-a1"},
+		},
+		{
+			name:      "deep nesting (3 levels)",
+			subareaID: subareaA,
+			mock: func() *mockProjectQuerier {
+				return &mockProjectQuerier{
+					listAllProjectsFunc: func(ctx context.Context) ([]db.Project, error) {
+						return []db.Project{
+							{
+								ID:        "proj-root-a",
+								SubareaID: sql.NullString{String: subareaA, Valid: true},
+								Status:    "active",
+								Priority:  "high",
+								Progress:  0,
+								CreatedAt: now,
+								UpdatedAt: now,
+							},
+							{
+								ID:        "proj-child-a1",
+								ParentID:  sql.NullString{String: "proj-root-a", Valid: true},
+								Status:    "active",
+								Priority:  "medium",
+								Progress:  0,
+								CreatedAt: now,
+								UpdatedAt: now,
+							},
+							{
+								ID:        "proj-grandchild-a1",
+								ParentID:  sql.NullString{String: "proj-child-a1", Valid: true},
+								Status:    "active",
+								Priority:  "low",
+								Progress:  0,
+								CreatedAt: now,
+								UpdatedAt: now,
+							},
+						}, nil
+					},
+				}
+			},
+			wantCount: 3,
+		},
+		{
+			name:      "excludes projects in other subareas",
+			subareaID: subareaA,
+			mock: func() *mockProjectQuerier {
+				return &mockProjectQuerier{
+					listAllProjectsFunc: func(ctx context.Context) ([]db.Project, error) {
+						return []db.Project{
+							{
+								ID:        "proj-root-a",
+								SubareaID: sql.NullString{String: subareaA, Valid: true},
+								Status:    "active",
+								Priority:  "high",
+								Progress:  0,
+								CreatedAt: now,
+								UpdatedAt: now,
+							},
+							{
+								ID:        "proj-root-b",
+								SubareaID: sql.NullString{String: subareaB, Valid: true},
+								Status:    "active",
+								Priority:  "high",
+								Progress:  0,
+								CreatedAt: now,
+								UpdatedAt: now,
+							},
+						}, nil
+					},
+				}
+			},
+			wantCount: 1,
+			wantIDs:   []string{"proj-root-a"},
+		},
+		{
+			name:      "excludes soft-deleted projects",
+			subareaID: subareaA,
+			mock: func() *mockProjectQuerier {
+				return &mockProjectQuerier{
+					listAllProjectsFunc: func(ctx context.Context) ([]db.Project, error) {
+						return []db.Project{
+							{
+								ID:        "proj-active",
+								SubareaID: sql.NullString{String: subareaA, Valid: true},
+								Status:    "active",
+								Priority:  "high",
+								Progress:  0,
+								CreatedAt: now,
+								UpdatedAt: now,
+							},
+						}, nil
+					},
+				}
+			},
+			wantCount: 1,
+		},
+		{
+			name:      "mixed direct and nested",
+			subareaID: subareaA,
+			mock: func() *mockProjectQuerier {
+				return &mockProjectQuerier{
+					listAllProjectsFunc: func(ctx context.Context) ([]db.Project, error) {
+						return []db.Project{
+							{
+								ID:        "proj-root-a1",
+								SubareaID: sql.NullString{String: subareaA, Valid: true},
+								Status:    "active",
+								Priority:  "high",
+								Progress:  0,
+								CreatedAt: now,
+								UpdatedAt: now,
+							},
+							{
+								ID:        "proj-root-a2",
+								SubareaID: sql.NullString{String: subareaA, Valid: true},
+								Status:    "active",
+								Priority:  "medium",
+								Progress:  0,
+								CreatedAt: now,
+								UpdatedAt: now,
+							},
+							{
+								ID:        "proj-child-a1",
+								ParentID:  sql.NullString{String: "proj-root-a1", Valid: true},
+								Status:    "active",
+								Priority:  "low",
+								Progress:  0,
+								CreatedAt: now,
+								UpdatedAt: now,
+							},
+						}, nil
+					},
+				}
+			},
+			wantCount: 3,
+		},
+		{
+			name:      "orphaned project (parent doesn't exist)",
+			subareaID: subareaA,
+			mock: func() *mockProjectQuerier {
+				return &mockProjectQuerier{
+					listAllProjectsFunc: func(ctx context.Context) ([]db.Project, error) {
+						return []db.Project{
+							{
+								ID:        "proj-orphan",
+								ParentID:  sql.NullString{String: "nonexistent-parent", Valid: true},
+								SubareaID: sql.NullString{Valid: false},
+								Status:    "active",
+								Priority:  "medium",
+								Progress:  0,
+								CreatedAt: now,
+								UpdatedAt: now,
+							},
+						}, nil
+					},
+				}
+			},
+			wantCount: 0,
+		},
+		{
+			name:      "root project with no parent",
+			subareaID: subareaA,
+			mock: func() *mockProjectQuerier {
+				return &mockProjectQuerier{
+					listAllProjectsFunc: func(ctx context.Context) ([]db.Project, error) {
+						return []db.Project{
+							{
+								ID:        "proj-root-a",
+								SubareaID: sql.NullString{String: subareaA, Valid: true},
+								ParentID:  sql.NullString{Valid: false},
+								Status:    "active",
+								Priority:  "high",
+								Progress:  0,
+								CreatedAt: now,
+								UpdatedAt: now,
+							},
+						}, nil
+					},
+				}
+			},
+			wantCount: 1,
+		},
+		{
+			name:      "database error",
+			subareaID: subareaA,
+			mock: func() *mockProjectQuerier {
+				return &mockProjectQuerier{
+					listAllProjectsFunc: func(ctx context.Context) ([]db.Project, error) {
+						return nil, errors.New("database connection failed")
+					},
+				}
+			},
+			wantCount: 0,
+			wantErr:   true,
+		},
+		{
+			name:      "complex hierarchy",
+			subareaID: subareaA,
+			mock: func() *mockProjectQuerier {
+				return &mockProjectQuerier{
+					listAllProjectsFunc: func(ctx context.Context) ([]db.Project, error) {
+						return []db.Project{
+							{
+								ID:        "root-a",
+								SubareaID: sql.NullString{String: subareaA, Valid: true},
+								Status:    "active",
+								Priority:  "high",
+								Progress:  0,
+								CreatedAt: now,
+								UpdatedAt: now,
+							},
+							{
+								ID:        "child-a",
+								ParentID:  sql.NullString{String: "root-a", Valid: true},
+								Status:    "active",
+								Priority:  "medium",
+								Progress:  0,
+								CreatedAt: now,
+								UpdatedAt: now,
+							},
+							{
+								ID:        "grandchild-a",
+								ParentID:  sql.NullString{String: "child-a", Valid: true},
+								Status:    "active",
+								Priority:  "low",
+								Progress:  0,
+								CreatedAt: now,
+								UpdatedAt: now,
+							},
+							{
+								ID:        "root-a2",
+								SubareaID: sql.NullString{String: subareaA, Valid: true},
+								Status:    "active",
+								Priority:  "high",
+								Progress:  0,
+								CreatedAt: now,
+								UpdatedAt: now,
+							},
+							{
+								ID:        "root-b",
+								SubareaID: sql.NullString{String: subareaB, Valid: true},
+								Status:    "active",
+								Priority:  "high",
+								Progress:  0,
+								CreatedAt: now,
+								UpdatedAt: now,
+							},
+						}, nil
+					},
+				}
+			},
+			wantCount: 4,
+			wantIDs:   []string{"root-a", "child-a", "grandchild-a", "root-a2"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			svc := NewProjectService(tt.mock(), nil)
+			got, err := svc.ListBySubareaRecursive(context.Background(), tt.subareaID)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ListBySubareaRecursive() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if !tt.wantErr && len(got) != tt.wantCount {
+				t.Errorf("ListBySubareaRecursive() returned %d projects, want %d", len(got), tt.wantCount)
+				t.Logf("Returned IDs: %v", getProjectIDs(got))
+			}
+
+			if tt.wantIDs != nil && !tt.wantErr {
+				gotIDs := getProjectIDs(got)
+				for _, wantID := range tt.wantIDs {
+					found := false
+					for _, gotID := range gotIDs {
+						if gotID == wantID {
+							found = true
+							break
+						}
+					}
+					if !found {
+						t.Errorf("Expected project ID %s not found in results", wantID)
+					}
+				}
+			}
+		})
+	}
+}
+
+func getProjectIDs(projects []domain.Project) []string {
+	ids := make([]string, len(projects))
+	for i, p := range projects {
+		ids[i] = p.ID
+	}
+	return ids
 }

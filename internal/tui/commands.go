@@ -28,13 +28,16 @@ func LoadSubareasCmd(subareaSvc service.SubareaServiceInterface, areaID string) 
 	}
 }
 
+// LoadProjectsCmd loads projects for a subarea using hierarchical retrieval.
+// When subareaID is provided, uses ListBySubareaRecursive to include nested projects.
+// When subareaID is nil, loads all projects using ListAll.
 func LoadProjectsCmd(projectSvc service.ProjectServiceInterface, subareaID *string) tea.Cmd {
 	return func() tea.Msg {
 		var projects []domain.Project
 		var err error
 
 		if subareaID != nil {
-			projects, err = projectSvc.ListBySubarea(context.Background(), *subareaID)
+			projects, err = projectSvc.ListBySubareaRecursive(context.Background(), *subareaID)
 		} else {
 			projects, err = projectSvc.ListAll(context.Background())
 		}

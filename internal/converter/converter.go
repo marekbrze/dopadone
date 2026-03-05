@@ -2,7 +2,6 @@ package converter
 
 import (
 	"database/sql"
-	"time"
 
 	"github.com/example/projectdb/internal/db"
 	"github.com/example/projectdb/internal/domain"
@@ -16,13 +15,6 @@ func nullStringToString(ns sql.NullString) string {
 }
 
 func DbAreaToDomain(dbArea db.Area) domain.Area {
-	var deletedAt *time.Time
-	if dbArea.DeletedAt != nil {
-		if t, ok := dbArea.DeletedAt.(time.Time); ok {
-			deletedAt = &t
-		}
-	}
-
 	color, _ := domain.ParseColor(dbArea.Color.String)
 
 	return domain.Area{
@@ -32,18 +24,11 @@ func DbAreaToDomain(dbArea db.Area) domain.Area {
 		SortOrder: int(dbArea.SortOrder),
 		CreatedAt: dbArea.CreatedAt,
 		UpdatedAt: dbArea.UpdatedAt,
-		DeletedAt: deletedAt,
+		DeletedAt: dbArea.DeletedAt,
 	}
 }
 
 func DbListAreasRowToDomain(row db.ListAreasRow) domain.Area {
-	var deletedAt *time.Time
-	if row.DeletedAt != nil {
-		if t, ok := row.DeletedAt.(time.Time); ok {
-			deletedAt = &t
-		}
-	}
-
 	color, _ := domain.ParseColor(row.Color.String)
 
 	return domain.Area{
@@ -53,18 +38,11 @@ func DbListAreasRowToDomain(row db.ListAreasRow) domain.Area {
 		SortOrder: int(row.SortOrder),
 		CreatedAt: row.CreatedAt,
 		UpdatedAt: row.UpdatedAt,
-		DeletedAt: deletedAt,
+		DeletedAt: row.DeletedAt,
 	}
 }
 
 func DbGetAreaByIDRowToDomain(row db.GetAreaByIDRow) domain.Area {
-	var deletedAt *time.Time
-	if row.DeletedAt != nil {
-		if t, ok := row.DeletedAt.(time.Time); ok {
-			deletedAt = &t
-		}
-	}
-
 	color, _ := domain.ParseColor(row.Color.String)
 
 	return domain.Area{
@@ -74,18 +52,11 @@ func DbGetAreaByIDRowToDomain(row db.GetAreaByIDRow) domain.Area {
 		SortOrder: int(row.SortOrder),
 		CreatedAt: row.CreatedAt,
 		UpdatedAt: row.UpdatedAt,
-		DeletedAt: deletedAt,
+		DeletedAt: row.DeletedAt,
 	}
 }
 
 func DbCreateAreaRowToDomain(row db.CreateAreaRow) domain.Area {
-	var deletedAt *time.Time
-	if row.DeletedAt != nil {
-		if t, ok := row.DeletedAt.(time.Time); ok {
-			deletedAt = &t
-		}
-	}
-
 	color, _ := domain.ParseColor(row.Color.String)
 
 	return domain.Area{
@@ -95,18 +66,11 @@ func DbCreateAreaRowToDomain(row db.CreateAreaRow) domain.Area {
 		SortOrder: int(row.SortOrder),
 		CreatedAt: row.CreatedAt,
 		UpdatedAt: row.UpdatedAt,
-		DeletedAt: deletedAt,
+		DeletedAt: row.DeletedAt,
 	}
 }
 
 func DbUpdateAreaRowToDomain(row db.UpdateAreaRow) domain.Area {
-	var deletedAt *time.Time
-	if row.DeletedAt != nil {
-		if t, ok := row.DeletedAt.(time.Time); ok {
-			deletedAt = &t
-		}
-	}
-
 	color, _ := domain.ParseColor(row.Color.String)
 
 	return domain.Area{
@@ -116,18 +80,11 @@ func DbUpdateAreaRowToDomain(row db.UpdateAreaRow) domain.Area {
 		SortOrder: int(row.SortOrder),
 		CreatedAt: row.CreatedAt,
 		UpdatedAt: row.UpdatedAt,
-		DeletedAt: deletedAt,
+		DeletedAt: row.DeletedAt,
 	}
 }
 
 func DbSubareaToDomain(dbSubarea db.Subarea) domain.Subarea {
-	var deletedAt *time.Time
-	if dbSubarea.DeletedAt != nil {
-		if t, ok := dbSubarea.DeletedAt.(time.Time); ok {
-			deletedAt = &t
-		}
-	}
-
 	color, _ := domain.ParseColor(dbSubarea.Color.String)
 
 	return domain.Subarea{
@@ -137,32 +94,11 @@ func DbSubareaToDomain(dbSubarea db.Subarea) domain.Subarea {
 		Color:     color,
 		CreatedAt: dbSubarea.CreatedAt,
 		UpdatedAt: dbSubarea.UpdatedAt,
-		DeletedAt: deletedAt,
+		DeletedAt: dbSubarea.DeletedAt,
 	}
 }
 
 func DbProjectToDomain(dbProject db.Project) domain.Project {
-	var deletedAt *time.Time
-	if dbProject.DeletedAt != nil {
-		if t, ok := dbProject.DeletedAt.(time.Time); ok {
-			deletedAt = &t
-		}
-	}
-
-	var completedAt *time.Time
-	if dbProject.CompletedAt != nil {
-		if t, ok := dbProject.CompletedAt.(time.Time); ok {
-			completedAt = &t
-		}
-	}
-
-	var deadline *time.Time
-	if dbProject.Deadline != nil {
-		if t, ok := dbProject.Deadline.(time.Time); ok {
-			deadline = &t
-		}
-	}
-
 	var parentID *string
 	if dbProject.ParentID.Valid {
 		parentID = &dbProject.ParentID.String
@@ -187,40 +123,19 @@ func DbProjectToDomain(dbProject db.Project) domain.Project {
 		Priority:    priority,
 		Progress:    progress,
 		StartDate:   nil,
-		Deadline:    deadline,
+		Deadline:    dbProject.Deadline,
 		Color:       color,
 		ParentID:    parentID,
 		SubareaID:   subareaID,
 		Position:    int(dbProject.Position),
 		CreatedAt:   dbProject.CreatedAt,
 		UpdatedAt:   dbProject.UpdatedAt,
-		CompletedAt: completedAt,
-		DeletedAt:   deletedAt,
+		CompletedAt: dbProject.CompletedAt,
+		DeletedAt:   dbProject.DeletedAt,
 	}
 }
 
 func DbTaskToDomain(dbTask db.Task) domain.Task {
-	var deletedAt *time.Time
-	if dbTask.DeletedAt != nil {
-		if t, ok := dbTask.DeletedAt.(time.Time); ok {
-			deletedAt = &t
-		}
-	}
-
-	var startDate *time.Time
-	if dbTask.StartDate != nil {
-		if t, ok := dbTask.StartDate.(time.Time); ok {
-			startDate = &t
-		}
-	}
-
-	var deadline *time.Time
-	if dbTask.Deadline != nil {
-		if t, ok := dbTask.Deadline.(time.Time); ok {
-			deadline = &t
-		}
-	}
-
 	status, _ := domain.ParseTaskStatus(dbTask.Status)
 	priority, _ := domain.ParseTaskPriority(dbTask.Priority)
 
@@ -239,8 +154,8 @@ func DbTaskToDomain(dbTask db.Task) domain.Task {
 		ProjectID:         dbTask.ProjectID,
 		Title:             dbTask.Title,
 		Description:       nullStringToString(dbTask.Description),
-		StartDate:         startDate,
-		Deadline:          deadline,
+		StartDate:         dbTask.StartDate,
+		Deadline:          dbTask.Deadline,
 		Priority:          priority,
 		Context:           nullStringToString(dbTask.Context),
 		EstimatedDuration: estimatedDuration,
@@ -248,6 +163,6 @@ func DbTaskToDomain(dbTask db.Task) domain.Task {
 		IsNext:            isNext,
 		CreatedAt:         dbTask.CreatedAt,
 		UpdatedAt:         dbTask.UpdatedAt,
-		DeletedAt:         deletedAt,
+		DeletedAt:         dbTask.DeletedAt,
 	}
 }

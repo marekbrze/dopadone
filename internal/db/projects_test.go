@@ -538,7 +538,7 @@ func TestUpdateProjectStatus(t *testing.T) {
 		SubareaID:   sql.NullString{String: subareaID, Valid: true},
 		Position:    0,
 		UpdatedAt:   updatedAt,
-		CompletedAt: completedAt,
+		CompletedAt: &completedAt,
 	})
 	if err != nil {
 		t.Fatalf("UpdateProject failed: %v", err)
@@ -628,7 +628,7 @@ func TestGetProjectsByStatus(t *testing.T) {
 		Position:    1,
 		CreatedAt:   now,
 		UpdatedAt:   now,
-		CompletedAt: now,
+		CompletedAt: &now,
 		DeletedAt:   nil,
 	})
 	if err != nil {
@@ -747,7 +747,7 @@ func TestSoftDeleteProject(t *testing.T) {
 	deletedAt := time.Now().UTC().Truncate(time.Second)
 	deleted, err := queries.SoftDeleteProject(ctx, SoftDeleteProjectParams{
 		ID:        projectID,
-		DeletedAt: deletedAt,
+		DeletedAt: &deletedAt,
 	})
 	if err != nil {
 		t.Fatalf("SoftDeleteProject failed: %v", err)

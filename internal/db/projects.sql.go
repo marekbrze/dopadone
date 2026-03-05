@@ -47,15 +47,15 @@ type CreateProjectParams struct {
 	Status      string         `json:"status"`
 	Priority    string         `json:"priority"`
 	Progress    int64          `json:"progress"`
-	Deadline    interface{}    `json:"deadline"`
+	Deadline    *time.Time     `json:"deadline"`
 	Color       sql.NullString `json:"color"`
 	ParentID    sql.NullString `json:"parent_id"`
 	SubareaID   sql.NullString `json:"subarea_id"`
 	Position    int64          `json:"position"`
 	CreatedAt   time.Time      `json:"created_at"`
 	UpdatedAt   time.Time      `json:"updated_at"`
-	CompletedAt interface{}    `json:"completed_at"`
-	DeletedAt   interface{}    `json:"deleted_at"`
+	CompletedAt *time.Time     `json:"completed_at"`
+	DeletedAt   *time.Time     `json:"deleted_at"`
 }
 
 func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (Project, error) {
@@ -97,6 +97,24 @@ func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (P
 		&i.DeletedAt,
 	)
 	return i, err
+}
+
+const deleteProjectsByParentID = `-- name: DeleteProjectsByParentID :exec
+DELETE FROM projects WHERE parent_id = ?
+`
+
+func (q *Queries) DeleteProjectsByParentID(ctx context.Context, parentID sql.NullString) error {
+	_, err := q.db.ExecContext(ctx, deleteProjectsByParentID, parentID)
+	return err
+}
+
+const deleteTasksByProjectID = `-- name: DeleteTasksByProjectID :exec
+DELETE FROM tasks WHERE project_id = ?
+`
+
+func (q *Queries) DeleteTasksByProjectID(ctx context.Context, projectID string) error {
+	_, err := q.db.ExecContext(ctx, deleteTasksByProjectID, projectID)
+	return err
 }
 
 const getProjectByID = `-- name: GetProjectByID :one
@@ -381,8 +399,8 @@ RETURNING id, name, description, goal, status, priority, progress, deadline, col
 `
 
 type SoftDeleteProjectParams struct {
-	DeletedAt interface{} `json:"deleted_at"`
-	ID        string      `json:"id"`
+	DeletedAt *time.Time `json:"deleted_at"`
+	ID        string     `json:"id"`
 }
 
 func (q *Queries) SoftDeleteProject(ctx context.Context, arg SoftDeleteProjectParams) (Project, error) {
@@ -423,13 +441,13 @@ type UpdateProjectParams struct {
 	Status      string         `json:"status"`
 	Priority    string         `json:"priority"`
 	Progress    int64          `json:"progress"`
-	Deadline    interface{}    `json:"deadline"`
+	Deadline    *time.Time     `json:"deadline"`
 	Color       sql.NullString `json:"color"`
 	ParentID    sql.NullString `json:"parent_id"`
 	SubareaID   sql.NullString `json:"subarea_id"`
 	Position    int64          `json:"position"`
 	UpdatedAt   time.Time      `json:"updated_at"`
-	CompletedAt interface{}    `json:"completed_at"`
+	CompletedAt *time.Time     `json:"completed_at"`
 	ID          string         `json:"id"`
 }
 

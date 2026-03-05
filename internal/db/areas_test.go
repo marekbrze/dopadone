@@ -232,7 +232,7 @@ func TestSoftDeleteArea(t *testing.T) {
 	deletedAt := time.Now().UTC().Truncate(time.Second)
 	deleted, err := queries.SoftDeleteArea(ctx, SoftDeleteAreaParams{
 		ID:        id,
-		DeletedAt: deletedAt,
+		DeletedAt: &deletedAt,
 	})
 	if err != nil {
 		t.Fatalf("SoftDeleteArea failed: %v", err)

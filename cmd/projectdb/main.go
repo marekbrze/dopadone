@@ -189,12 +189,13 @@ func GetServices() (*ServiceContainer, error) {
 		return nil, err
 	}
 	queries := db.New(dbConn)
+	tm := db.NewTransactionManager(dbConn)
 
 	return &ServiceContainer{
-		Projects: service.NewProjectService(queries),
-		Tasks:    service.NewTaskService(queries),
-		Subareas: service.NewSubareaService(queries),
-		Areas:    service.NewAreaService(queries),
+		Projects: service.NewProjectService(queries, tm),
+		Tasks:    service.NewTaskService(queries, tm),
+		Subareas: service.NewSubareaService(queries, tm),
+		Areas:    service.NewAreaService(queries, tm),
 		db:       dbConn,
 	}, nil
 }

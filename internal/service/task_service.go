@@ -19,7 +19,7 @@ type TaskService struct {
 	repo db.Querier
 }
 
-func NewTaskService(repo db.Querier) *TaskService {
+func NewTaskService(repo db.Querier, tm *db.TransactionManager) *TaskService {
 	return &TaskService{repo: repo}
 }
 
@@ -53,21 +53,6 @@ func (s *TaskService) Create(ctx context.Context, params CreateTaskParams) (*dom
 		return nil, err
 	}
 
-	var startDate interface{}
-	if task.StartDate != nil {
-		startDate = *task.StartDate
-	}
-
-	var deadline interface{}
-	if task.Deadline != nil {
-		deadline = *task.Deadline
-	}
-
-	var deletedAt interface{}
-	if task.DeletedAt != nil {
-		deletedAt = *task.DeletedAt
-	}
-
 	var isNext int64
 	if task.IsNext {
 		isNext = 1
@@ -83,8 +68,8 @@ func (s *TaskService) Create(ctx context.Context, params CreateTaskParams) (*dom
 		ProjectID:         task.ProjectID,
 		Title:             task.Title,
 		Description:       sql.NullString{String: task.Description, Valid: task.Description != ""},
-		StartDate:         startDate,
-		Deadline:          deadline,
+		StartDate:         task.StartDate,
+		Deadline:          task.Deadline,
 		Priority:          task.Priority.String(),
 		Context:           sql.NullString{String: task.Context, Valid: task.Context != ""},
 		EstimatedDuration: estimatedDuration,
@@ -92,7 +77,7 @@ func (s *TaskService) Create(ctx context.Context, params CreateTaskParams) (*dom
 		IsNext:            isNext,
 		CreatedAt:         task.CreatedAt,
 		UpdatedAt:         task.UpdatedAt,
-		DeletedAt:         deletedAt,
+		DeletedAt:         task.DeletedAt,
 	}
 
 	dbResult, err := s.repo.CreateTask(ctx, dbParams)
@@ -195,16 +180,6 @@ type UpdateTaskParams struct {
 }
 
 func (s *TaskService) Update(ctx context.Context, params UpdateTaskParams) (*domain.Task, error) {
-	var startDate interface{}
-	if params.StartDate != nil {
-		startDate = *params.StartDate
-	}
-
-	var deadline interface{}
-	if params.Deadline != nil {
-		deadline = *params.Deadline
-	}
-
 	var isNext int64
 	if params.IsNext {
 		isNext = 1
@@ -219,8 +194,8 @@ func (s *TaskService) Update(ctx context.Context, params UpdateTaskParams) (*dom
 		ID:                params.ID,
 		Title:             params.Title,
 		Description:       sql.NullString{String: params.Description, Valid: params.Description != ""},
-		StartDate:         startDate,
-		Deadline:          deadline,
+		StartDate:         params.StartDate,
+		Deadline:          params.Deadline,
 		Priority:          params.Priority.String(),
 		Context:           sql.NullString{String: params.Context, Valid: params.Context != ""},
 		EstimatedDuration: estimatedDuration,
@@ -245,7 +220,7 @@ func (s *TaskService) SoftDelete(ctx context.Context, id string) error {
 	now := time.Now()
 	params := db.SoftDeleteTaskParams{
 		ID:        id,
-		DeletedAt: now,
+		DeletedAt: &now,
 	}
 	_, err := s.repo.SoftDeleteTask(ctx, params)
 	if err != nil {

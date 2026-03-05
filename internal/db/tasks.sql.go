@@ -22,8 +22,8 @@ type CreateTaskParams struct {
 	ProjectID         string         `json:"project_id"`
 	Title             string         `json:"title"`
 	Description       sql.NullString `json:"description"`
-	StartDate         interface{}    `json:"start_date"`
-	Deadline          interface{}    `json:"deadline"`
+	StartDate         *time.Time     `json:"start_date"`
+	Deadline          *time.Time     `json:"deadline"`
 	Priority          string         `json:"priority"`
 	Context           sql.NullString `json:"context"`
 	EstimatedDuration sql.NullInt64  `json:"estimated_duration"`
@@ -31,7 +31,7 @@ type CreateTaskParams struct {
 	IsNext            int64          `json:"is_next"`
 	CreatedAt         time.Time      `json:"created_at"`
 	UpdatedAt         time.Time      `json:"updated_at"`
-	DeletedAt         interface{}    `json:"deleted_at"`
+	DeletedAt         *time.Time     `json:"deleted_at"`
 }
 
 func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, error) {
@@ -341,8 +341,8 @@ RETURNING id, project_id, title, description, start_date, deadline, priority, co
 `
 
 type SoftDeleteTaskParams struct {
-	DeletedAt interface{} `json:"deleted_at"`
-	ID        string      `json:"id"`
+	DeletedAt *time.Time `json:"deleted_at"`
+	ID        string     `json:"id"`
 }
 
 func (q *Queries) SoftDeleteTask(ctx context.Context, arg SoftDeleteTaskParams) (Task, error) {
@@ -412,8 +412,8 @@ RETURNING id, project_id, title, description, start_date, deadline, priority, co
 type UpdateTaskParams struct {
 	Title             string         `json:"title"`
 	Description       sql.NullString `json:"description"`
-	StartDate         interface{}    `json:"start_date"`
-	Deadline          interface{}    `json:"deadline"`
+	StartDate         *time.Time     `json:"start_date"`
+	Deadline          *time.Time     `json:"deadline"`
 	Priority          string         `json:"priority"`
 	Context           sql.NullString `json:"context"`
 	EstimatedDuration sql.NullInt64  `json:"estimated_duration"`

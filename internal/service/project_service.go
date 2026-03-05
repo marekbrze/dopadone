@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/example/projectdb/internal/converter"
@@ -25,10 +26,11 @@ type ProjectStats struct {
 
 type ProjectService struct {
 	repo db.Querier
+	tm   *db.TransactionManager
 }
 
-func NewProjectService(repo db.Querier) *ProjectService {
-	return &ProjectService{repo: repo}
+func NewProjectService(repo db.Querier, tm *db.TransactionManager) *ProjectService {
+	return &ProjectService{repo: repo, tm: tm}
 }
 
 type CreateProjectParams struct {
@@ -71,21 +73,6 @@ func (s *ProjectService) Create(ctx context.Context, params CreateProjectParams)
 		return nil, err
 	}
 
-	var deadline interface{}
-	if project.Deadline != nil {
-		deadline = *project.Deadline
-	}
-
-	var completedAt interface{}
-	if project.CompletedAt != nil {
-		completedAt = *project.CompletedAt
-	}
-
-	var deletedAt interface{}
-	if project.DeletedAt != nil {
-		deletedAt = *project.DeletedAt
-	}
-
 	dbParams := db.CreateProjectParams{
 		ID:          project.ID,
 		Name:        project.Name,
@@ -94,15 +81,15 @@ func (s *ProjectService) Create(ctx context.Context, params CreateProjectParams)
 		Status:      project.Status.String(),
 		Priority:    project.Priority.String(),
 		Progress:    int64(project.Progress.Int()),
-		Deadline:    deadline,
+		Deadline:    project.Deadline,
 		Color:       sql.NullString{String: string(project.Color), Valid: project.Color != ""},
 		ParentID:    sql.NullString{String: stringPtr(project.ParentID), Valid: project.ParentID != nil},
 		SubareaID:   sql.NullString{String: stringPtr(project.SubareaID), Valid: project.SubareaID != nil},
 		Position:    int64(project.Position),
 		CreatedAt:   project.CreatedAt,
 		UpdatedAt:   project.UpdatedAt,
-		CompletedAt: completedAt,
-		DeletedAt:   deletedAt,
+		CompletedAt: project.CompletedAt,
+		DeletedAt:   project.DeletedAt,
 	}
 
 	dbResult, err := s.repo.CreateProject(ctx, dbParams)
@@ -192,7 +179,46 @@ func (s *ProjectService) ListByPriority(ctx context.Context, priority domain.Pri
 }
 
 func (s *ProjectService) ListBySubareaRecursive(ctx context.Context, subareaID string) ([]domain.Project, error) {
-	return nil, ErrNotImplemented
+	if subareaID == "" {
+		return []domain.Project{}, nil
+	}
+
+	allProjects, err := s.ListAll(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list projects for subarea %s: %w", subareaID, err)
+	}
+
+	projectMap := make(map[string]domain.Project, len(allProjects))
+	for _, p := range allProjects {
+		projectMap[p.ID] = p
+	}
+
+	result := make([]domain.Project, 0)
+	for _, project := range allProjects {
+		if s.belongsToSubarea(project, subareaID, projectMap) {
+			result = append(result, project)
+		}
+	}
+
+	return result, nil
+}
+
+func (s *ProjectService) belongsToSubarea(
+	project domain.Project,
+	subareaID string,
+	projectMap map[string]domain.Project,
+) bool {
+	if project.SubareaID != nil && *project.SubareaID == subareaID {
+		return true
+	}
+
+	if project.ParentID != nil {
+		if parent, exists := projectMap[*project.ParentID]; exists {
+			return s.belongsToSubarea(parent, subareaID, projectMap)
+		}
+	}
+
+	return false
 }
 
 type UpdateProjectParams struct {
@@ -218,11 +244,6 @@ func (s *ProjectService) Update(ctx context.Context, params UpdateProjectParams)
 		}
 	}
 
-	var deadline interface{}
-	if params.Deadline != nil {
-		deadline = *params.Deadline
-	}
-
 	dbParams := db.UpdateProjectParams{
 		ID:          params.ID,
 		Name:        params.Name,
@@ -231,7 +252,7 @@ func (s *ProjectService) Update(ctx context.Context, params UpdateProjectParams)
 		Status:      params.Status.String(),
 		Priority:    params.Priority.String(),
 		Progress:    int64(params.Progress.Int()),
-		Deadline:    deadline,
+		Deadline:    params.Deadline,
 		Color:       sql.NullString{String: string(params.Color), Valid: params.Color != ""},
 		ParentID:    sql.NullString{String: stringPtr(params.ParentID), Valid: params.ParentID != nil},
 		SubareaID:   sql.NullString{String: stringPtr(params.SubareaID), Valid: params.SubareaID != nil},
@@ -256,7 +277,7 @@ func (s *ProjectService) SoftDelete(ctx context.Context, id string) error {
 	now := time.Now()
 	params := db.SoftDeleteProjectParams{
 		ID:        id,
-		DeletedAt: now,
+		DeletedAt: &now,
 	}
 	_, err := s.repo.SoftDeleteProject(ctx, params)
 	if err != nil {
@@ -269,7 +290,40 @@ func (s *ProjectService) SoftDelete(ctx context.Context, id string) error {
 }
 
 func (s *ProjectService) HardDelete(ctx context.Context, id string) error {
-	return s.repo.HardDeleteProject(ctx, id)
+	if s.tm == nil {
+		if err := s.hardDeleteRecursive(ctx, s.repo, id); err != nil {
+			return err
+		}
+		return s.repo.HardDeleteProject(ctx, id)
+	}
+
+	return s.tm.WithTransaction(ctx, func(ctx context.Context, tx db.Querier) error {
+		if err := s.hardDeleteRecursive(ctx, tx, id); err != nil {
+			return err
+		}
+		return tx.HardDeleteProject(ctx, id)
+	})
+}
+
+func (s *ProjectService) hardDeleteRecursive(ctx context.Context, q db.Querier, projectID string) error {
+	children, err := q.ListProjectsByParent(ctx, sql.NullString{String: projectID, Valid: true})
+	if err != nil {
+		return err
+	}
+
+	for _, child := range children {
+		if err := s.hardDeleteRecursive(ctx, q, child.ID); err != nil {
+			return err
+		}
+		if err := q.DeleteTasksByProjectID(ctx, child.ID); err != nil {
+			return err
+		}
+		if err := q.HardDeleteProject(ctx, child.ID); err != nil {
+			return err
+		}
+	}
+
+	return q.DeleteTasksByProjectID(ctx, projectID)
 }
 
 func (s *ProjectService) GetStats(ctx context.Context, id string) (*ProjectStats, error) {

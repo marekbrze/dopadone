@@ -262,7 +262,7 @@ func TestSoftDeleteCascadeBehavior(t *testing.T) {
 	deletedAt := time.Now().UTC().Truncate(time.Second)
 	_, err = queries.SoftDeleteArea(ctx, SoftDeleteAreaParams{
 		ID:        areaID,
-		DeletedAt: deletedAt,
+		DeletedAt: &deletedAt,
 	})
 	if err != nil {
 		t.Fatalf("SoftDeleteArea failed: %v", err)

@@ -221,6 +221,22 @@ func (m *mockSubareaQuerier) ListProjectsByPriority(ctx context.Context, priorit
 	return nil, nil
 }
 
+func (m *mockSubareaQuerier) DeleteProjectsByParentID(ctx context.Context, parentID sql.NullString) error {
+	return nil
+}
+
+func (m *mockSubareaQuerier) DeleteProjectsBySubareaID(ctx context.Context, subareaID sql.NullString) error {
+	return nil
+}
+
+func (m *mockSubareaQuerier) DeleteTasksBySubareaID(ctx context.Context, subareaID sql.NullString) error {
+	return nil
+}
+
+func (m *mockSubareaQuerier) DeleteTasksByProjectID(ctx context.Context, projectID string) error {
+	return nil
+}
+
 func TestSubareaService_Create(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -271,7 +287,7 @@ func TestSubareaService_Create(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := NewSubareaService(tt.mock())
+			svc := NewSubareaService(tt.mock(), nil)
 			got, err := svc.Create(context.Background(), tt.name_, tt.areaID, tt.color)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("SubareaService.Create() error = %v, wantErr %v", err, tt.wantErr)
@@ -328,7 +344,7 @@ func TestSubareaService_GetByID(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := NewSubareaService(tt.mock())
+			svc := NewSubareaService(tt.mock(), nil)
 			got, err := svc.GetByID(context.Background(), tt.id)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("SubareaService.GetByID() error = %v, wantErr %v", err, tt.wantErr)
@@ -382,7 +398,7 @@ func TestSubareaService_ListByArea(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := NewSubareaService(tt.mock())
+			svc := NewSubareaService(tt.mock(), nil)
 			got, err := svc.ListByArea(context.Background(), tt.areaID)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("SubareaService.ListByArea() error = %v, wantErr %v", err, tt.wantErr)
@@ -420,7 +436,7 @@ func TestSubareaService_GetStats(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := NewSubareaService(tt.mock())
+			svc := NewSubareaService(tt.mock(), nil)
 			got, err := svc.GetStats(context.Background(), tt.id)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("SubareaService.GetStats() error = %v, wantErr %v", err, tt.wantErr)
@@ -487,7 +503,7 @@ func TestSubareaService_GetEffectiveColor(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := NewSubareaService(&mockSubareaQuerier{})
+			svc := NewSubareaService(&mockSubareaQuerier{}, nil)
 			got := svc.GetEffectiveColor(context.Background(), tt.subarea, tt.parentArea)
 			if got != tt.wantColor {
 				t.Errorf("GetEffectiveColor() = %v, want %v", got, tt.wantColor)
@@ -535,7 +551,7 @@ func TestSubareaService_ListAll(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := NewSubareaService(tt.mock())
+			svc := NewSubareaService(tt.mock(), nil)
 			got, err := svc.ListAll(context.Background())
 			if (err != nil) != tt.wantErr {
 				t.Errorf("SubareaService.ListAll() error = %v, wantErr %v", err, tt.wantErr)

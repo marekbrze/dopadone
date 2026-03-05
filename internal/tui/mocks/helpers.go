@@ -39,6 +39,9 @@ func SetupMockProjectSuccess(projectSvc *MockProjectService, projects []domain.P
 	projectSvc.ListBySubareaFunc = func(ctx context.Context, subareaID string) ([]domain.Project, error) {
 		return projects, nil
 	}
+	projectSvc.ListBySubareaRecursiveFunc = func(ctx context.Context, subareaID string) ([]domain.Project, error) {
+		return projects, nil
+	}
 	projectSvc.ListAllFunc = func(ctx context.Context) ([]domain.Project, error) {
 		return projects, nil
 	}
@@ -83,5 +86,89 @@ func SetupMockProjectCreate(projectSvc *MockProjectService, project *domain.Proj
 func SetupMockTaskCreate(taskSvc *MockTaskService, task *domain.Task) {
 	taskSvc.CreateFunc = func(ctx context.Context, params service.CreateTaskParams) (*domain.Task, error) {
 		return task, nil
+	}
+}
+
+func SetupMockAreaCreateError(areaSvc *MockAreaService, err error) {
+	areaSvc.CreateFunc = func(ctx context.Context, name string, color domain.Color) (*domain.Area, error) {
+		return nil, err
+	}
+}
+
+func SetupMockSubareaCreateError(subareaSvc *MockSubareaService, err error) {
+	subareaSvc.CreateFunc = func(ctx context.Context, name string, areaID string, color domain.Color) (*domain.Subarea, error) {
+		return nil, err
+	}
+}
+
+func SetupMockProjectCreateError(projectSvc *MockProjectService, err error) {
+	projectSvc.CreateFunc = func(ctx context.Context, params service.CreateProjectParams) (*domain.Project, error) {
+		return nil, err
+	}
+}
+
+func SetupMockTaskCreateError(taskSvc *MockTaskService, err error) {
+	taskSvc.CreateFunc = func(ctx context.Context, params service.CreateTaskParams) (*domain.Task, error) {
+		return nil, err
+	}
+}
+
+func SetupMockAreaUpdate(areaSvc *MockAreaService, area *domain.Area) {
+	areaSvc.UpdateFunc = func(ctx context.Context, id string, name string, color domain.Color) (*domain.Area, error) {
+		return area, nil
+	}
+}
+
+func SetupMockAreaUpdateError(areaSvc *MockAreaService, err error) {
+	areaSvc.UpdateFunc = func(ctx context.Context, id string, name string, color domain.Color) (*domain.Area, error) {
+		return nil, err
+	}
+}
+
+func SetupMockAreaDelete(areaSvc *MockAreaService) {
+	areaSvc.SoftDeleteFunc = func(ctx context.Context, id string) error {
+		return nil
+	}
+}
+
+func SetupMockAreaDeleteError(areaSvc *MockAreaService, err error) {
+	areaSvc.SoftDeleteFunc = func(ctx context.Context, id string) error {
+		return err
+	}
+}
+
+func SetupMockAreaHardDelete(areaSvc *MockAreaService) {
+	areaSvc.HardDeleteFunc = func(ctx context.Context, id string) error {
+		return nil
+	}
+}
+
+func SetupMockAreaHardDeleteError(areaSvc *MockAreaService, err error) {
+	areaSvc.HardDeleteFunc = func(ctx context.Context, id string) error {
+		return err
+	}
+}
+
+func SetupMockAreaReorder(areaSvc *MockAreaService) {
+	areaSvc.ReorderAllFunc = func(ctx context.Context, areaIDs []string) error {
+		return nil
+	}
+}
+
+func SetupMockAreaReorderError(areaSvc *MockAreaService, err error) {
+	areaSvc.ReorderAllFunc = func(ctx context.Context, areaIDs []string) error {
+		return err
+	}
+}
+
+func SetupMockAreaStats(areaSvc *MockAreaService, stats *service.AreaStats) {
+	areaSvc.GetStatsFunc = func(ctx context.Context, id string) (*service.AreaStats, error) {
+		return stats, nil
+	}
+}
+
+func SetupMockAreaStatsError(areaSvc *MockAreaService, err error) {
+	areaSvc.GetStatsFunc = func(ctx context.Context, id string) (*service.AreaStats, error) {
+		return nil, err
 	}
 }

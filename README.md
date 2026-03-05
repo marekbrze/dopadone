@@ -412,6 +412,18 @@ go test ./internal/db/... -v -run "TestCompleteHierarchy|TestSoftDeleteCascade"
 1. **Project Hierarchy**: A project must have either `parent_id` OR `subarea_id` (not both, not neither)
 2. **Soft Delete**: Deletes are soft by default; child entities remain when parent is soft-deleted
 3. **Foreign Key Cascade**: Hard deletes cascade at the database level
+4. **Transaction Support**: Multi-entity operations use transactions for atomicity and consistency
+
+### Transaction Support
+
+ProjectDB uses database transactions for operations that modify multiple entities:
+
+- **HardDelete operations**: Cascade deletes wrapped in transactions (tasks→projects→subareas→area)
+- **Batch operations**: Sort order updates and bulk changes are atomic
+- **Serializable isolation**: Strongest consistency guarantees
+- **Automatic rollback**: On error or panic, all changes are rolled back
+
+For detailed documentation on transaction usage patterns, integration examples, and best practices, see [docs/TRANSACTIONS.md](docs/TRANSACTIONS.md).
 
 ### Tech Stack
 

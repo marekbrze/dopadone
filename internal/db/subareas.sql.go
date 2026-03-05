@@ -35,7 +35,7 @@ type CreateSubareaParams struct {
 	Color     sql.NullString `json:"color"`
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
-	DeletedAt interface{}    `json:"deleted_at"`
+	DeletedAt *time.Time     `json:"deleted_at"`
 }
 
 func (q *Queries) CreateSubarea(ctx context.Context, arg CreateSubareaParams) (Subarea, error) {
@@ -59,6 +59,24 @@ func (q *Queries) CreateSubarea(ctx context.Context, arg CreateSubareaParams) (S
 		&i.DeletedAt,
 	)
 	return i, err
+}
+
+const deleteProjectsBySubareaID = `-- name: DeleteProjectsBySubareaID :exec
+DELETE FROM projects WHERE subarea_id = ?
+`
+
+func (q *Queries) DeleteProjectsBySubareaID(ctx context.Context, subareaID sql.NullString) error {
+	_, err := q.db.ExecContext(ctx, deleteProjectsBySubareaID, subareaID)
+	return err
+}
+
+const deleteTasksBySubareaID = `-- name: DeleteTasksBySubareaID :exec
+DELETE FROM tasks WHERE project_id IN (SELECT id FROM projects WHERE subarea_id = ?)
+`
+
+func (q *Queries) DeleteTasksBySubareaID(ctx context.Context, subareaID sql.NullString) error {
+	_, err := q.db.ExecContext(ctx, deleteTasksBySubareaID, subareaID)
+	return err
 }
 
 const getSubareaByID = `-- name: GetSubareaByID :one
@@ -175,8 +193,8 @@ RETURNING id, name, area_id, color, created_at, updated_at, deleted_at
 `
 
 type SoftDeleteSubareaParams struct {
-	DeletedAt interface{} `json:"deleted_at"`
-	ID        string      `json:"id"`
+	DeletedAt *time.Time `json:"deleted_at"`
+	ID        string     `json:"id"`
 }
 
 func (q *Queries) SoftDeleteSubarea(ctx context.Context, arg SoftDeleteSubareaParams) (Subarea, error) {

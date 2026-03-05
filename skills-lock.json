@@ -66,6 +66,11 @@
       "sourceType": "github",
       "computedHash": "33d87d1f12d214506ad284c36c3c7bf315c6c7315268d603803d06bbb515c2b1"
     },
+    "golang-patterns": {
+      "source": "affaan-m/everything-claude-code",
+      "sourceType": "github",
+      "computedHash": "67c25e95cec3f3166c2efefd5f4502863a1246c6f742b8cbcd2e2864d2a8182a"
+    },
     "golang-pro": {
       "source": "jeffallan/claude-skills",
       "sourceType": "github",

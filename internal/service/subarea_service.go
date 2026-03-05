@@ -21,10 +21,11 @@ type SubareaStats struct {
 
 type SubareaService struct {
 	repo db.Querier
+	tm   *db.TransactionManager
 }
 
-func NewSubareaService(repo db.Querier) *SubareaService {
-	return &SubareaService{repo: repo}
+func NewSubareaService(repo db.Querier, tm *db.TransactionManager) *SubareaService {
+	return &SubareaService{repo: repo, tm: tm}
 }
 
 func (s *SubareaService) Create(ctx context.Context, name string, areaID string, color domain.Color) (*domain.Subarea, error) {
@@ -103,7 +104,7 @@ func (s *SubareaService) SoftDelete(ctx context.Context, id string) error {
 	now := time.Now()
 	params := db.SoftDeleteSubareaParams{
 		ID:        id,
-		DeletedAt: now,
+		DeletedAt: &now,
 	}
 	_, err := s.repo.SoftDeleteSubarea(ctx, params)
 	if err != nil {
@@ -116,7 +117,25 @@ func (s *SubareaService) SoftDelete(ctx context.Context, id string) error {
 }
 
 func (s *SubareaService) HardDelete(ctx context.Context, id string) error {
-	return s.repo.HardDeleteSubarea(ctx, id)
+	if s.tm == nil {
+		if err := s.repo.DeleteTasksBySubareaID(ctx, sql.NullString{String: id, Valid: true}); err != nil {
+			return err
+		}
+		if err := s.repo.DeleteProjectsBySubareaID(ctx, sql.NullString{String: id, Valid: true}); err != nil {
+			return err
+		}
+		return s.repo.HardDeleteSubarea(ctx, id)
+	}
+
+	return s.tm.WithTransaction(ctx, func(ctx context.Context, tx db.Querier) error {
+		if err := tx.DeleteTasksBySubareaID(ctx, sql.NullString{String: id, Valid: true}); err != nil {
+			return err
+		}
+		if err := tx.DeleteProjectsBySubareaID(ctx, sql.NullString{String: id, Valid: true}); err != nil {
+			return err
+		}
+		return tx.HardDeleteSubarea(ctx, id)
+	})
 }
 
 func (s *SubareaService) GetStats(ctx context.Context, id string) (*SubareaStats, error) {

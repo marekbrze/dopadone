@@ -233,6 +233,22 @@ func (m *mockTaskQuerier) HardDeleteProject(ctx context.Context, id string) erro
 	return nil
 }
 
+func (m *mockTaskQuerier) DeleteProjectsByParentID(ctx context.Context, parentID sql.NullString) error {
+	return nil
+}
+
+func (m *mockTaskQuerier) DeleteProjectsBySubareaID(ctx context.Context, subareaID sql.NullString) error {
+	return nil
+}
+
+func (m *mockTaskQuerier) DeleteTasksBySubareaID(ctx context.Context, subareaID sql.NullString) error {
+	return nil
+}
+
+func (m *mockTaskQuerier) DeleteTasksByProjectID(ctx context.Context, projectID string) error {
+	return nil
+}
+
 func TestTaskService_Create(t *testing.T) {
 	now := time.Now()
 	tests := []struct {
@@ -294,7 +310,7 @@ func TestTaskService_Create(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := NewTaskService(tt.mock())
+			svc := NewTaskService(tt.mock(), nil)
 			got, err := svc.Create(context.Background(), tt.params)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("TaskService.Create() error = %v, wantErr %v", err, tt.wantErr)
@@ -354,7 +370,7 @@ func TestTaskService_GetByID(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := NewTaskService(tt.mock())
+			svc := NewTaskService(tt.mock(), nil)
 			got, err := svc.GetByID(context.Background(), tt.id)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("TaskService.GetByID() error = %v, wantErr %v", err, tt.wantErr)
@@ -408,7 +424,7 @@ func TestTaskService_ListByProject(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := NewTaskService(tt.mock())
+			svc := NewTaskService(tt.mock(), nil)
 			got, err := svc.ListByProject(context.Background(), tt.projectID)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("TaskService.ListByProject() error = %v, wantErr %v", err, tt.wantErr)
@@ -479,7 +495,7 @@ func TestTaskService_SetStatus(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := NewTaskService(tt.mock())
+			svc := NewTaskService(tt.mock(), nil)
 			got, err := svc.SetStatus(context.Background(), tt.id, tt.status)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("TaskService.SetStatus() error = %v, wantErr %v", err, tt.wantErr)
@@ -547,7 +563,7 @@ func TestTaskService_ToggleIsNext(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := NewTaskService(tt.mock())
+			svc := NewTaskService(tt.mock(), nil)
 			got, err := svc.ToggleIsNext(context.Background(), tt.id)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("TaskService.ToggleIsNext() error = %v, wantErr %v", err, tt.wantErr)
@@ -606,7 +622,7 @@ func TestTaskService_MarkCompleted(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := NewTaskService(tt.mock())
+			svc := NewTaskService(tt.mock(), nil)
 			got, err := svc.MarkCompleted(context.Background(), tt.id)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("TaskService.MarkCompleted() error = %v, wantErr %v", err, tt.wantErr)
@@ -658,7 +674,7 @@ func TestTaskService_ListAll(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := NewTaskService(tt.mock())
+			svc := NewTaskService(tt.mock(), nil)
 			got, err := svc.ListAll(context.Background())
 			if (err != nil) != tt.wantErr {
 				t.Errorf("TaskService.ListAll() error = %v, wantErr %v", err, tt.wantErr)

@@ -59,7 +59,7 @@ type CreateAreaParams struct {
 	SortOrder int64          `json:"sort_order"`
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
-	DeletedAt interface{}    `json:"deleted_at"`
+	DeletedAt *time.Time     `json:"deleted_at"`
 }
 
 type CreateAreaRow struct {
@@ -69,7 +69,7 @@ type CreateAreaRow struct {
 	SortOrder int64          `json:"sort_order"`
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
-	DeletedAt interface{}    `json:"deleted_at"`
+	DeletedAt *time.Time     `json:"deleted_at"`
 }
 
 func (q *Queries) CreateArea(ctx context.Context, arg CreateAreaParams) (CreateAreaRow, error) {
@@ -137,7 +137,7 @@ type GetAreaByIDRow struct {
 	SortOrder int64          `json:"sort_order"`
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
-	DeletedAt interface{}    `json:"deleted_at"`
+	DeletedAt *time.Time     `json:"deleted_at"`
 }
 
 func (q *Queries) GetAreaByID(ctx context.Context, id string) (GetAreaByIDRow, error) {
@@ -179,7 +179,7 @@ type ListAreasRow struct {
 	SortOrder int64          `json:"sort_order"`
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
-	DeletedAt interface{}    `json:"deleted_at"`
+	DeletedAt *time.Time     `json:"deleted_at"`
 }
 
 func (q *Queries) ListAreas(ctx context.Context) ([]ListAreasRow, error) {
@@ -221,8 +221,8 @@ RETURNING id, name, color, sort_order, created_at, updated_at, deleted_at
 `
 
 type SoftDeleteAreaParams struct {
-	DeletedAt interface{} `json:"deleted_at"`
-	ID        string      `json:"id"`
+	DeletedAt *time.Time `json:"deleted_at"`
+	ID        string     `json:"id"`
 }
 
 type SoftDeleteAreaRow struct {
@@ -232,7 +232,7 @@ type SoftDeleteAreaRow struct {
 	SortOrder int64          `json:"sort_order"`
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
-	DeletedAt interface{}    `json:"deleted_at"`
+	DeletedAt *time.Time     `json:"deleted_at"`
 }
 
 func (q *Queries) SoftDeleteArea(ctx context.Context, arg SoftDeleteAreaParams) (SoftDeleteAreaRow, error) {
@@ -271,7 +271,7 @@ type UpdateAreaRow struct {
 	SortOrder int64          `json:"sort_order"`
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
-	DeletedAt interface{}    `json:"deleted_at"`
+	DeletedAt *time.Time     `json:"deleted_at"`
 }
 
 func (q *Queries) UpdateArea(ctx context.Context, arg UpdateAreaParams) (UpdateAreaRow, error) {

@@ -65,10 +65,10 @@ func TestTUILoadAreasFromDB(t *testing.T) {
 
 	repo := db.New(database)
 
-	areaSvc := service.NewAreaService(repo)
-	subareaSvc := service.NewSubareaService(repo)
-	projectSvc := service.NewProjectService(repo)
-	taskSvc := service.NewTaskService(repo)
+	areaSvc := service.NewAreaService(repo, nil)
+	subareaSvc := service.NewSubareaService(repo, nil)
+	projectSvc := service.NewProjectService(repo, nil)
+	taskSvc := service.NewTaskService(repo, nil)
 
 	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc)
 
@@ -124,10 +124,10 @@ func TestFullTUIFlowFromDB(t *testing.T) {
 
 	repo := db.New(database)
 
-	areaSvc := service.NewAreaService(repo)
-	subareaSvc := service.NewSubareaService(repo)
-	projectSvc := service.NewProjectService(repo)
-	taskSvc := service.NewTaskService(repo)
+	areaSvc := service.NewAreaService(repo, nil)
+	subareaSvc := service.NewSubareaService(repo, nil)
+	projectSvc := service.NewProjectService(repo, nil)
+	taskSvc := service.NewTaskService(repo, nil)
 
 	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc)
 

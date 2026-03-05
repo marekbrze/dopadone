@@ -20,11 +20,12 @@ type AreaStats struct {
 // AreaService provides business logic for area operations
 type AreaService struct {
 	repo db.Querier
+	tm   *db.TransactionManager
 }
 
 // NewAreaService creates a new AreaService
-func NewAreaService(repo db.Querier) *AreaService {
-	return &AreaService{repo: repo}
+func NewAreaService(repo db.Querier, tm *db.TransactionManager) *AreaService {
+	return &AreaService{repo: repo, tm: tm}
 }
 
 // List retrieves all non-deleted areas sorted by sort_order
@@ -114,12 +115,28 @@ func (s *AreaService) UpdateSortOrder(ctx context.Context, id string, sortOrder 
 
 // ReorderAll updates the sort order of all areas based on their positions in the list
 func (s *AreaService) ReorderAll(ctx context.Context, areaIDs []string) error {
-	for i, id := range areaIDs {
-		if err := s.UpdateSortOrder(ctx, id, i); err != nil {
-			return err
+	if s.tm == nil {
+		for i, id := range areaIDs {
+			if err := s.UpdateSortOrder(ctx, id, i); err != nil {
+				return err
+			}
 		}
+		return nil
 	}
-	return nil
+
+	return s.tm.WithTransaction(ctx, func(ctx context.Context, tx db.Querier) error {
+		for i, id := range areaIDs {
+			params := db.UpdateAreaSortOrderParams{
+				ID:        id,
+				SortOrder: int64(i),
+				UpdatedAt: time.Now(),
+			}
+			if err := tx.UpdateAreaSortOrder(ctx, params); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 // SoftDelete marks an area as deleted (children become orphaned)
@@ -127,7 +144,7 @@ func (s *AreaService) SoftDelete(ctx context.Context, id string) error {
 	now := time.Now()
 	params := db.SoftDeleteAreaParams{
 		ID:        id,
-		DeletedAt: now,
+		DeletedAt: &now,
 	}
 	_, err := s.repo.SoftDeleteArea(ctx, params)
 	return err
@@ -135,17 +152,31 @@ func (s *AreaService) SoftDelete(ctx context.Context, id string) error {
 
 // HardDelete permanently deletes an area and all its children
 func (s *AreaService) HardDelete(ctx context.Context, id string) error {
-	// Delete in order: tasks -> projects -> subareas -> area
-	if err := s.repo.DeleteTasksByProject(ctx, id); err != nil {
-		return err
+	if s.tm == nil {
+		if err := s.repo.DeleteTasksByProject(ctx, id); err != nil {
+			return err
+		}
+		if err := s.repo.DeleteProjectsBySubarea(ctx, id); err != nil {
+			return err
+		}
+		if err := s.repo.DeleteSubareasByArea(ctx, id); err != nil {
+			return err
+		}
+		return s.repo.HardDeleteArea(ctx, id)
 	}
-	if err := s.repo.DeleteProjectsBySubarea(ctx, id); err != nil {
-		return err
-	}
-	if err := s.repo.DeleteSubareasByArea(ctx, id); err != nil {
-		return err
-	}
-	return s.repo.HardDeleteArea(ctx, id)
+
+	return s.tm.WithTransaction(ctx, func(ctx context.Context, tx db.Querier) error {
+		if err := tx.DeleteTasksByProject(ctx, id); err != nil {
+			return err
+		}
+		if err := tx.DeleteProjectsBySubarea(ctx, id); err != nil {
+			return err
+		}
+		if err := tx.DeleteSubareasByArea(ctx, id); err != nil {
+			return err
+		}
+		return tx.HardDeleteArea(ctx, id)
+	})
 }
 
 // GetStats retrieves statistics about an area's children

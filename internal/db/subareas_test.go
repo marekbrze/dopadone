@@ -267,7 +267,7 @@ func TestSoftDeleteSubarea(t *testing.T) {
 	deletedAt := time.Now().UTC().Truncate(time.Second)
 	deleted, err := queries.SoftDeleteSubarea(ctx, SoftDeleteSubareaParams{
 		ID:        subareaID,
-		DeletedAt: deletedAt,
+		DeletedAt: &deletedAt,
 	})
 	if err != nil {
 		t.Fatalf("SoftDeleteSubarea failed: %v", err)

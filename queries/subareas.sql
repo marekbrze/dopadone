@@ -37,3 +37,9 @@ SELECT id, name, area_id, color, created_at, updated_at, deleted_at
 FROM subareas
 WHERE deleted_at IS NULL
 ORDER BY name ASC;
+
+-- name: DeleteProjectsBySubareaID :exec
+DELETE FROM projects WHERE subarea_id = ?;
+
+-- name: DeleteTasksBySubareaID :exec
+DELETE FROM tasks WHERE project_id IN (SELECT id FROM projects WHERE subarea_id = ?);

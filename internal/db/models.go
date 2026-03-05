@@ -15,7 +15,7 @@ type Area struct {
 	Color     sql.NullString `json:"color"`
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
-	DeletedAt interface{}    `json:"deleted_at"`
+	DeletedAt *time.Time     `json:"deleted_at"`
 	SortOrder int64          `json:"sort_order"`
 }
 
@@ -27,15 +27,15 @@ type Project struct {
 	Status      string         `json:"status"`
 	Priority    string         `json:"priority"`
 	Progress    int64          `json:"progress"`
-	Deadline    interface{}    `json:"deadline"`
+	Deadline    *time.Time     `json:"deadline"`
 	Color       sql.NullString `json:"color"`
 	ParentID    sql.NullString `json:"parent_id"`
 	SubareaID   sql.NullString `json:"subarea_id"`
 	Position    int64          `json:"position"`
 	CreatedAt   time.Time      `json:"created_at"`
 	UpdatedAt   time.Time      `json:"updated_at"`
-	CompletedAt interface{}    `json:"completed_at"`
-	DeletedAt   interface{}    `json:"deleted_at"`
+	CompletedAt *time.Time     `json:"completed_at"`
+	DeletedAt   *time.Time     `json:"deleted_at"`
 }
 
 type Subarea struct {
@@ -45,7 +45,7 @@ type Subarea struct {
 	Color     sql.NullString `json:"color"`
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
-	DeletedAt interface{}    `json:"deleted_at"`
+	DeletedAt *time.Time     `json:"deleted_at"`
 }
 
 type Task struct {
@@ -53,8 +53,8 @@ type Task struct {
 	ProjectID         string         `json:"project_id"`
 	Title             string         `json:"title"`
 	Description       sql.NullString `json:"description"`
-	StartDate         interface{}    `json:"start_date"`
-	Deadline          interface{}    `json:"deadline"`
+	StartDate         *time.Time     `json:"start_date"`
+	Deadline          *time.Time     `json:"deadline"`
 	Priority          string         `json:"priority"`
 	Context           sql.NullString `json:"context"`
 	EstimatedDuration sql.NullInt64  `json:"estimated_duration"`
@@ -62,5 +62,5 @@ type Task struct {
 	IsNext            int64          `json:"is_next"`
 	CreatedAt         time.Time      `json:"created_at"`
 	UpdatedAt         time.Time      `json:"updated_at"`
-	DeletedAt         interface{}    `json:"deleted_at"`
+	DeletedAt         *time.Time     `json:"deleted_at"`
 }
