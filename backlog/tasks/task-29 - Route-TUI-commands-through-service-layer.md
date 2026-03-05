@@ -1,10 +1,10 @@
 ---
 id: TASK-29
 title: Route TUI commands through service layer
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-04 16:59'
-updated_date: '2026-03-05 10:12'
+updated_date: '2026-03-05 14:37'
 labels:
   - architecture
   - refactoring
