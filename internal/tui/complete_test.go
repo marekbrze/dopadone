@@ -7,13 +7,14 @@ import (
 	"testing"
 
 	"github.com/example/projectdb/internal/db"
+	"github.com/example/projectdb/internal/service"
 	_ "modernc.org/sqlite"
 )
 
 func TestTUICompleteFlow(t *testing.T) {
 	wd, _ := os.Getwd()
 	dbPath := filepath.Join(wd, "..", "..", "test-with-tasks.db")
-	
+
 	database, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		t.Fatalf("Failed to open database: %v", err)
@@ -21,35 +22,37 @@ func TestTUICompleteFlow(t *testing.T) {
 	defer database.Close()
 
 	repo := db.New(database)
-	model := InitialModel(repo)
-	
-	// Load complete cascade
-	areaMsg := LoadAreasCmd(repo)().(AreasLoadedMsg)
+
+	areaSvc := service.NewAreaService(repo)
+	subareaSvc := service.NewSubareaService(repo)
+	projectSvc := service.NewProjectService(repo)
+	taskSvc := service.NewTaskService(repo)
+
+	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc)
+
+	areaMsg := LoadAreasCmd(areaSvc)().(AreasLoadedMsg)
 	t.Logf("Loaded %d areas", len(areaMsg.Areas))
-	
+
 	newModel, cmd := model.Update(areaMsg)
 	model = newModel.(Model)
-	
+
 	if len(model.tabs) != len(model.areas) {
 		t.Errorf("Tabs mismatch: %d tabs, %d areas", len(model.tabs), len(model.areas))
 	}
 	t.Logf("Created %d tabs", len(model.tabs))
-	
-	// Load subareas
+
 	if cmd != nil {
 		msg := cmd().(SubareasLoadedMsg)
 		newModel, cmd = model.Update(msg)
 		model = newModel.(Model)
 		t.Logf("Loaded %d subareas", len(model.subareas))
-		
-		// Load projects
+
 		if cmd != nil {
 			msg := cmd().(ProjectsLoadedMsg)
 			newModel, cmd = model.Update(msg)
 			model = newModel.(Model)
 			t.Logf("Loaded %d projects", len(model.projects))
-			
-			// Load tasks
+
 			if cmd != nil {
 				msg := cmd().(TasksLoadedMsg)
 				newModel, _ = model.Update(msg)
@@ -58,8 +61,7 @@ func TestTUICompleteFlow(t *testing.T) {
 			}
 		}
 	}
-	
-	// Verify all data loaded
+
 	if len(model.areas) == 0 {
 		t.Error("No areas loaded")
 	}
@@ -75,9 +77,8 @@ func TestTUICompleteFlow(t *testing.T) {
 	if len(model.tasks) == 0 {
 		t.Error("No tasks loaded")
 	}
-	
-	// Success if all data present
-	if len(model.areas) > 0 && len(model.tabs) > 0 && len(model.subareas) > 0 && 
+
+	if len(model.areas) > 0 && len(model.tabs) > 0 && len(model.subareas) > 0 &&
 		len(model.projects) > 0 && len(model.tasks) > 0 {
 		t.Log("\n✅ SUCCESS: TUI displays all seeded data (areas, subareas, projects, tasks)")
 	} else {

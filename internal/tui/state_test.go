@@ -28,7 +28,7 @@ func TestGetAreaStateCreatesNew(t *testing.T) {
 		areaStates: make(map[string]*AreaState),
 	}
 
-	state := m.getAreaState("area-1")
+	state := m.GetAreaState("area-1")
 	if state == nil {
 		t.Fatal("expected state to be created")
 	}
@@ -47,7 +47,7 @@ func TestGetAreaStateReturnsExisting(t *testing.T) {
 		},
 	}
 
-	state := m.getAreaState("area-1")
+	state := m.GetAreaState("area-1")
 	if state != existingState {
 		t.Error("expected existing state to be returned")
 	}
@@ -65,7 +65,7 @@ func TestSaveCurrentAreaState(t *testing.T) {
 		selectedTaskIndex:    1,
 	}
 
-	m.saveCurrentAreaState()
+	m.SaveCurrentAreaState()
 
 	state := m.areaStates["area-1"]
 	if state == nil {
@@ -93,7 +93,7 @@ func TestRestoreAreaState(t *testing.T) {
 		},
 	}
 
-	m.restoreAreaState("area-1")
+	m.RestoreAreaState("area-1")
 
 	if m.selectedSubareaIndex != 4 {
 		t.Errorf("expected 4, got %d", m.selectedSubareaIndex)
@@ -119,13 +119,13 @@ func TestSaveRestoreAreaStateRoundTrip(t *testing.T) {
 		selectedTaskIndex:    2,
 	}
 
-	m.saveCurrentAreaState()
+	m.SaveCurrentAreaState()
 
 	m.selectedSubareaIndex = 0
 	m.selectedProjectIndex = 0
 	m.selectedTaskIndex = 0
 
-	m.restoreAreaState("area-1")
+	m.RestoreAreaState("area-1")
 
 	if m.selectedSubareaIndex != 3 {
 		t.Errorf("expected 3, got %d", m.selectedSubareaIndex)
@@ -151,13 +151,13 @@ func TestAreaStateIsolation(t *testing.T) {
 		selectedTaskIndex:    3,
 	}
 
-	m.saveCurrentAreaState()
+	m.SaveCurrentAreaState()
 
 	m.selectedAreaIndex = 1
 	m.selectedSubareaIndex = 5
 	m.selectedProjectIndex = 6
 	m.selectedTaskIndex = 7
-	m.saveCurrentAreaState()
+	m.SaveCurrentAreaState()
 
 	state1 := m.areaStates["area-1"]
 	state2 := m.areaStates["area-2"]
@@ -188,7 +188,7 @@ func TestTreeExpandStatePersistence(t *testing.T) {
 		projectTree:       root,
 	}
 
-	m.saveCurrentAreaState()
+	m.SaveCurrentAreaState()
 
 	state := m.areaStates["area-1"]
 	if !state.ExpandedProjects["parent"] {
@@ -228,7 +228,7 @@ func TestSaveCurrentAreaStateEmptyAreas(t *testing.T) {
 		selectedAreaIndex: 0,
 	}
 
-	m.saveCurrentAreaState()
+	m.SaveCurrentAreaState()
 
 	if len(m.areaStates) != 0 {
 		t.Error("expected no state to be saved for empty areas")
@@ -244,7 +244,7 @@ func TestSaveCurrentAreaStateIndexOutOfRange(t *testing.T) {
 		selectedAreaIndex: 5,
 	}
 
-	m.saveCurrentAreaState()
+	m.SaveCurrentAreaState()
 
 	if len(m.areaStates) != 0 {
 		t.Error("expected no state to be saved for out of range index")

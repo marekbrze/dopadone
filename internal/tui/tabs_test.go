@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/example/projectdb/internal/domain"
+	"github.com/example/projectdb/internal/tui/mocks"
 )
 
 func TestUpdateTabsFromAreasEmpty(t *testing.T) {
@@ -115,7 +116,8 @@ func TestUpdateTabsFromAreasLastSelected(t *testing.T) {
 }
 
 func TestAreasLoadedUpdatesTabs(t *testing.T) {
-	m := InitialModel(nil)
+	mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc := mocks.NewMockServices()
+	m := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc)
 	m.areas = []domain.Area{
 		{ID: "area-1", Name: "Personal"},
 		{ID: "area-2", Name: "Work"},
@@ -146,7 +148,8 @@ func TestAreasLoadedUpdatesTabs(t *testing.T) {
 }
 
 func TestAreasLoadedUpdatesTabsCorrectSelection(t *testing.T) {
-	m := InitialModel(nil)
+	mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc := mocks.NewMockServices()
+	m := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc)
 	m.selectedAreaIndex = 1
 	m.areas = []domain.Area{
 		{ID: "area-1", Name: "Personal"},
@@ -178,7 +181,8 @@ func TestAreasLoadedUpdatesTabsCorrectSelection(t *testing.T) {
 }
 
 func TestInitialModelHasEmptyTabs(t *testing.T) {
-	m := InitialModel(nil)
+	mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc := mocks.NewMockServices()
+	m := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc)
 
 	if len(m.tabs) != 0 {
 		t.Errorf("Expected InitialModel to have empty tabs, got %d tabs", len(m.tabs))
@@ -186,7 +190,8 @@ func TestInitialModelHasEmptyTabs(t *testing.T) {
 }
 
 func TestSwitchToNextAreaUpdatesTabs(t *testing.T) {
-	m := InitialModel(nil)
+	mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc := mocks.NewMockServices()
+	m := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc)
 	m.areas = []domain.Area{
 		{ID: "area-1", Name: "Personal"},
 		{ID: "area-2", Name: "Work"},
@@ -222,7 +227,8 @@ func TestSwitchToNextAreaUpdatesTabs(t *testing.T) {
 }
 
 func TestSwitchToPreviousAreaUpdatesTabs(t *testing.T) {
-	m := InitialModel(nil)
+	mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc := mocks.NewMockServices()
+	m := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc)
 	m.areas = []domain.Area{
 		{ID: "area-1", Name: "Personal"},
 		{ID: "area-2", Name: "Work"},
@@ -258,7 +264,8 @@ func TestSwitchToPreviousAreaUpdatesTabs(t *testing.T) {
 }
 
 func TestSwitchAreaWrapsTabs(t *testing.T) {
-	m := InitialModel(nil)
+	mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc := mocks.NewMockServices()
+	m := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc)
 	m.areas = []domain.Area{
 		{ID: "area-1", Name: "Personal"},
 		{ID: "area-2", Name: "Work"},

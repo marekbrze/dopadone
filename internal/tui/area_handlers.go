@@ -11,29 +11,29 @@ import (
 func (m *Model) handleAreaModalSubmit(msg areamodal.SubmitMsg) (tea.Model, tea.Cmd) {
 	m.isAreaModalOpen = false
 	m.areaModal = nil
-	return m, CreateAreaCmd(m.repo, msg.Name, msg.Color)
+	return m, CreateAreaCmd(m.areaSvc, msg.Name, msg.Color)
 }
 
 func (m *Model) handleAreaModalUpdate(msg areamodal.UpdateMsg) (tea.Model, tea.Cmd) {
 	m.isAreaModalOpen = false
 	m.areaModal = nil
-	return m, UpdateAreaCmd(m.repo, msg.ID, msg.Name, msg.Color)
+	return m, UpdateAreaCmd(m.areaSvc, msg.ID, msg.Name, msg.Color)
 }
 
 func (m *Model) handleAreaModalDelete(msg areamodal.DeleteMsg) (tea.Model, tea.Cmd) {
 	m.isAreaModalOpen = false
 	m.areaModal = nil
-	return m, DeleteAreaCmd(m.repo, msg.ID, msg.Hard)
+	return m, DeleteAreaCmd(m.areaSvc, msg.ID, msg.Hard)
 }
 
 func (m *Model) handleAreaModalReorder(msg areamodal.ReorderMsg) (tea.Model, tea.Cmd) {
 	m.isAreaModalOpen = false
 	m.areaModal = nil
-	return m, ReorderAreasCmd(m.repo, msg.AreaIDs)
+	return m, ReorderAreasCmd(m.areaSvc, msg.AreaIDs)
 }
 
 func (m *Model) handleLoadAreaStats(msg LoadAreaStatsMsg) (tea.Model, tea.Cmd) {
-	return m, LoadAreaStatsCmd(m.repo, msg.AreaID)
+	return m, LoadAreaStatsCmd(m.areaSvc, msg.AreaID)
 }
 
 func (m *Model) handleAreaStatsLoaded(msg AreaStatsLoadedMsg) (tea.Model, tea.Cmd) {
@@ -59,7 +59,7 @@ func (m *Model) handleAreaCreated(msg AreaCreatedMsg) (tea.Model, tea.Cmd) {
 
 	m.addToast(toast.NewSuccess("Area created successfully"))
 	m.isLoadingAreas = true
-	return m, LoadAreasCmd(m.repo)
+	return m, LoadAreasCmd(m.areaSvc)
 }
 
 func (m *Model) handleAreaUpdated(msg AreaUpdatedMsg) (tea.Model, tea.Cmd) {
@@ -70,7 +70,7 @@ func (m *Model) handleAreaUpdated(msg AreaUpdatedMsg) (tea.Model, tea.Cmd) {
 
 	m.addToast(toast.NewSuccess("Area updated successfully"))
 	m.isLoadingAreas = true
-	return m, LoadAreasCmd(m.repo)
+	return m, LoadAreasCmd(m.areaSvc)
 }
 
 func (m *Model) handleAreaDeleted(msg AreaDeletedMsg) (tea.Model, tea.Cmd) {
@@ -85,7 +85,7 @@ func (m *Model) handleAreaDeleted(msg AreaDeletedMsg) (tea.Model, tea.Cmd) {
 	}
 	m.addToast(toast.NewSuccess(fmt.Sprintf("Area %s deleted", deleteType)))
 	m.isLoadingAreas = true
-	return m, LoadAreasCmd(m.repo)
+	return m, LoadAreasCmd(m.areaSvc)
 }
 
 func (m *Model) handleAreasReordered(msg AreasReorderedMsg) (tea.Model, tea.Cmd) {
@@ -96,5 +96,5 @@ func (m *Model) handleAreasReordered(msg AreasReorderedMsg) (tea.Model, tea.Cmd)
 
 	m.addToast(toast.NewSuccess("Areas reordered successfully"))
 	m.isLoadingAreas = true
-	return m, LoadAreasCmd(m.repo)
+	return m, LoadAreasCmd(m.areaSvc)
 }

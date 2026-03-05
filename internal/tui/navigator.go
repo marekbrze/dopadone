@@ -36,7 +36,7 @@ func (m *Model) NavigateDownWithLoad(column FocusColumn) (tea.Model, tea.Cmd) {
 			m.tasks = nil
 			m.projectTree = nil
 			m.selectedProjectID = ""
-			return m, LoadProjectsCmd(m.repo, &m.subareas[m.selectedSubareaIndex].ID)
+			return m, LoadProjectsCmd(m.projectSvc, &m.subareas[m.selectedSubareaIndex].ID)
 		}
 		return m, nil
 	}
@@ -47,7 +47,7 @@ func (m *Model) NavigateDownWithLoad(column FocusColumn) (tea.Model, tea.Cmd) {
 			m.isLoadingTasks = true
 			m.tasks = nil
 			m.selectedTaskIndex = 0
-			return m, LoadTasksCmd(m.repo, m.selectedProjectID)
+			return m, LoadTasksCmd(m.taskSvc, m.selectedProjectID)
 		}
 		return m, nil
 	}
@@ -65,7 +65,7 @@ func (m *Model) NavigateUpWithLoad(column FocusColumn) (tea.Model, tea.Cmd) {
 			m.tasks = nil
 			m.projectTree = nil
 			m.selectedProjectID = ""
-			return m, LoadProjectsCmd(m.repo, &m.subareas[m.selectedSubareaIndex].ID)
+			return m, LoadProjectsCmd(m.projectSvc, &m.subareas[m.selectedSubareaIndex].ID)
 		}
 		return m, nil
 	}
@@ -76,7 +76,7 @@ func (m *Model) NavigateUpWithLoad(column FocusColumn) (tea.Model, tea.Cmd) {
 			m.isLoadingTasks = true
 			m.tasks = nil
 			m.selectedTaskIndex = 0
-			return m, LoadTasksCmd(m.repo, m.selectedProjectID)
+			return m, LoadTasksCmd(m.taskSvc, m.selectedProjectID)
 		}
 		return m, nil
 	}
@@ -168,5 +168,5 @@ func (m *Model) loadAreaData(areaID string) tea.Cmd {
 	m.projects = nil
 	m.tasks = nil
 	m.projectTree = nil
-	return LoadSubareasCmd(m.repo, areaID)
+	return LoadSubareasCmd(m.subareaSvc, areaID)
 }

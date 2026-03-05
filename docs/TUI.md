@@ -19,6 +19,10 @@ internal/tui/
 ├── messages.go         # Bubble Tea message types
 ├── commands.go         # Bubble Tea commands
 ├── converters.go       # Data conversion utilities
+├── mocks/              # Service mock implementations for testing
+│   ├── services.go     # Mock implementations of service interfaces
+│   ├── helpers.go      # Mock setup helper functions
+│   └── README.md       # Mock usage documentation
 ├── help/               # Help modal component
 │   ├── help.go         # Help modal logic
 │   └── styles.go       # Lipgloss styling
@@ -39,6 +43,111 @@ internal/tui/
     ├── columns.go      # 3-column browser layout
     └── styles.go       # View styling
 ```
+
+### Service Layer Integration
+
+The TUI follows **dependency injection** principles and depends on service layer interfaces rather than direct database access:
+
+```go
+type Model struct {
+    // Service layer dependencies (injected)
+    areaSvc     service.AreaServiceInterface
+    subareaSvc  service.SubareaServiceInterface
+    projectSvc  service.ProjectServiceInterface
+    taskSvc     service.TaskServiceInterface
+    
+    // ... other fields
+}
+```
+
+**Benefits**:
+- **Testability**: Services can be individually mocked for unit tests
+- **Loose coupling**: TUI layer isolated from database implementation details
+- **Flexibility**: Service implementations can be swapped without TUI changes
+- **Clear boundaries**: Well-defined interfaces between layers
+
+**Initialization**:
+```go
+// In cmd/projectdb/tui.go
+func runTUI() error {
+    // Get service container
+    container := db.GetServices()
+    defer container.Close()
+    
+    // Create TUI with injected services
+    model := tui.New(
+        container.AreaService(),
+        container.SubareaService(),
+        container.ProjectService(),
+        container.TaskService(),
+    )
+    
+    // Start program
+    p := tea.NewProgram(model)
+    return p.Start()
+}
+```
+
+**See Also**: [Service Layer Documentation](../internal/service/README.md)
+
+### Service Layer Architecture
+
+The TUI interacts with the data layer exclusively through **service interfaces**, not directly with the database:
+
+```
+┌─────────────────────────────────────────┐
+│            TUI Layer (app.go)           │
+│  - User interface logic                 │
+│  - State management                     │
+│  - Event handling                       │
+└────────────────┬────────────────────────┘
+                 │ depends on
+                 ▼
+┌─────────────────────────────────────────┐
+│        Service Layer Interfaces         │
+│  - AreaServiceInterface                 │
+│  - SubareaServiceInterface              │
+│  - ProjectServiceInterface              │
+│  - TaskServiceInterface                 │
+└────────────────┬────────────────────────┘
+                 │ implemented by
+                 ▼
+┌─────────────────────────────────────────┐
+│      Service Implementations            │
+│  - Business logic                       │
+│  - Validation                           │
+│  - Data transformation                  │
+└────────────────┬────────────────────────┘
+                 │ uses
+                 ▼
+┌─────────────────────────────────────────┐
+│      Data Layer (db.Querier)            │
+│  - Database queries                     │
+│  - SQL operations                       │
+└─────────────────────────────────────────┘
+```
+
+**Commands Use Services**:
+
+All TUI commands (`commands.go`) use service interfaces instead of `db.Querier`:
+
+```go
+func LoadAreasCmd(areaSvc service.AreaServiceInterface) tea.Cmd {
+    return func() tea.Msg {
+        areas, err := areaSvc.List(context.Background())
+        if err != nil {
+            return AreasLoadedMsg{Err: err}
+        }
+        return AreasLoadedMsg{Areas: areas}
+    }
+}
+```
+
+**Benefits of Service Layer**:
+- **Separation of concerns**: TUI focuses on UI, services handle business logic
+- **Testability**: Mock services enable isolated unit testing
+- **Flexibility**: Service implementations can change without TUI modifications
+- **Maintainability**: Clear boundaries make code easier to understand and modify
 
 ### The Elm Architecture
 
@@ -187,27 +296,44 @@ Persistent footer showing common keyboard shortcuts.
 
 ```go
 type Model struct {
+    // Service layer dependencies (injected)
+    areaSvc     service.AreaServiceInterface
+    subareaSvc  service.SubareaServiceInterface
+    projectSvc  service.ProjectServiceInterface
+    taskSvc     service.TaskServiceInterface
+    
     // Core data
-    areas    []Area
-    subareas []Subarea
-    projects []Project
-    tasks    []Task
+    areas    []domain.Area
+    subareas []domain.Subarea
+    projects []domain.Project
+    tasks    []domain.Task
     
     // UI state
-    focusedColumn  FocusColumn
-    selectedArea   int
-    selectedSubarea int
-    selectedProject int
-    selectedTask   int
+    focus           FocusColumn
+    selectedTab     int
+    selectedAreaIndex    int
+    selectedSubareaIndex int
+    selectedProjectIndex int
+    selectedTaskIndex    int
     
     // Tree state
-    tree          *tree.Node
-    expandedNodes map[string]bool
+    projectTree       *tree.TreeNode
+    areaStates        map[string]*AreaState
+    selectedProjectID string
+    
+    // Loading states
+    isLoadingAreas    bool
+    isLoadingSubareas bool
+    isLoadingProjects bool
+    isLoadingTasks    bool
     
     // Modal state
-    showHelp  bool
-    showAddModal bool
-    addModalContext AddModalContext
+    modal         *modal.Modal
+    isModalOpen   bool
+    areaModal     *areamodal.Modal
+    isAreaModalOpen bool
+    helpModal     *help.HelpModal
+    isHelpOpen    bool
     
     // Toasts
     toasts []toast.Toast
@@ -215,8 +341,36 @@ type Model struct {
     // Terminal size
     width  int
     height int
+    ready  bool
 }
 ```
+
+### Dependency Injection Pattern
+
+The TUI uses **constructor injection** to receive service dependencies:
+
+```go
+// InitialModel creates a new Model with injected services
+func InitialModel(
+    areaSvc service.AreaServiceInterface,
+    subareaSvc service.SubareaServiceInterface,
+    projectSvc service.ProjectServiceInterface,
+    taskSvc service.TaskServiceInterface,
+) Model {
+    return Model{
+        areaSvc:    areaSvc,
+        subareaSvc: subareaSvc,
+        projectSvc: projectSvc,
+        taskSvc:    taskSvc,
+        // ... initialize other fields
+    }
+}
+```
+
+This pattern enables:
+- Easy testing with mock services
+- Clear documentation of dependencies
+- Decoupling from database layer
 
 ### Focus States
 
@@ -250,18 +404,55 @@ Comprehensive test suite covering:
 1. **Unit Tests**:
    - `*_test.go` files alongside implementation
    - Test individual components in isolation
-   - Mock data for predictable testing
+   - Use mock services for predictable testing
+   - Located in `internal/tui/` directory
 
-2. **Integration Tests** (`integration_test.go`):
+2. **Mock Services** (`internal/tui/mocks/`):
+   - Mock implementations of all 4 service interfaces
+   - Func-field pattern for maximum flexibility
+   - Helper functions for common setup scenarios
+   - See [mocks/README.md](../internal/tui/mocks/README.md) for details
+
+3. **Integration Tests** (`integration_test.go`):
    - End-to-end user flows
    - Keyboard input sequences
    - State transitions
    - Modal interactions
 
-3. **Navigation Tests** (`navigation_test.go`):
+4. **Navigation Tests** (`navigation_test.go`):
    - Column focus switching
    - Tab navigation
    - Tree navigation with wrapping
+
+### Testing with Mocks
+
+All tests use mock services instead of database connections:
+
+```go
+import "github.com/example/projectdb/internal/tui/mocks"
+
+func TestLoadAreas(t *testing.T) {
+    // Create mock services
+    m := mocks.NewMockServices()
+    
+    // Configure mock behavior
+    expectedAreas := []domain.Area{
+        {ID: "area-1", Name: "Work"},
+        {ID: "area-2", Name: "Personal"},
+    }
+    m.SetupMockAreaSuccess(expectedAreas)
+    
+    // Create model with mocked services
+    model := InitialModel(
+        m.AreaSvc,
+        m.SubareaSvc,
+        m.ProjectSvc,
+        m.TaskSvc,
+    )
+    
+    // Test logic here...
+}
+```
 
 ### Running Tests
 
@@ -274,6 +465,30 @@ go test ./internal/tui/... -v -run TestHelpModal
 
 # Run with coverage
 go test ./internal/tui/... -cover
+
+# Run with race detector
+go test -race ./internal/tui/...
+```
+
+### Test Patterns
+
+**Success Scenario**:
+```go
+m.SetupMockAreaSuccess(areas)
+m.SetupMockProjectSuccess(projects)
+```
+
+**Error Scenario**:
+```go
+m.SetupMockAreaError(errors.New("database connection failed"))
+```
+
+**Custom Behavior**:
+```go
+m.AreaSvc.ListFunc = func(ctx context.Context) ([]domain.Area, error) {
+    // Custom logic for specific test case
+    return []domain.Area{{ID: "1", Name: "Test"}}, nil
+}
 ```
 
 ### Manual Verification Checklist

@@ -94,16 +94,16 @@ func (m *Model) getProjectNameByID(id string) string {
 func (m *Model) handleModalSubmit(msg modal.SubmitMsg) (tea.Model, tea.Cmd) {
 	switch msg.EntityType {
 	case modal.EntityTypeSubarea:
-		return m, CreateSubareaCmd(m.repo, msg.Title, msg.ParentID)
+		return m, CreateSubareaCmd(m.subareaSvc, msg.Title, msg.ParentID)
 
 	case modal.EntityTypeProject:
-		return m, CreateProjectCmd(m.repo, msg.Title, nil, msg.SubareaID)
+		return m, CreateProjectCmd(m.projectSvc, msg.Title, nil, msg.SubareaID)
 
 	case modal.EntityTypeSubproject:
-		return m, CreateProjectCmd(m.repo, msg.Title, &msg.ParentID, nil)
+		return m, CreateProjectCmd(m.projectSvc, msg.Title, &msg.ParentID, nil)
 
 	case modal.EntityTypeTask:
-		return m, CreateTaskCmd(m.repo, msg.Title, msg.ParentID)
+		return m, CreateTaskCmd(m.taskSvc, msg.Title, msg.ParentID)
 	}
 
 	m.isModalOpen = false

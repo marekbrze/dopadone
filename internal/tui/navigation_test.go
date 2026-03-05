@@ -255,8 +255,8 @@ func TestIsEmpty(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.model.isEmpty(tt.column); got != tt.expected {
-				t.Errorf("isEmpty() = %v, want %v", got, tt.expected)
+			if got := tt.model.IsEmpty(tt.column); got != tt.expected {
+				t.Errorf("IsEmpty() = %v, want %v", got, tt.expected)
 			}
 		})
 	}

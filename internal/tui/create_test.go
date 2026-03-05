@@ -7,6 +7,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/example/projectdb/internal/db"
+	"github.com/example/projectdb/internal/service"
 )
 
 func TestCreateSubareaCmd(t *testing.T) {
@@ -56,6 +57,7 @@ func TestCreateSubareaCmd(t *testing.T) {
 			defer sqlDB.Close()
 
 			queries := db.New(sqlDB)
+			subareaSvc := service.NewSubareaService(queries)
 
 			if tt.subareaName != "" && tt.areaID != "" && tt.mockError == nil {
 				now := time.Now()
@@ -73,7 +75,7 @@ func TestCreateSubareaCmd(t *testing.T) {
 					WillReturnError(tt.mockError)
 			}
 
-			cmd := CreateSubareaCmd(queries, tt.subareaName, tt.areaID)
+			cmd := CreateSubareaCmd(subareaSvc, tt.subareaName, tt.areaID)
 			msg := cmd()
 
 			createdMsg, ok := msg.(SubareaCreatedMsg)
@@ -161,6 +163,7 @@ func TestCreateProjectCmd(t *testing.T) {
 			defer sqlDB.Close()
 
 			queries := db.New(sqlDB)
+			projectSvc := service.NewProjectService(queries)
 
 			if tt.projectName != "" && (tt.parentID != nil || tt.subareaID != nil) && tt.mockError == nil {
 				now := time.Now()
@@ -188,7 +191,7 @@ func TestCreateProjectCmd(t *testing.T) {
 					WillReturnError(tt.mockError)
 			}
 
-			cmd := CreateProjectCmd(queries, tt.projectName, tt.parentID, tt.subareaID)
+			cmd := CreateProjectCmd(projectSvc, tt.projectName, tt.parentID, tt.subareaID)
 			msg := cmd()
 
 			createdMsg, ok := msg.(ProjectCreatedMsg)
@@ -263,6 +266,7 @@ func TestCreateTaskCmd(t *testing.T) {
 			defer sqlDB.Close()
 
 			queries := db.New(sqlDB)
+			taskSvc := service.NewTaskService(queries)
 
 			if tt.taskTitle != "" && tt.projectID != "" && tt.mockError == nil {
 				now := time.Now()
@@ -282,7 +286,7 @@ func TestCreateTaskCmd(t *testing.T) {
 					WillReturnError(tt.mockError)
 			}
 
-			cmd := CreateTaskCmd(queries, tt.taskTitle, tt.projectID)
+			cmd := CreateTaskCmd(taskSvc, tt.taskTitle, tt.projectID)
 			msg := cmd()
 
 			createdMsg, ok := msg.(TaskCreatedMsg)

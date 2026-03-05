@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/example/projectdb/internal/db"
+	"github.com/example/projectdb/internal/service"
 	_ "modernc.org/sqlite"
 )
 
@@ -15,7 +16,7 @@ func TestDatabaseConnectionAndData(t *testing.T) {
 	wd, _ := os.Getwd()
 	dbPath := filepath.Join(wd, "..", "..", "test-verify.db")
 	t.Logf("Database path: %s", dbPath)
-	
+
 	database, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		t.Fatalf("Failed to open database: %v", err)
@@ -28,12 +29,12 @@ func TestDatabaseConnectionAndData(t *testing.T) {
 	t.Log("✓ Database connection successful")
 
 	repo := db.New(database)
-	
+
 	areas, err := repo.ListAreas(context.Background())
 	if err != nil {
 		t.Fatalf("Failed to list areas: %v", err)
 	}
-	
+
 	if len(areas) == 0 {
 		t.Error("No areas found in database")
 	} else {
@@ -42,7 +43,7 @@ func TestDatabaseConnectionAndData(t *testing.T) {
 			t.Logf("  Area %d: ID=%s, Name=%s", i, area.ID, area.Name)
 		}
 	}
-	
+
 	if len(areas) > 0 {
 		subareas, err := repo.ListSubareasByArea(context.Background(), areas[0].ID)
 		if err != nil {
@@ -55,7 +56,7 @@ func TestDatabaseConnectionAndData(t *testing.T) {
 func TestTUILoadAreasFromDB(t *testing.T) {
 	wd, _ := os.Getwd()
 	dbPath := filepath.Join(wd, "..", "..", "test-verify.db")
-	
+
 	database, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		t.Fatalf("Failed to open database: %v", err)
@@ -63,20 +64,26 @@ func TestTUILoadAreasFromDB(t *testing.T) {
 	defer database.Close()
 
 	repo := db.New(database)
-	model := InitialModel(repo)
-	
-	cmd := LoadAreasCmd(repo)
+
+	areaSvc := service.NewAreaService(repo)
+	subareaSvc := service.NewSubareaService(repo)
+	projectSvc := service.NewProjectService(repo)
+	taskSvc := service.NewTaskService(repo)
+
+	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc)
+
+	cmd := LoadAreasCmd(areaSvc)
 	msg := cmd()
-	
+
 	areasMsg, ok := msg.(AreasLoadedMsg)
 	if !ok {
 		t.Fatalf("Expected AreasLoadedMsg, got %T", msg)
 	}
-	
+
 	if areasMsg.Err != nil {
 		t.Fatalf("AreasLoadedMsg has error: %v", areasMsg.Err)
 	}
-	
+
 	if len(areasMsg.Areas) == 0 {
 		t.Error("No areas in AreasLoadedMsg")
 	} else {
@@ -85,16 +92,16 @@ func TestTUILoadAreasFromDB(t *testing.T) {
 			t.Logf("  Area %d: %s (ID: %s)", i, area.Name, area.ID)
 		}
 	}
-	
+
 	newModel, _ := model.Update(areasMsg)
 	model = newModel.(Model)
-	
+
 	if len(model.areas) == 0 {
 		t.Error("Model has no areas after update")
 	} else {
 		t.Logf("✓ Model has %d areas after update", len(model.areas))
 	}
-	
+
 	if len(model.tabs) == 0 {
 		t.Error("Model has no tabs after update")
 	} else {
@@ -108,7 +115,7 @@ func TestTUILoadAreasFromDB(t *testing.T) {
 func TestFullTUIFlowFromDB(t *testing.T) {
 	wd, _ := os.Getwd()
 	dbPath := filepath.Join(wd, "..", "..", "test-verify.db")
-	
+
 	database, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		t.Fatalf("Failed to open database: %v", err)
@@ -116,43 +123,44 @@ func TestFullTUIFlowFromDB(t *testing.T) {
 	defer database.Close()
 
 	repo := db.New(database)
-	model := InitialModel(repo)
-	
-	// Load areas
-	areaCmd := LoadAreasCmd(repo)
+
+	areaSvc := service.NewAreaService(repo)
+	subareaSvc := service.NewSubareaService(repo)
+	projectSvc := service.NewProjectService(repo)
+	taskSvc := service.NewTaskService(repo)
+
+	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc)
+
+	areaCmd := LoadAreasCmd(areaSvc)
 	areaMsg := areaCmd()
 	areasMsg := areaMsg.(AreasLoadedMsg)
-	
+
 	if len(areasMsg.Areas) == 0 {
 		t.Fatal("No areas found")
 	}
 	t.Logf("✓ Loaded %d areas", len(areasMsg.Areas))
-	
+
 	newModel, subareaCmd := model.Update(areasMsg)
 	model = newModel.(Model)
-	
-	// Check tabs created
+
 	if len(model.tabs) != len(model.areas) {
 		t.Errorf("Tabs count mismatch: tabs=%d, areas=%d", len(model.tabs), len(model.areas))
 	}
-	
-	// Load subareas
+
 	if subareaCmd != nil {
 		subareaMsg := subareaCmd()
 		if subareasMsg, ok := subareaMsg.(SubareasLoadedMsg); ok {
 			newModel, projCmd := model.Update(subareasMsg)
 			model = newModel.(Model)
 			t.Logf("✓ Loaded %d subareas", len(model.subareas))
-			
-			// Load projects
+
 			if projCmd != nil {
 				projMsg := projCmd()
 				if projectsMsg, ok := projMsg.(ProjectsLoadedMsg); ok {
 					newModel, taskCmd := model.Update(projectsMsg)
 					model = newModel.(Model)
 					t.Logf("✓ Loaded %d projects", len(model.projects))
-					
-					// Load tasks
+
 					if taskCmd != nil {
 						taskMsg := taskCmd()
 						if tasksMsg, ok := taskMsg.(TasksLoadedMsg); ok {
@@ -165,14 +173,13 @@ func TestFullTUIFlowFromDB(t *testing.T) {
 			}
 		}
 	}
-	
-	// Final state check
+
 	t.Logf("\n=== Final State ===")
 	t.Logf("Areas: %d (Tabs: %d)", len(model.areas), len(model.tabs))
 	t.Logf("Subareas: %d", len(model.subareas))
 	t.Logf("Projects: %d", len(model.projects))
 	t.Logf("Tasks: %d", len(model.tasks))
-	
+
 	if len(model.areas) == 0 || len(model.tabs) == 0 {
 		t.Error("FAILED: TUI does not display seeded data - areas or tabs are empty")
 	} else {

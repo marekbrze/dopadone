@@ -23,7 +23,7 @@ func (m *Model) handleSubareaCreated(msg SubareaCreatedMsg) (tea.Model, tea.Cmd)
 	areaID := m.areas[m.selectedAreaIndex].ID
 	m.isLoadingSubareas = true
 
-	return m, LoadSubareasCmd(m.repo, areaID)
+	return m, LoadSubareasCmd(m.subareaSvc, areaID)
 }
 
 func (m *Model) handleProjectCreated(msg ProjectCreatedMsg) (tea.Model, tea.Cmd) {
@@ -44,7 +44,7 @@ func (m *Model) handleProjectCreated(msg ProjectCreatedMsg) (tea.Model, tea.Cmd)
 	subareaID := m.subareas[m.selectedSubareaIndex].ID
 	m.isLoadingProjects = true
 
-	return m, LoadProjectsCmd(m.repo, &subareaID)
+	return m, LoadProjectsCmd(m.projectSvc, &subareaID)
 }
 
 func (m *Model) handleTaskCreated(msg TaskCreatedMsg) (tea.Model, tea.Cmd) {
@@ -64,5 +64,5 @@ func (m *Model) handleTaskCreated(msg TaskCreatedMsg) (tea.Model, tea.Cmd) {
 	}
 	m.isLoadingTasks = true
 
-	return m, LoadTasksCmd(m.repo, m.selectedProjectID)
+	return m, LoadTasksCmd(m.taskSvc, m.selectedProjectID)
 }

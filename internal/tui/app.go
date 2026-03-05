@@ -6,8 +6,8 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/example/projectdb/internal/db"
 	"github.com/example/projectdb/internal/domain"
+	"github.com/example/projectdb/internal/service"
 	"github.com/example/projectdb/internal/tui/areamodal"
 	"github.com/example/projectdb/internal/tui/help"
 	"github.com/example/projectdb/internal/tui/modal"
@@ -17,7 +17,10 @@ import (
 )
 
 type Model struct {
-	repo        db.Querier
+	areaSvc     service.AreaServiceInterface
+	subareaSvc  service.SubareaServiceInterface
+	projectSvc  service.ProjectServiceInterface
+	taskSvc     service.TaskServiceInterface
 	focus       FocusColumn
 	width       int
 	height      int
@@ -57,13 +60,21 @@ type Model struct {
 	toasts []toast.Toast
 }
 
-func InitialModel(repo db.Querier) Model {
+func InitialModel(
+	areaSvc service.AreaServiceInterface,
+	subareaSvc service.SubareaServiceInterface,
+	projectSvc service.ProjectServiceInterface,
+	taskSvc service.TaskServiceInterface,
+) Model {
 	s := spinner.New()
 	s.Spinner = spinner.Dot
 	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
 
 	return Model{
-		repo:        repo,
+		areaSvc:     areaSvc,
+		subareaSvc:  subareaSvc,
+		projectSvc:  projectSvc,
+		taskSvc:     taskSvc,
 		focus:       FocusSubareas,
 		width:       0,
 		height:      0,
@@ -101,13 +112,13 @@ func InitialModel(repo db.Querier) Model {
 }
 
 func (m Model) Init() tea.Cmd {
-	if m.repo == nil {
+	if m.areaSvc == nil {
 		return nil
 	}
 	m.isLoadingAreas = true
 	return tea.Batch(
 		m.spinner.Tick,
-		LoadAreasCmd(m.repo),
+		LoadAreasCmd(m.areaSvc),
 		tea.Tick(time.Second, func(t time.Time) tea.Msg {
 			return ToastTickMsg{}
 		}),
@@ -135,7 +146,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if len(m.areas) > 0 && m.selectedAreaIndex == 0 {
 			m.selectedAreaIndex = 0
 			m.isLoadingSubareas = true
-			cmds = append(cmds, LoadSubareasCmd(m.repo, m.areas[0].ID))
+			cmds = append(cmds, LoadSubareasCmd(m.subareaSvc, m.areas[0].ID))
 		}
 		return m, tea.Batch(cmds...)
 
@@ -149,7 +160,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if len(m.subareas) > 0 && m.selectedSubareaIndex == 0 {
 			m.selectedSubareaIndex = 0
 			m.isLoadingProjects = true
-			cmds = append(cmds, LoadProjectsCmd(m.repo, &m.subareas[0].ID))
+			cmds = append(cmds, LoadProjectsCmd(m.projectSvc, &m.subareas[0].ID))
 		}
 		return m, tea.Batch(cmds...)
 
@@ -172,7 +183,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.isLoadingTasks = true
 				m.tasks = nil
 				m.selectedTaskIndex = 0
-				cmds = append(cmds, LoadTasksCmd(m.repo, firstNode.ID))
+				cmds = append(cmds, LoadTasksCmd(m.taskSvc, firstNode.ID))
 			}
 		}
 		return m, tea.Batch(cmds...)
@@ -219,7 +230,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.areaModal = nil
 		return m, nil
 	case areamodal.LoadStatsMsg:
-		return m, LoadAreaStatsCmd(m.repo, msg.AreaID)
+		return m, LoadAreaStatsCmd(m.areaSvc, msg.AreaID)
 
 	case AreaCreatedMsg:
 		return m.handleAreaCreated(msg)
