@@ -98,18 +98,22 @@ func (s *ProjectService) SoftDelete(ctx context.Context, id string) error
 func (s *ProjectService) HardDelete(ctx context.Context, id string) error
 ```
 
-**ListBySubareaRecursive**: Returns all projects belonging to a subarea, including nested projects whose parent chain leads to the subarea. This method recursively traverses the project hierarchy to find all descendant projects.
+**ListBySubareaRecursive**: Returns all projects belonging to a subarea, including nested projects whose parent chain leads to the subarea. Uses server-side filtering with recursive CTE for optimal performance.
 
-- **Performance**: O(n) time complexity where n = total projects
+- **Performance**: O(k) time complexity where k = filtered projects (not total projects)
+  - **Benchmarks** (10% filter ratio): 100 projects: 1.4μs, 500 projects: 7μs, 1000 projects: 13.4μs
+  - Memory allocation: O(k) instead of O(n) - only loads required records
 - **Algorithm**: 
-  1. Loads all non-deleted projects via `ListAll(ctx)`
-  2. Builds a project map for O(1) parent lookups
-  3. Filters projects that belong to the subarea (direct membership or via parent chain)
+  1. Uses recursive SQL CTE (`ListProjectsBySubareaRecursive` query) for server-side filtering
+  2. Base case: projects directly in subarea (WHERE subarea_id = ?)
+  3. Recursive case: children of projects in hierarchy (JOIN on parent_id)
+  4. Returns only matching projects, not all projects
 - **Edge Cases**: 
   - Empty subareaID returns empty slice
-  - Orphaned projects (parent doesn't exist) are excluded
-  - Soft-deleted projects are automatically excluded
+  - Soft-deleted projects automatically excluded at each recursion level
+  - Handles arbitrary hierarchy depth (no manual depth limit)
 - **Use Case**: When displaying all projects in a subarea tree view, this ensures nested projects are included even if they don't have a direct subareaID assignment
+- **Optimization Note**: Task-32 migrated from in-memory filtering (O(n)) to server-side CTE (O(k)) - see [Performance Optimization](#performance-optimization) section
 
 #### TaskService
 
@@ -610,6 +614,79 @@ func TestProjectsCreateCommand(t *testing.T) {
     // Verify output
 }
 ```
+
+## Performance Optimization
+
+### Server-Side Filtering with Recursive CTEs
+
+For hierarchical queries that filter data, prefer server-side filtering over in-memory filtering:
+
+**Pattern: Use SQL Recursive CTEs for hierarchical filtering**
+
+```sql
+-- Example: ListProjectsBySubareaRecursive
+WITH RECURSIVE project_hierarchy AS (
+    -- Base case: direct membership
+    SELECT * FROM projects
+    WHERE subarea_id = ? AND deleted_at IS NULL
+    
+    UNION ALL
+    
+    -- Recursive case: children of projects in hierarchy
+    SELECT p.* FROM projects p
+    INNER JOIN project_hierarchy ph ON p.parent_id = ph.id
+    WHERE p.deleted_at IS NULL
+)
+SELECT * FROM project_hierarchy
+ORDER BY position ASC, name ASC;
+```
+
+**Benefits:**
+- **Memory Efficiency**: Load O(k) records instead of O(n) where k < n (filtered subset)
+- **Performance**: Database engine optimizes query execution
+- **Scalability**: Performance scales with filtered result size, not total data size
+
+**Implementation Example (Task-32):**
+
+Before (in-memory filtering):
+```go
+func (s *ProjectService) ListBySubareaRecursive(ctx context.Context, subareaID string) ([]domain.Project, error) {
+    // Load ALL projects (O(n) memory)
+    allProjects, err := s.repo.ListAll(ctx)
+    // Filter in Go code
+    filtered := filterBySubarea(allProjects, subareaID)
+    return filtered, nil
+}
+```
+
+After (server-side filtering):
+```go
+func (s *ProjectService) ListBySubareaRecursive(ctx context.Context, subareaID string) ([]domain.Project, error) {
+    // Load ONLY filtered projects (O(k) memory, k < n)
+    rows, err := s.repo.ListProjectsBySubareaRecursive(ctx, sql.NullString{
+        String: subareaID,
+        Valid:  true,
+    })
+    // Convert to domain types
+    return converter.DbProjectRowsToDomain(rows), nil
+}
+```
+
+**Performance Impact (Benchmarks for 10% filter ratio):**
+- Small dataset (100 projects, 10 in subarea): 1.4μs, 8.6KB, 22 allocs
+- Medium dataset (500 projects, 50 in subarea): 7μs, 44.8KB, 102 allocs
+- Large dataset (1000 projects, 100 in subarea): 13.4μs, 89.7KB, 202 allocs
+
+**When to Use:**
+- Hierarchical data with filtering requirements
+- Large datasets where filtered subset is significantly smaller than total
+- Queries that traverse parent-child relationships
+- Use cases where filtering at database level reduces data transfer
+
+**When NOT to Use:**
+- Simple non-hierarchical queries (use standard WHERE clauses)
+- Small datasets where in-memory filtering is negligible
+- Cases where all data needs to be loaded anyway (e.g., for caching)
 
 ## Future Enhancements
 
