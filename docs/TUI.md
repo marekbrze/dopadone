@@ -279,6 +279,21 @@ Context-aware modal for creating new items.
 - Input validation for non-empty title
 - Press `Enter` to create, `Escape` to cancel
 
+**Subproject Checkbox** (Projects Column Only):
+
+When a project is selected in the Projects column, the modal displays a checkbox labeled "Add as subproject" below the input field:
+
+- **Unchecked (default)**: Creates a root-level project under the currently selected subarea
+- **Checked**: Creates a subproject under the currently selected project
+- **Keyboard navigation**: 
+  - `Tab`/`Shift+Tab`: Navigate between input field and checkbox
+  - `Space`: Toggle checkbox when focused
+  - `Enter`: Submit with current checkbox state
+
+This feature provides explicit control over project hierarchy, allowing users to create both root projects and subprojects when a project is selected.
+
+**Note**: The checkbox only appears when a project is selected in the Projects column. Behavior remains unchanged for Subareas and Tasks columns.
+
 ### 7. Footer with Quick Reference
 
 Persistent footer showing common keyboard shortcuts.
@@ -307,6 +322,8 @@ Persistent footer showing common keyboard shortcuts.
 |-----|--------|-------------|
 | `Enter`, `Space` | Toggle Expand/Collapse | Expand or collapse project tree nodes |
 | `a` | Quick Add | Open modal to create new item |
+| `Tab`, `Shift+Tab` | Navigate Modal | In quick-add modal: cycle between input and checkbox (when visible) |
+| `Space` | Toggle Checkbox | In quick-add modal: toggle checkbox when focused |
 
 ### General
 

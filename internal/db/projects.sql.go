@@ -391,6 +391,89 @@ func (q *Queries) ListProjectsBySubarea(ctx context.Context, subareaID sql.NullS
 	return items, nil
 }
 
+const listProjectsBySubareaRecursive = `-- name: ListProjectsBySubareaRecursive :many
+WITH RECURSIVE project_hierarchy AS (
+    SELECT 
+        id, name, description, goal, status, priority, progress, 
+        deadline, color, parent_id, subarea_id, position, 
+        created_at, updated_at, completed_at, deleted_at
+    FROM projects
+    WHERE projects.subarea_id = ? AND deleted_at IS NULL
+    
+    UNION ALL
+    
+    SELECT 
+        p.id, p.name, p.description, p.goal, p.status, p.priority, p.progress,
+        p.deadline, p.color, p.parent_id, p.subarea_id, p.position,
+        p.created_at, p.updated_at, p.completed_at, p.deleted_at
+    FROM projects p
+    INNER JOIN project_hierarchy ph ON p.parent_id = ph.id
+    WHERE p.deleted_at IS NULL
+)
+SELECT id, name, description, goal, status, priority, progress, deadline, color, parent_id, subarea_id, position, created_at, updated_at, completed_at, deleted_at
+FROM project_hierarchy
+ORDER BY position ASC, name ASC
+`
+
+type ListProjectsBySubareaRecursiveRow struct {
+	ID          string         `json:"id"`
+	Name        string         `json:"name"`
+	Description sql.NullString `json:"description"`
+	Goal        sql.NullString `json:"goal"`
+	Status      string         `json:"status"`
+	Priority    string         `json:"priority"`
+	Progress    int64          `json:"progress"`
+	Deadline    interface{}    `json:"deadline"`
+	Color       sql.NullString `json:"color"`
+	ParentID    sql.NullString `json:"parent_id"`
+	SubareaID   sql.NullString `json:"subarea_id"`
+	Position    int64          `json:"position"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+	CompletedAt interface{}    `json:"completed_at"`
+	DeletedAt   interface{}    `json:"deleted_at"`
+}
+
+func (q *Queries) ListProjectsBySubareaRecursive(ctx context.Context, subareaID sql.NullString) ([]ListProjectsBySubareaRecursiveRow, error) {
+	rows, err := q.db.QueryContext(ctx, listProjectsBySubareaRecursive, subareaID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListProjectsBySubareaRecursiveRow{}
+	for rows.Next() {
+		var i ListProjectsBySubareaRecursiveRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.Goal,
+			&i.Status,
+			&i.Priority,
+			&i.Progress,
+			&i.Deadline,
+			&i.Color,
+			&i.ParentID,
+			&i.SubareaID,
+			&i.Position,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.CompletedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const softDeleteProject = `-- name: SoftDeleteProject :one
 UPDATE projects
 SET deleted_at = ?

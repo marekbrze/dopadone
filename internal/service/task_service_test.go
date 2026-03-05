@@ -217,6 +217,10 @@ func (m *mockTaskQuerier) ListAllProjects(ctx context.Context) ([]db.Project, er
 	return nil, nil
 }
 
+func (m *mockTaskQuerier) ListProjectsBySubareaRecursive(ctx context.Context, subareaID sql.NullString) ([]db.ListProjectsBySubareaRecursiveRow, error) {
+	return nil, nil
+}
+
 func (m *mockTaskQuerier) GetProjectsByStatus(ctx context.Context, status string) ([]db.Project, error) {
 	return nil, nil
 }

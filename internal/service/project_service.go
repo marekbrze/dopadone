@@ -183,42 +183,19 @@ func (s *ProjectService) ListBySubareaRecursive(ctx context.Context, subareaID s
 		return []domain.Project{}, nil
 	}
 
-	allProjects, err := s.ListAll(ctx)
+	rows, err := s.repo.ListProjectsBySubareaRecursive(ctx, sql.NullString{
+		String: subareaID,
+		Valid:  true,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("list projects for subarea %s: %w", subareaID, err)
 	}
 
-	projectMap := make(map[string]domain.Project, len(allProjects))
-	for _, p := range allProjects {
-		projectMap[p.ID] = p
+	projects := make([]domain.Project, len(rows))
+	for i, row := range rows {
+		projects[i] = converter.DbProjectRowToDomain(row)
 	}
-
-	result := make([]domain.Project, 0)
-	for _, project := range allProjects {
-		if s.belongsToSubarea(project, subareaID, projectMap) {
-			result = append(result, project)
-		}
-	}
-
-	return result, nil
-}
-
-func (s *ProjectService) belongsToSubarea(
-	project domain.Project,
-	subareaID string,
-	projectMap map[string]domain.Project,
-) bool {
-	if project.SubareaID != nil && *project.SubareaID == subareaID {
-		return true
-	}
-
-	if project.ParentID != nil {
-		if parent, exists := projectMap[*project.ParentID]; exists {
-			return s.belongsToSubarea(parent, subareaID, projectMap)
-		}
-	}
-
-	return false
+	return projects, nil
 }
 
 type UpdateProjectParams struct {

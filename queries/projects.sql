@@ -64,3 +64,26 @@ DELETE FROM tasks WHERE project_id = ?;
 
 -- name: DeleteProjectsByParentID :exec
 DELETE FROM projects WHERE parent_id = ?;
+
+-- name: ListProjectsBySubareaRecursive :many
+WITH RECURSIVE project_hierarchy AS (
+    SELECT 
+        id, name, description, goal, status, priority, progress, 
+        deadline, color, parent_id, subarea_id, position, 
+        created_at, updated_at, completed_at, deleted_at
+    FROM projects
+    WHERE projects.subarea_id = ? AND deleted_at IS NULL
+    
+    UNION ALL
+    
+    SELECT 
+        p.id, p.name, p.description, p.goal, p.status, p.priority, p.progress,
+        p.deadline, p.color, p.parent_id, p.subarea_id, p.position,
+        p.created_at, p.updated_at, p.completed_at, p.deleted_at
+    FROM projects p
+    INNER JOIN project_hierarchy ph ON p.parent_id = ph.id
+    WHERE p.deleted_at IS NULL
+)
+SELECT id, name, description, goal, status, priority, progress, deadline, color, parent_id, subarea_id, position, created_at, updated_at, completed_at, deleted_at
+FROM project_hierarchy
+ORDER BY position ASC, name ASC;

@@ -25,4 +25,18 @@ var (
 			Foreground(lipgloss.Color("62"))
 
 	OverlayStyle = lipgloss.NewStyle()
+
+	CheckboxStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("241"))
+
+	CheckboxFocusedStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("62")).
+				Bold(true)
+
+	CheckboxCheckedStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("42"))
+
+	CheckboxFocusedCheckedStyle = lipgloss.NewStyle().
+					Foreground(lipgloss.Color("42")).
+					Bold(true)
 )

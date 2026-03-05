@@ -12,18 +12,19 @@ import (
 )
 
 type mockProjectQuerier struct {
-	createProjectFunc          func(ctx context.Context, arg db.CreateProjectParams) (db.Project, error)
-	getProjectByIDFunc         func(ctx context.Context, id string) (db.Project, error)
-	listProjectsBySubareaFunc  func(ctx context.Context, subareaID sql.NullString) ([]db.Project, error)
-	listProjectsByParentFunc   func(ctx context.Context, parentID sql.NullString) ([]db.Project, error)
-	listAllProjectsFunc        func(ctx context.Context) ([]db.Project, error)
-	getProjectsByStatusFunc    func(ctx context.Context, status string) ([]db.Project, error)
-	listProjectsByPriorityFunc func(ctx context.Context, priority string) ([]db.Project, error)
-	updateProjectFunc          func(ctx context.Context, arg db.UpdateProjectParams) (db.Project, error)
-	softDeleteProjectFunc      func(ctx context.Context, arg db.SoftDeleteProjectParams) (db.Project, error)
-	hardDeleteProjectFunc      func(ctx context.Context, id string) error
-	countTasksByProjectFunc    func(ctx context.Context, projectID string) (int64, error)
-	countProjectsByParentFunc  func(ctx context.Context, parentID sql.NullString) (int64, error)
+	createProjectFunc                  func(ctx context.Context, arg db.CreateProjectParams) (db.Project, error)
+	getProjectByIDFunc                 func(ctx context.Context, id string) (db.Project, error)
+	listProjectsBySubareaFunc          func(ctx context.Context, subareaID sql.NullString) ([]db.Project, error)
+	listProjectsBySubareaRecursiveFunc func(ctx context.Context, subareaID sql.NullString) ([]db.ListProjectsBySubareaRecursiveRow, error)
+	listProjectsByParentFunc           func(ctx context.Context, parentID sql.NullString) ([]db.Project, error)
+	listAllProjectsFunc                func(ctx context.Context) ([]db.Project, error)
+	getProjectsByStatusFunc            func(ctx context.Context, status string) ([]db.Project, error)
+	listProjectsByPriorityFunc         func(ctx context.Context, priority string) ([]db.Project, error)
+	updateProjectFunc                  func(ctx context.Context, arg db.UpdateProjectParams) (db.Project, error)
+	softDeleteProjectFunc              func(ctx context.Context, arg db.SoftDeleteProjectParams) (db.Project, error)
+	hardDeleteProjectFunc              func(ctx context.Context, id string) error
+	countTasksByProjectFunc            func(ctx context.Context, projectID string) (int64, error)
+	countProjectsByParentFunc          func(ctx context.Context, parentID sql.NullString) (int64, error)
 }
 
 func (m *mockProjectQuerier) CreateProject(ctx context.Context, arg db.CreateProjectParams) (db.Project, error) {
@@ -43,6 +44,13 @@ func (m *mockProjectQuerier) GetProjectByID(ctx context.Context, id string) (db.
 func (m *mockProjectQuerier) ListProjectsBySubarea(ctx context.Context, subareaID sql.NullString) ([]db.Project, error) {
 	if m.listProjectsBySubareaFunc != nil {
 		return m.listProjectsBySubareaFunc(ctx, subareaID)
+	}
+	return nil, nil
+}
+
+func (m *mockProjectQuerier) ListProjectsBySubareaRecursive(ctx context.Context, subareaID sql.NullString) ([]db.ListProjectsBySubareaRecursiveRow, error) {
+	if m.listProjectsBySubareaRecursiveFunc != nil {
+		return m.listProjectsBySubareaRecursiveFunc(ctx, subareaID)
 	}
 	return nil, nil
 }
@@ -608,7 +616,6 @@ func TestProjectService_ListByPriority(t *testing.T) {
 func TestProjectService_ListBySubareaRecursive(t *testing.T) {
 	now := time.Now()
 	subareaA := "subarea-a"
-	subareaB := "subarea-b"
 
 	tests := []struct {
 		name      string
@@ -630,8 +637,8 @@ func TestProjectService_ListBySubareaRecursive(t *testing.T) {
 			subareaID: subareaA,
 			mock: func() *mockProjectQuerier {
 				return &mockProjectQuerier{
-					listAllProjectsFunc: func(ctx context.Context) ([]db.Project, error) {
-						return []db.Project{}, nil
+					listProjectsBySubareaRecursiveFunc: func(ctx context.Context, subareaID sql.NullString) ([]db.ListProjectsBySubareaRecursiveRow, error) {
+						return []db.ListProjectsBySubareaRecursiveRow{}, nil
 					},
 				}
 			},
@@ -643,9 +650,9 @@ func TestProjectService_ListBySubareaRecursive(t *testing.T) {
 			subareaID: subareaA,
 			mock: func() *mockProjectQuerier {
 				return &mockProjectQuerier{
-					listAllProjectsFunc: func(ctx context.Context) ([]db.Project, error) {
-						return []db.Project{
-							{
+					listProjectsBySubareaRecursiveFunc: func(ctx context.Context, subareaID sql.NullString) ([]db.ListProjectsBySubareaRecursiveRow, error) {
+						return []db.ListProjectsBySubareaRecursiveRow{
+							projectToRow(db.Project{
 								ID:        "proj-root-a",
 								SubareaID: sql.NullString{String: subareaA, Valid: true},
 								Status:    "active",
@@ -653,7 +660,7 @@ func TestProjectService_ListBySubareaRecursive(t *testing.T) {
 								Progress:  0,
 								CreatedAt: now,
 								UpdatedAt: now,
-							},
+							}),
 						}, nil
 					},
 				}
@@ -666,9 +673,9 @@ func TestProjectService_ListBySubareaRecursive(t *testing.T) {
 			subareaID: subareaA,
 			mock: func() *mockProjectQuerier {
 				return &mockProjectQuerier{
-					listAllProjectsFunc: func(ctx context.Context) ([]db.Project, error) {
-						return []db.Project{
-							{
+					listProjectsBySubareaRecursiveFunc: func(ctx context.Context, subareaID sql.NullString) ([]db.ListProjectsBySubareaRecursiveRow, error) {
+						return []db.ListProjectsBySubareaRecursiveRow{
+							projectToRow(db.Project{
 								ID:        "proj-root-a",
 								SubareaID: sql.NullString{String: subareaA, Valid: true},
 								Status:    "active",
@@ -676,8 +683,8 @@ func TestProjectService_ListBySubareaRecursive(t *testing.T) {
 								Progress:  0,
 								CreatedAt: now,
 								UpdatedAt: now,
-							},
-							{
+							}),
+							projectToRow(db.Project{
 								ID:        "proj-child-a1",
 								ParentID:  sql.NullString{String: "proj-root-a", Valid: true},
 								SubareaID: sql.NullString{Valid: false},
@@ -686,7 +693,7 @@ func TestProjectService_ListBySubareaRecursive(t *testing.T) {
 								Progress:  0,
 								CreatedAt: now,
 								UpdatedAt: now,
-							},
+							}),
 						}, nil
 					},
 				}
@@ -699,9 +706,9 @@ func TestProjectService_ListBySubareaRecursive(t *testing.T) {
 			subareaID: subareaA,
 			mock: func() *mockProjectQuerier {
 				return &mockProjectQuerier{
-					listAllProjectsFunc: func(ctx context.Context) ([]db.Project, error) {
-						return []db.Project{
-							{
+					listProjectsBySubareaRecursiveFunc: func(ctx context.Context, subareaID sql.NullString) ([]db.ListProjectsBySubareaRecursiveRow, error) {
+						return []db.ListProjectsBySubareaRecursiveRow{
+							projectToRow(db.Project{
 								ID:        "proj-root-a",
 								SubareaID: sql.NullString{String: subareaA, Valid: true},
 								Status:    "active",
@@ -709,8 +716,8 @@ func TestProjectService_ListBySubareaRecursive(t *testing.T) {
 								Progress:  0,
 								CreatedAt: now,
 								UpdatedAt: now,
-							},
-							{
+							}),
+							projectToRow(db.Project{
 								ID:        "proj-child-a1",
 								ParentID:  sql.NullString{String: "proj-root-a", Valid: true},
 								Status:    "active",
@@ -718,8 +725,8 @@ func TestProjectService_ListBySubareaRecursive(t *testing.T) {
 								Progress:  0,
 								CreatedAt: now,
 								UpdatedAt: now,
-							},
-							{
+							}),
+							projectToRow(db.Project{
 								ID:        "proj-grandchild-a1",
 								ParentID:  sql.NullString{String: "proj-child-a1", Valid: true},
 								Status:    "active",
@@ -727,7 +734,7 @@ func TestProjectService_ListBySubareaRecursive(t *testing.T) {
 								Progress:  0,
 								CreatedAt: now,
 								UpdatedAt: now,
-							},
+							}),
 						}, nil
 					},
 				}
@@ -739,9 +746,9 @@ func TestProjectService_ListBySubareaRecursive(t *testing.T) {
 			subareaID: subareaA,
 			mock: func() *mockProjectQuerier {
 				return &mockProjectQuerier{
-					listAllProjectsFunc: func(ctx context.Context) ([]db.Project, error) {
-						return []db.Project{
-							{
+					listProjectsBySubareaRecursiveFunc: func(ctx context.Context, subareaID sql.NullString) ([]db.ListProjectsBySubareaRecursiveRow, error) {
+						return []db.ListProjectsBySubareaRecursiveRow{
+							projectToRow(db.Project{
 								ID:        "proj-root-a",
 								SubareaID: sql.NullString{String: subareaA, Valid: true},
 								Status:    "active",
@@ -749,16 +756,7 @@ func TestProjectService_ListBySubareaRecursive(t *testing.T) {
 								Progress:  0,
 								CreatedAt: now,
 								UpdatedAt: now,
-							},
-							{
-								ID:        "proj-root-b",
-								SubareaID: sql.NullString{String: subareaB, Valid: true},
-								Status:    "active",
-								Priority:  "high",
-								Progress:  0,
-								CreatedAt: now,
-								UpdatedAt: now,
-							},
+							}),
 						}, nil
 					},
 				}
@@ -771,9 +769,9 @@ func TestProjectService_ListBySubareaRecursive(t *testing.T) {
 			subareaID: subareaA,
 			mock: func() *mockProjectQuerier {
 				return &mockProjectQuerier{
-					listAllProjectsFunc: func(ctx context.Context) ([]db.Project, error) {
-						return []db.Project{
-							{
+					listProjectsBySubareaRecursiveFunc: func(ctx context.Context, subareaID sql.NullString) ([]db.ListProjectsBySubareaRecursiveRow, error) {
+						return []db.ListProjectsBySubareaRecursiveRow{
+							projectToRow(db.Project{
 								ID:        "proj-active",
 								SubareaID: sql.NullString{String: subareaA, Valid: true},
 								Status:    "active",
@@ -781,7 +779,7 @@ func TestProjectService_ListBySubareaRecursive(t *testing.T) {
 								Progress:  0,
 								CreatedAt: now,
 								UpdatedAt: now,
-							},
+							}),
 						}, nil
 					},
 				}
@@ -793,9 +791,9 @@ func TestProjectService_ListBySubareaRecursive(t *testing.T) {
 			subareaID: subareaA,
 			mock: func() *mockProjectQuerier {
 				return &mockProjectQuerier{
-					listAllProjectsFunc: func(ctx context.Context) ([]db.Project, error) {
-						return []db.Project{
-							{
+					listProjectsBySubareaRecursiveFunc: func(ctx context.Context, subareaID sql.NullString) ([]db.ListProjectsBySubareaRecursiveRow, error) {
+						return []db.ListProjectsBySubareaRecursiveRow{
+							projectToRow(db.Project{
 								ID:        "proj-root-a1",
 								SubareaID: sql.NullString{String: subareaA, Valid: true},
 								Status:    "active",
@@ -803,8 +801,8 @@ func TestProjectService_ListBySubareaRecursive(t *testing.T) {
 								Progress:  0,
 								CreatedAt: now,
 								UpdatedAt: now,
-							},
-							{
+							}),
+							projectToRow(db.Project{
 								ID:        "proj-root-a2",
 								SubareaID: sql.NullString{String: subareaA, Valid: true},
 								Status:    "active",
@@ -812,8 +810,8 @@ func TestProjectService_ListBySubareaRecursive(t *testing.T) {
 								Progress:  0,
 								CreatedAt: now,
 								UpdatedAt: now,
-							},
-							{
+							}),
+							projectToRow(db.Project{
 								ID:        "proj-child-a1",
 								ParentID:  sql.NullString{String: "proj-root-a1", Valid: true},
 								Status:    "active",
@@ -821,7 +819,7 @@ func TestProjectService_ListBySubareaRecursive(t *testing.T) {
 								Progress:  0,
 								CreatedAt: now,
 								UpdatedAt: now,
-							},
+							}),
 						}, nil
 					},
 				}
@@ -833,19 +831,8 @@ func TestProjectService_ListBySubareaRecursive(t *testing.T) {
 			subareaID: subareaA,
 			mock: func() *mockProjectQuerier {
 				return &mockProjectQuerier{
-					listAllProjectsFunc: func(ctx context.Context) ([]db.Project, error) {
-						return []db.Project{
-							{
-								ID:        "proj-orphan",
-								ParentID:  sql.NullString{String: "nonexistent-parent", Valid: true},
-								SubareaID: sql.NullString{Valid: false},
-								Status:    "active",
-								Priority:  "medium",
-								Progress:  0,
-								CreatedAt: now,
-								UpdatedAt: now,
-							},
-						}, nil
+					listProjectsBySubareaRecursiveFunc: func(ctx context.Context, subareaID sql.NullString) ([]db.ListProjectsBySubareaRecursiveRow, error) {
+						return []db.ListProjectsBySubareaRecursiveRow{}, nil
 					},
 				}
 			},
@@ -856,9 +843,9 @@ func TestProjectService_ListBySubareaRecursive(t *testing.T) {
 			subareaID: subareaA,
 			mock: func() *mockProjectQuerier {
 				return &mockProjectQuerier{
-					listAllProjectsFunc: func(ctx context.Context) ([]db.Project, error) {
-						return []db.Project{
-							{
+					listProjectsBySubareaRecursiveFunc: func(ctx context.Context, subareaID sql.NullString) ([]db.ListProjectsBySubareaRecursiveRow, error) {
+						return []db.ListProjectsBySubareaRecursiveRow{
+							projectToRow(db.Project{
 								ID:        "proj-root-a",
 								SubareaID: sql.NullString{String: subareaA, Valid: true},
 								ParentID:  sql.NullString{Valid: false},
@@ -867,7 +854,7 @@ func TestProjectService_ListBySubareaRecursive(t *testing.T) {
 								Progress:  0,
 								CreatedAt: now,
 								UpdatedAt: now,
-							},
+							}),
 						}, nil
 					},
 				}
@@ -879,7 +866,7 @@ func TestProjectService_ListBySubareaRecursive(t *testing.T) {
 			subareaID: subareaA,
 			mock: func() *mockProjectQuerier {
 				return &mockProjectQuerier{
-					listAllProjectsFunc: func(ctx context.Context) ([]db.Project, error) {
+					listProjectsBySubareaRecursiveFunc: func(ctx context.Context, subareaID sql.NullString) ([]db.ListProjectsBySubareaRecursiveRow, error) {
 						return nil, errors.New("database connection failed")
 					},
 				}
@@ -892,9 +879,9 @@ func TestProjectService_ListBySubareaRecursive(t *testing.T) {
 			subareaID: subareaA,
 			mock: func() *mockProjectQuerier {
 				return &mockProjectQuerier{
-					listAllProjectsFunc: func(ctx context.Context) ([]db.Project, error) {
-						return []db.Project{
-							{
+					listProjectsBySubareaRecursiveFunc: func(ctx context.Context, subareaID sql.NullString) ([]db.ListProjectsBySubareaRecursiveRow, error) {
+						return []db.ListProjectsBySubareaRecursiveRow{
+							projectToRow(db.Project{
 								ID:        "root-a",
 								SubareaID: sql.NullString{String: subareaA, Valid: true},
 								Status:    "active",
@@ -902,8 +889,8 @@ func TestProjectService_ListBySubareaRecursive(t *testing.T) {
 								Progress:  0,
 								CreatedAt: now,
 								UpdatedAt: now,
-							},
-							{
+							}),
+							projectToRow(db.Project{
 								ID:        "child-a",
 								ParentID:  sql.NullString{String: "root-a", Valid: true},
 								Status:    "active",
@@ -911,8 +898,8 @@ func TestProjectService_ListBySubareaRecursive(t *testing.T) {
 								Progress:  0,
 								CreatedAt: now,
 								UpdatedAt: now,
-							},
-							{
+							}),
+							projectToRow(db.Project{
 								ID:        "grandchild-a",
 								ParentID:  sql.NullString{String: "child-a", Valid: true},
 								Status:    "active",
@@ -920,8 +907,8 @@ func TestProjectService_ListBySubareaRecursive(t *testing.T) {
 								Progress:  0,
 								CreatedAt: now,
 								UpdatedAt: now,
-							},
-							{
+							}),
+							projectToRow(db.Project{
 								ID:        "root-a2",
 								SubareaID: sql.NullString{String: subareaA, Valid: true},
 								Status:    "active",
@@ -929,16 +916,7 @@ func TestProjectService_ListBySubareaRecursive(t *testing.T) {
 								Progress:  0,
 								CreatedAt: now,
 								UpdatedAt: now,
-							},
-							{
-								ID:        "root-b",
-								SubareaID: sql.NullString{String: subareaB, Valid: true},
-								Status:    "active",
-								Priority:  "high",
-								Progress:  0,
-								CreatedAt: now,
-								UpdatedAt: now,
-							},
+							}),
 						}, nil
 					},
 				}
@@ -988,4 +966,33 @@ func getProjectIDs(projects []domain.Project) []string {
 		ids[i] = p.ID
 	}
 	return ids
+}
+
+func projectToRow(p db.Project) db.ListProjectsBySubareaRecursiveRow {
+	return db.ListProjectsBySubareaRecursiveRow{
+		ID:          p.ID,
+		Name:        p.Name,
+		Description: p.Description,
+		Goal:        p.Goal,
+		Status:      p.Status,
+		Priority:    p.Priority,
+		Progress:    p.Progress,
+		Deadline:    p.Deadline,
+		Color:       p.Color,
+		ParentID:    p.ParentID,
+		SubareaID:   p.SubareaID,
+		Position:    p.Position,
+		CreatedAt:   p.CreatedAt,
+		UpdatedAt:   p.UpdatedAt,
+		CompletedAt: p.CompletedAt,
+		DeletedAt:   p.DeletedAt,
+	}
+}
+
+func projectsToRows(projects []db.Project) []db.ListProjectsBySubareaRecursiveRow {
+	rows := make([]db.ListProjectsBySubareaRecursiveRow, len(projects))
+	for i, p := range projects {
+		rows[i] = projectToRow(p)
+	}
+	return rows
 }

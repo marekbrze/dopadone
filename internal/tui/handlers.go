@@ -33,51 +33,52 @@ func (m *Model) toggleTreeExpand() {
 }
 
 func (m *Model) handleQuickAdd() (tea.Model, tea.Cmd) {
-	parentName, entityType, parentID, subareaID := m.getParentContext()
+	parentName, entityType, parentID, subareaID, showCheckbox := m.getParentContext()
 	if parentName == "" {
 		return m, nil
 	}
 
-	m.modal = modal.New(parentName, entityType, parentID, subareaID)
+	m.modal = modal.New(parentName, entityType, parentID, subareaID, showCheckbox)
 	m.isModalOpen = true
 
 	return m, nil
 }
 
-func (m *Model) getParentContext() (string, modal.EntityType, string, *string) {
+func (m *Model) getParentContext() (string, modal.EntityType, string, *string, bool) {
 	switch m.focus {
 	case FocusSubareas:
 		if len(m.areas) == 0 || m.selectedAreaIndex >= len(m.areas) {
-			return "", "", "", nil
+			return "", "", "", nil, false
 		}
 		area := m.areas[m.selectedAreaIndex]
-		return area.Name, modal.EntityTypeSubarea, area.ID, nil
+		return area.Name, modal.EntityTypeSubarea, area.ID, nil, false
 
 	case FocusProjects:
 		if m.selectedProjectID != "" {
 			projectName := m.getProjectNameByID(m.selectedProjectID)
-			if projectName != "" {
-				return projectName, modal.EntityTypeSubproject, m.selectedProjectID, nil
+			if projectName != "" && len(m.subareas) > 0 && m.selectedSubareaIndex < len(m.subareas) {
+				subareaID := m.subareas[m.selectedSubareaIndex].ID
+				return projectName, modal.EntityTypeProject, m.selectedProjectID, &subareaID, true
 			}
 		}
 		if len(m.subareas) == 0 || m.selectedSubareaIndex >= len(m.subareas) {
-			return "", "", "", nil
+			return "", "", "", nil, false
 		}
 		subarea := m.subareas[m.selectedSubareaIndex]
-		return subarea.Name, modal.EntityTypeProject, "", &subarea.ID
+		return subarea.Name, modal.EntityTypeProject, "", &subarea.ID, false
 
 	case FocusTasks:
 		if m.selectedProjectID == "" {
-			return "", "", "", nil
+			return "", "", "", nil, false
 		}
 		projectName := m.getProjectNameByID(m.selectedProjectID)
 		if projectName == "" {
-			return "", "", "", nil
+			return "", "", "", nil, false
 		}
-		return projectName, modal.EntityTypeTask, m.selectedProjectID, nil
+		return projectName, modal.EntityTypeTask, m.selectedProjectID, nil, false
 	}
 
-	return "", "", "", nil
+	return "", "", "", nil, false
 }
 
 func (m *Model) getProjectNameByID(id string) string {
@@ -97,6 +98,9 @@ func (m *Model) handleModalSubmit(msg modal.SubmitMsg) (tea.Model, tea.Cmd) {
 		return m, CreateSubareaCmd(m.subareaSvc, msg.Title, msg.ParentID)
 
 	case modal.EntityTypeProject:
+		if msg.AsSubproject {
+			return m, CreateProjectCmd(m.projectSvc, msg.Title, &msg.ParentID, nil)
+		}
 		return m, CreateProjectCmd(m.projectSvc, msg.Title, nil, msg.SubareaID)
 
 	case modal.EntityTypeSubproject:

@@ -2,6 +2,7 @@ package converter
 
 import (
 	"database/sql"
+	"time"
 
 	"github.com/example/projectdb/internal/db"
 	"github.com/example/projectdb/internal/domain"
@@ -164,5 +165,57 @@ func DbTaskToDomain(dbTask db.Task) domain.Task {
 		CreatedAt:         dbTask.CreatedAt,
 		UpdatedAt:         dbTask.UpdatedAt,
 		DeletedAt:         dbTask.DeletedAt,
+	}
+}
+
+func DbProjectRowToDomain(row db.ListProjectsBySubareaRecursiveRow) domain.Project {
+	var parentID *string
+	if row.ParentID.Valid {
+		parentID = &row.ParentID.String
+	}
+
+	var subareaID *string
+	if row.SubareaID.Valid {
+		subareaID = &row.SubareaID.String
+	}
+
+	status, _ := domain.ParseProjectStatus(row.Status)
+	priority, _ := domain.ParsePriority(row.Priority)
+	progress, _ := domain.ParseProgress(int(row.Progress))
+	color, _ := domain.ParseColor(row.Color.String)
+
+	var deadline *time.Time
+	if t, ok := row.Deadline.(*time.Time); ok {
+		deadline = t
+	}
+
+	var completedAt *time.Time
+	if t, ok := row.CompletedAt.(*time.Time); ok {
+		completedAt = t
+	}
+
+	var deletedAt *time.Time
+	if t, ok := row.DeletedAt.(*time.Time); ok {
+		deletedAt = t
+	}
+
+	return domain.Project{
+		ID:          row.ID,
+		Name:        row.Name,
+		Description: nullStringToString(row.Description),
+		Goal:        nullStringToString(row.Goal),
+		Status:      status,
+		Priority:    priority,
+		Progress:    progress,
+		StartDate:   nil,
+		Deadline:    deadline,
+		Color:       color,
+		ParentID:    parentID,
+		SubareaID:   subareaID,
+		Position:    int(row.Position),
+		CreatedAt:   row.CreatedAt,
+		UpdatedAt:   row.UpdatedAt,
+		CompletedAt: completedAt,
+		DeletedAt:   deletedAt,
 	}
 }
