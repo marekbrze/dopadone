@@ -130,7 +130,7 @@ func (s *SubareaService) GetStats(ctx context.Context, id string) (*SubareaStats
 	}, nil
 }
 
-func (s *SubareaService) GetEffectiveColor(subarea *domain.Subarea, parentArea *domain.Area) domain.Color {
+func (s *SubareaService) GetEffectiveColor(ctx context.Context, subarea *domain.Subarea, parentArea *domain.Area) domain.Color {
 	return subarea.GetEffectiveColor(parentArea)
 }
 

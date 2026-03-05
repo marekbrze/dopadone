@@ -15,6 +15,7 @@ var (
 	ErrProjectNotFound    = errors.New("project not found")
 	ErrCircularReference  = errors.New("circular reference detected: project cannot be its own ancestor")
 	ErrProjectHasChildren = errors.New("project has non-deleted children and cannot be hard deleted")
+	ErrNotImplemented     = errors.New("method not yet implemented")
 )
 
 type ProjectStats struct {
@@ -188,6 +189,10 @@ func (s *ProjectService) ListByPriority(ctx context.Context, priority domain.Pri
 		projects[i] = converter.DbProjectToDomain(row)
 	}
 	return projects, nil
+}
+
+func (s *ProjectService) ListBySubareaRecursive(ctx context.Context, subareaID string) ([]domain.Project, error) {
+	return nil, ErrNotImplemented
 }
 
 type UpdateProjectParams struct {

@@ -488,7 +488,7 @@ func TestSubareaService_GetEffectiveColor(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			svc := NewSubareaService(&mockSubareaQuerier{})
-			got := svc.GetEffectiveColor(tt.subarea, tt.parentArea)
+			got := svc.GetEffectiveColor(context.Background(), tt.subarea, tt.parentArea)
 			if got != tt.wantColor {
 				t.Errorf("GetEffectiveColor() = %v, want %v", got, tt.wantColor)
 			}

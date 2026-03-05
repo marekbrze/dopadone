@@ -3,6 +3,7 @@ id: doc-5
 title: Service Layer Architecture
 type: technical
 created_date: '2026-03-05'
+updated_date: '2026-03-05'
 ---
 
 # Service Layer Architecture
@@ -145,6 +146,98 @@ func (s *AreaService) Update(ctx context.Context, id, name string, color domain.
 func (s *AreaService) SoftDelete(ctx context.Context, id string) error
 func (s *AreaService) HardDelete(ctx context.Context, id string) error
 ```
+
+### Service Interfaces
+
+All services implement corresponding interfaces defined in `internal/service/interfaces.go`. These interfaces enable:
+
+- **Dependency Injection**: Services can be injected via interfaces rather than concrete types
+- **Testability**: Easy mocking in unit tests without requiring database connections
+- **Flexibility**: Consumers can define narrower interfaces if needed
+- **Compile-time Safety**: Interface satisfaction is verified at compile time
+
+#### Interface Definitions
+
+```go
+type AreaServiceInterface interface {
+    List(ctx context.Context) ([]domain.Area, error)
+    GetByID(ctx context.Context, id string) (*domain.Area, error)
+    Create(ctx context.Context, name string, color domain.Color) (*domain.Area, error)
+    Update(ctx context.Context, id string, name string, color domain.Color) (*domain.Area, error)
+    UpdateSortOrder(ctx context.Context, id string, sortOrder int) error
+    ReorderAll(ctx context.Context, areaIDs []string) error
+    SoftDelete(ctx context.Context, id string) error
+    HardDelete(ctx context.Context, id string) error
+    GetStats(ctx context.Context, id string) (*AreaStats, error)
+}
+
+type SubareaServiceInterface interface {
+    Create(ctx context.Context, name string, areaID string, color domain.Color) (*domain.Subarea, error)
+    GetByID(ctx context.Context, id string) (*domain.Subarea, error)
+    ListByArea(ctx context.Context, areaID string) ([]domain.Subarea, error)
+    Update(ctx context.Context, id string, name string, areaID string, color domain.Color) (*domain.Subarea, error)
+    SoftDelete(ctx context.Context, id string) error
+    HardDelete(ctx context.Context, id string) error
+    GetStats(ctx context.Context, id string) (*SubareaStats, error)
+    GetEffectiveColor(ctx context.Context, subarea *domain.Subarea, parentArea *domain.Area) domain.Color
+    ListAll(ctx context.Context) ([]domain.Subarea, error)
+}
+
+type ProjectServiceInterface interface {
+    Create(ctx context.Context, params CreateProjectParams) (*domain.Project, error)
+    GetByID(ctx context.Context, id string) (*domain.Project, error)
+    ListBySubarea(ctx context.Context, subareaID string) ([]domain.Project, error)
+    ListByParent(ctx context.Context, parentID string) ([]domain.Project, error)
+    ListAll(ctx context.Context) ([]domain.Project, error)
+    ListByStatus(ctx context.Context, status domain.ProjectStatus) ([]domain.Project, error)
+    ListByPriority(ctx context.Context, priority domain.Priority) ([]domain.Project, error)
+    ListBySubareaRecursive(ctx context.Context, subareaID string) ([]domain.Project, error)
+    Update(ctx context.Context, params UpdateProjectParams) (*domain.Project, error)
+    SoftDelete(ctx context.Context, id string) error
+    HardDelete(ctx context.Context, id string) error
+    GetStats(ctx context.Context, id string) (*ProjectStats, error)
+    ValidateParentHierarchy(ctx context.Context, parentID string, projectID string) error
+}
+
+type TaskServiceInterface interface {
+    Create(ctx context.Context, params CreateTaskParams) (*domain.Task, error)
+    GetByID(ctx context.Context, id string) (*domain.Task, error)
+    ListByProject(ctx context.Context, projectID string) ([]domain.Task, error)
+    ListByStatus(ctx context.Context, status domain.TaskStatus) ([]domain.Task, error)
+    ListByPriority(ctx context.Context, priority domain.TaskPriority) ([]domain.Task, error)
+    ListNext(ctx context.Context) ([]domain.Task, error)
+    ListAll(ctx context.Context) ([]domain.Task, error)
+    Update(ctx context.Context, params UpdateTaskParams) (*domain.Task, error)
+    SoftDelete(ctx context.Context, id string) error
+    HardDelete(ctx context.Context, id string) error
+    SetStatus(ctx context.Context, id string, status domain.TaskStatus) (*domain.Task, error)
+    MarkCompleted(ctx context.Context, id string) (*domain.Task, error)
+    SetPriority(ctx context.Context, id string, priority domain.TaskPriority) (*domain.Task, error)
+    ToggleIsNext(ctx context.Context, id string) (*domain.Task, error)
+}
+```
+
+#### Design Principles
+
+1. **Provider Pattern**: Interfaces are defined alongside implementations (not in consumer packages)
+   - Keeps interfaces close to implementations for maintainability
+   - Simplifies dependency graph
+   - Allows consumers to define narrower interfaces if needed
+
+2. **Context-First**: All methods accept `context.Context` as first parameter
+   - Follows Go best practices
+   - Enables future cancellation and timeout support
+   - Consistent API across all services
+
+3. **Compile-Time Checks**: Interface satisfaction verified at compile time
+   ```go
+   var (
+       _ AreaServiceInterface    = (*AreaService)(nil)
+       _ SubareaServiceInterface = (*SubareaService)(nil)
+       _ ProjectServiceInterface = (*ProjectService)(nil)
+       _ TaskServiceInterface    = (*TaskService)(nil)
+   )
+   ```
 
 ### Service Container
 
@@ -331,11 +424,13 @@ func runProjectsCreate(cmd *cobra.Command, args []string) {
 
 1. **Separation of Concerns**: Business logic isolated from presentation layer
 2. **Type Safety**: Domain types prevent invalid states
-3. **Testability**: Services can be mocked/stubbed for testing
+3. **Testability**: Service interfaces enable easy mocking/stubbing for tests without database dependencies
 4. **Reusability**: Same service layer can be used by CLI, TUI, and future REST API
 5. **Validation**: Centralized business validation rules
 6. **Error Handling**: Domain-specific errors with proper context
 7. **Maintainability**: Clear boundaries between layers
+8. **Dependency Injection**: Interfaces enable proper DI patterns and flexible component wiring
+9. **Compile-Time Safety**: Interface satisfaction verified at compile time catches errors early
 
 ## File Structure
 
@@ -348,11 +443,12 @@ internal/
     area.go       # Area domain types and constants
   
   service/
-    project.go    # ProjectService
-    task.go       # TaskService
-    subarea.go    # SubareaService
-    area.go       # AreaService
-    errors.go     # Domain errors
+    interfaces.go    # Service interfaces (AreaServiceInterface, etc.)
+    project.go       # ProjectService implementation
+    task.go          # TaskService implementation
+    subarea.go       # SubareaService implementation
+    area.go          # AreaService implementation
+    errors.go        # Domain errors
   
   converter/
     project.go    # DB → Domain converters
@@ -370,7 +466,38 @@ cmd/projectdb/
 
 ## Testing Strategy
 
-### Unit Tests
+### Unit Tests with Service Interfaces
+
+Service interfaces enable easy mocking for unit tests. You can create mock implementations without requiring database connections:
+
+```go
+type MockAreaService struct {
+    mock.Mock
+}
+
+func (m *MockAreaService) Create(ctx context.Context, name string, color domain.Color) (*domain.Area, error) {
+    args := m.Called(ctx, name, color)
+    if args.Get(0) == nil {
+        return nil, args.Error(1)
+    }
+    return args.Get(0).(*domain.Area), args.Error(1)
+}
+
+// ... implement other interface methods
+
+func TestTUIWithMockService(t *testing.T) {
+    mockService := new(MockAreaService)
+    mockService.On("List", mock.Anything).Return([]domain.Area{
+        {ID: "1", Name: "Test Area", Color: "#FF5733"},
+    }, nil)
+    
+    // Use mockService in TUI components without database
+    model := NewModel(mockService)
+    // ... test model behavior
+}
+```
+
+### Service Layer Tests with Mock Querier
 
 Services can be tested in isolation with mock Querier:
 
