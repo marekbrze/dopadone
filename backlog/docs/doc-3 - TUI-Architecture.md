@@ -55,13 +55,15 @@ internal/tui/
 ├── model.go            # FocusColumn enum and state definitions (AreaState)
 ├── tui.go              # Exported New() function for program creation
 ├── messages.go         # Message types for async data loading
-├── commands.go         # Loader commands for database operations
-├── converters.go       # DB types to Domain types conversion
+├── commands.go         # Loader commands using service layer interfaces
+                         # - LoadAreasCmd: AreaServiceInterface.List()
+                         # - LoadSubareasCmd: SubareaServiceInterface.ListByArea()
+                         # - LoadProjectsCmd: ProjectServiceInterface.ListBySubareaRecursive()
+                         # - LoadTasksCmd: TaskServiceInterface.ListByProject()
 ├── constants.go        # Named constants for TUI (no magic numbers)
 ├── app_test.go         # Unit tests for app functionality
 ├── messages_test.go    # Unit tests for message types
-├── commands_test.go    # Unit tests for loader commands
-├── converters_test.go  # Unit tests for type converters
+├── commands_test.go    # Unit tests for loader commands with mocks
 ├── navigation_test.go  # Unit tests for navigation (Task-18)
 ├── state_test.go       # Unit tests for state persistence (Task-18)
 ├── integration_test.go # Integration tests for navigation flow (Task-18)
@@ -84,6 +86,12 @@ internal/tui/
 
 ```go
 type Model struct {
+    // Service layer interfaces (Task-38)
+    areaSvc     service.AreaServiceInterface
+    subareaSvc  service.SubareaServiceInterface
+    projectSvc  service.ProjectServiceInterface
+    taskSvc     service.TaskServiceInterface
+    
     focus       FocusColumn      // Current focused column
     width       int              // Terminal width
     height      int              // Terminal height
@@ -91,20 +99,17 @@ type Model struct {
     tabs        []views.Tab      // Area tabs (placeholder)
     selectedTab int              // Selected area index
     
-    // Data layer (Task-21)
-    repo        db.Querier       // Repository interface for data access
-    
     // Loaded data
     areas       []domain.Area
     subareas    []domain.Subarea
     projects    []domain.Project
     tasks       []domain.Task
     
-    // Selection tracking
-    selectedAreaID    sql.NullString
-    selectedSubareaID sql.NullString
-    selectedProjectID sql.NullString
-    selectedTaskID    sql.NullString
+    // Selection tracking (simplified to int indices)
+    selectedAreaIndex    int
+    selectedSubareaIndex int
+    selectedProjectIndex int
+    selectedTaskIndex    int
     
     // Loading states
     isLoadingAreas    bool
@@ -360,44 +365,78 @@ LoadTasksCmd() ──► Database Query
 Update() ◄────────────────────┘
 ```
 
-### Repository Injection Pattern
+### Service Injection Pattern
 
 ```go
-func InitialModel(repo db.Querier) Model {
+func InitialModel(
+    areaSvc service.AreaServiceInterface,
+    subareaSvc service.SubareaServiceInterface,
+    projectSvc service.ProjectServiceInterface,
+    taskSvc service.TaskServiceInterface,
+) Model {
     return Model{
-        repo:    repo,
-        spinner: spinner.New(spinner.WithSpinner(spinner.Dot)),
+        areaSvc:    areaSvc,
+        subareaSvc: subareaSvc,
+        projectSvc: projectSvc,
+        taskSvc:    taskSvc,
+        spinner:    spinner.New(spinner.WithSpinner(spinner.Dot)),
         // ... other fields
     }
 }
 ```
 
 Clean architecture boundaries:
-- TUI depends on repository interface (db.Querier), not concrete implementation
+- TUI depends on service interfaces, not concrete implementations or database layer
 - Domain entities have no framework dependencies
 - Dependency Inversion Principle followed
+- Services encapsulate business logic and return domain types directly
 
 ### Loader Commands
 
-All loader functions follow the same pattern and are under 20 lines:
+All loader functions use service layer interfaces instead of direct database access:
 
 ```go
-func LoadAreasCmd(repo db.Querier) tea.Cmd {
+func LoadAreasCmd(areaSvc service.AreaServiceInterface) tea.Cmd {
     return func() tea.Msg {
-        areas, err := repo.ListAreas(context.Background())
+        areas, err := areaSvc.List(context.Background())
         if err != nil {
             return AreasLoadedMsg{Err: err}
         }
-        return AreasLoadedMsg{Areas: converters.DbAreasToDomain(areas)}
+        return AreasLoadedMsg{Areas: areas}
+    }
+}
+
+// LoadProjectsCmd uses hierarchical retrieval for nested projects
+func LoadProjectsCmd(projectSvc service.ProjectServiceInterface, subareaID *string) tea.Cmd {
+    return func() tea.Msg {
+        var projects []domain.Project
+        var err error
+        
+        if subareaID != nil {
+            projects, err = projectSvc.ListBySubareaRecursive(context.Background(), *subareaID)
+        } else {
+            projects, err = projectSvc.ListAll(context.Background())
+        }
+        
+        if err != nil {
+            return ProjectsLoadedMsg{Err: err}
+        }
+        return ProjectsLoadedMsg{Projects: projects}
     }
 }
 ```
 
-Similar pattern for: LoadSubareasCmd, LoadProjectsCmd, LoadTasksCmd
+Similar pattern for: LoadSubareasCmd, LoadTasksCmd
+
+**Benefits**:
+- Services return domain types directly (no converter layer needed in commands)
+- Consistent error handling through service layer
+- Easy mocking for tests with service interfaces
+- Business logic centralized in services
 
 ### Type Converters
 
-Separate conversion layer between DB types and domain types:
+Type converters exist in `internal/converter/` and are used by the service layer to convert DB types to domain types:
 
 ```go
 func DbAreaToDomain(dbArea db.Area) domain.Area
@@ -406,7 +445,7 @@ func DbProjectToDomain(dbProject db.Project) domain.Project
 func DbTaskToDomain(dbTask db.Task) domain.Task
 ```
 
-This ensures domain types remain pure and decoupled from database schema.
+**TUI commands don't need converters** because services return domain types directly. This simplifies the TUI layer and keeps it focused on presentation logic.
 
 ### Loading State Management
 
@@ -669,8 +708,10 @@ Parent task split into 6 subtasks, all completed:
 - Task-18 (14C Nav): In-column nav, area switching, state persistence
 - Task-19 (14D Modal): Quick-add modal with validation
 - Task-17 (14E Polish): Help modal, toasts, footer, docs
+- Task-38 (29D): Refactored load commands to use service layer interfaces
 
-**Total**: 62 acceptance criteria across all tasks, 127 TUI tests passing
+**Total**: 67 acceptance criteria across all tasks, 133 TUI tests passing
+  - Comprehensive test coverage with mocked services
 
 ### ✅ Completed: Core TUI Framework (Task-15)
 - 3-column layout with focus-aware borders
@@ -690,8 +731,8 @@ Parent task split into 6 subtasks, all completed:
 - Cascade loading: Area → Subarea → Projects → Tasks
 - Loading spinner with bubbles/spinner component
 - Empty state messages with keyboard hints
-- Repository injection pattern
-- Type converters for DB → Domain
+- Service injection pattern (updated in Task-38)
+- Type converters for DB → Domain (in service layer)
 - 85.5% test coverage
 
 ### ✅ Completed: Navigation & State Persistence (Task-18)
@@ -728,6 +769,17 @@ Parent task split into 6 subtasks, all completed:
 - README updated with TUI command usage
 - Integration tests for key user flows
 - All 62 ACs from tasks 15, 17-21 verified manually
+
+### ✅ Completed: Refactor Load Commands to Use Services (Task-38)
+- All 4 load commands refactored to use service layer interfaces
+- LoadAreasCmd uses AreaServiceInterface.List()
+- LoadSubareasCmd uses SubareaServiceInterface.ListByArea()
+- LoadProjectsCmd uses ProjectServiceInterface.ListBySubareaRecursive() for hierarchical loading
+- LoadTasksCmd uses TaskServiceInterface.ListByProject()
+- Model structure updated to use service interfaces instead of db.Querier
+- Comprehensive test coverage with mocked services (table-driven tests)
+- Removed converter layer from TUI (services return domain types directly)
+- Benefits: Better separation of concerns, easier mocking, centralized business logic
 
 ## Design Decisions
 
