@@ -119,7 +119,7 @@ type Area struct {
     Color     sql.NullString `json:"color"`
     CreatedAt time.Time      `json:"created_at"`
     UpdatedAt time.Time      `json:"updated_at"`
-    DeletedAt interface{}    `json:"deleted_at"`
+    DeletedAt *time.Time     `json:"deleted_at"`
 }
 ```
 
@@ -133,7 +133,7 @@ type Subarea struct {
     Color     sql.NullString `json:"color"`
     CreatedAt time.Time      `json:"created_at"`
     UpdatedAt time.Time      `json:"updated_at"`
-    DeletedAt interface{}    `json:"deleted_at"`
+    DeletedAt *time.Time     `json:"deleted_at"`
 }
 ```
 
@@ -148,15 +148,15 @@ type Project struct {
     Status      string         `json:"status"`
     Priority    string         `json:"priority"`
     Progress    int64          `json:"progress"`
-    Deadline    interface{}    `json:"deadline"`
+    Deadline    *time.Time     `json:"deadline"`
     Color       sql.NullString `json:"color"`
     ParentID    sql.NullString `json:"parent_id"`
     SubareaID   sql.NullString `json:"subarea_id"`
     Position    int64          `json:"position"`
     CreatedAt   time.Time      `json:"created_at"`
     UpdatedAt   time.Time      `json:"updated_at"`
-    CompletedAt interface{}    `json:"completed_at"`
-    DeletedAt   interface{}    `json:"deleted_at"`
+    CompletedAt *time.Time     `json:"completed_at"`
+    DeletedAt   *time.Time     `json:"deleted_at"`
 }
 ```
 
