@@ -154,15 +154,18 @@ func runSubareasCreate(cmd *cobra.Command, args []string) {
 		cli.ExitWithError(cli.WrapError(err, "failed to create subarea"))
 	}
 
-	if outputFormat == "json" {
-		formatter := output.NewJSONFormatter()
-		if err := formatter.PrintObject(domainSubareaToMap(*subarea)); err != nil {
-			cli.ExitWithError(cli.WrapError(err, "failed to output subarea"))
-		}
-		return
+	formatter, err := GetFormatter()
+	if err != nil {
+		cli.ExitWithError(err)
 	}
 
-	output.PrintSuccess(fmt.Sprintf("Subarea created with ID: %s", subarea.ID))
+	if jsonFormatter, ok := formatter.(*output.JSONFormatter); ok {
+		if err := jsonFormatter.PrintObject(domainSubareaToMap(*subarea)); err != nil {
+			cli.ExitWithError(cli.WrapError(err, "failed to output subarea"))
+		}
+	} else {
+		output.PrintSuccess(fmt.Sprintf("Subarea created with ID: %s", subarea.ID))
+	}
 }
 
 func runSubareasList(cmd *cobra.Command, args []string) {

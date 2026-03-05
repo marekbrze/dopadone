@@ -244,19 +244,22 @@ func runTasksCreate(cmd *cobra.Command, args []string) {
 		cli.ExitWithError(cli.WrapError(err, "failed to create task"))
 	}
 
-	if outputFormat == "json" {
-		formatter := output.NewJSONFormatter()
-		if err := formatter.PrintObject(domainTaskToMap(*task)); err != nil {
-			cli.ExitWithError(cli.WrapError(err, "failed to output task"))
-		}
-		return
+	formatter, err := GetFormatter()
+	if err != nil {
+		cli.ExitWithError(err)
 	}
 
-	nextFlag := ""
-	if task.IsNext {
-		nextFlag = " [NEXT]"
+	if jsonFormatter, ok := formatter.(*output.JSONFormatter); ok {
+		if err := jsonFormatter.PrintObject(domainTaskToMap(*task)); err != nil {
+			cli.ExitWithError(cli.WrapError(err, "failed to output task"))
+		}
+	} else {
+		nextFlag := ""
+		if task.IsNext {
+			nextFlag = " [NEXT]"
+		}
+		output.PrintSuccess(fmt.Sprintf("Task created with ID: %s%s", task.ID, nextFlag))
 	}
-	output.PrintSuccess(fmt.Sprintf("Task created with ID: %s%s", task.ID, nextFlag))
 }
 
 func runTasksList(cmd *cobra.Command, args []string) {

@@ -1,11 +1,11 @@
 ---
 id: TASK-23
 title: Fix CLI create commands to support JSON output
-status: In Progress
+status: Done
 assignee:
   - '@opencode'
 created_date: '2026-03-04 10:12'
-updated_date: '2026-03-04 10:21'
+updated_date: '2026-03-05 14:43'
 labels:
   - backend
   - cli

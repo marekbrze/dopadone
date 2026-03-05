@@ -265,15 +265,18 @@ func runProjectsCreate(cmd *cobra.Command, args []string) {
 		cli.ExitWithError(cli.WrapError(err, "failed to create project"))
 	}
 
-	if outputFormat == "json" {
-		formatter := output.NewJSONFormatter()
-		if err := formatter.PrintObject(domainProjectToMap(*project)); err != nil {
-			cli.ExitWithError(cli.WrapError(err, "failed to output project"))
-		}
-		return
+	formatter, err := GetFormatter()
+	if err != nil {
+		cli.ExitWithError(err)
 	}
 
-	output.PrintSuccess(fmt.Sprintf("Project created with ID: %s", project.ID))
+	if jsonFormatter, ok := formatter.(*output.JSONFormatter); ok {
+		if err := jsonFormatter.PrintObject(domainProjectToMap(*project)); err != nil {
+			cli.ExitWithError(cli.WrapError(err, "failed to output project"))
+		}
+	} else {
+		output.PrintSuccess(fmt.Sprintf("Project created with ID: %s", project.ID))
+	}
 }
 
 func runProjectsList(cmd *cobra.Command, args []string) {

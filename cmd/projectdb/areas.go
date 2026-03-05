@@ -142,7 +142,18 @@ func runAreasCreate(cmd *cobra.Command, args []string) {
 		cli.ExitWithError(cli.WrapError(err, "failed to create area"))
 	}
 
-	output.PrintSuccess(fmt.Sprintf("Area created with ID: %s", area.ID))
+	formatter, err := GetFormatter()
+	if err != nil {
+		cli.ExitWithError(err)
+	}
+
+	if jsonFormatter, ok := formatter.(*output.JSONFormatter); ok {
+		if err := jsonFormatter.PrintObject(domainAreaToMap(*area)); err != nil {
+			cli.ExitWithError(cli.WrapError(err, "failed to output area"))
+		}
+	} else {
+		output.PrintSuccess(fmt.Sprintf("Area created with ID: %s", area.ID))
+	}
 }
 
 func runAreasList(cmd *cobra.Command, args []string) {
