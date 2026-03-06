@@ -208,6 +208,53 @@ Top-level navigation showing all areas as clickable tabs.
 - Project tree with expand/collapse
 - Synchronized selection state
 
+#### Proportional Column Layout
+
+The three-column browser uses weight-based proportional widths to optimize screen real estate:
+
+**Column Widths**:
+- **Subareas**: 25% of available width (minimum 20 characters)
+- **Projects**: 25% of available width (minimum 20 characters)
+- **Tasks**: 50% of available width (minimum 40 characters)
+
+**Layout Algorithm**:
+
+The layout calculation follows these steps:
+
+1. **Calculate available width**: `totalWidth - gaps` (6 characters for 3 gaps between columns)
+2. **Apply weight distribution**: Subareas=1, Projects=1, Tasks=2 (25/25/50 ratio)
+3. **Enforce minimum widths**: Each column respects its minimum character constraint
+4. **Handle narrow terminals**: Below 80 columns, columns may overlap (stacked layout planned for future)
+
+**Example Width Calculations**:
+
+| Terminal Width | Subareas | Projects | Tasks |
+|---------------|----------|----------|-------|
+| 80 cols | 20 chars | 20 chars | 40 chars |
+| 120 cols | 28 chars | 28 chars | 58 chars |
+| 160 cols | 38 chars | 38 chars | 78 chars |
+
+**Responsive Behavior**:
+
+- Column widths recalculate instantly on terminal resize
+- No animation or transition delays
+- Minimum width constraints prevent unusable narrow columns
+- Text truncation ensures clean borders at all sizes
+
+#### Text Truncation
+
+To prevent text wrapping in bordered panels (BubbleTea Golden Rule #2), all text is automatically truncated:
+
+- **Maximum text width**: `columnWidth - 4` (accounting for 2 border chars + 2 padding chars)
+- **Truncation style**: Ellipsis (…) appended to truncated text
+- **Example**: "Very Long Project Name" → "Very Long Proje…"
+- **Applies to**: Column titles, item names, and all content lines
+
+This ensures:
+- No horizontal scrolling needed
+- Clean, aligned borders
+- Readable content at all terminal sizes
+
 ### 3. Project Tree Navigation
 
 Hierarchical display of projects and sub-projects with expand/collapse functionality.
