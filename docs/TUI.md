@@ -26,6 +26,10 @@ internal/tui/
 ├── help/               # Help modal component
 │   ├── help.go         # Help modal logic
 │   └── styles.go       # Lipgloss styling
+├── spacemenu/          # Command menu component (LazyVim-style which-key)
+│   ├── spacemenu.go    # Command menu logic
+│   ├── types.go        # Menu state and action types
+│   └── styles.go       # Lipgloss styling
 ├── toast/              # Toast notification component
 │   ├── toast.go        # Toast logic with auto-dismiss
 │   └── styles.go       # Error/success styling
@@ -513,6 +517,7 @@ Persistent footer showing common keyboard shortcuts.
 
 | Key | Action | Description |
 |-----|--------|-------------|
+| `Space` | Command Menu | Open command menu when no modal is open (LazyVim-style which-key) |
 | `?` | Help | Show help modal with all shortcuts |
 | `q`, `Ctrl+C` | Quit | Exit the TUI |
 | `Escape` | Cancel/Close | Close modal or cancel operation |
@@ -559,6 +564,8 @@ type Model struct {
     isModalOpen   bool
     areaModal     *areamodal.Modal
     isAreaModalOpen bool
+    spaceMenu     *spacemenu.SpaceMenu
+    isSpaceMenuOpen bool
     helpModal     *help.HelpModal
     isHelpOpen    bool
     

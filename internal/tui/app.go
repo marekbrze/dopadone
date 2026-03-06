@@ -11,6 +11,7 @@ import (
 	"github.com/example/dopadone/internal/tui/areamodal"
 	"github.com/example/dopadone/internal/tui/help"
 	"github.com/example/dopadone/internal/tui/modal"
+	"github.com/example/dopadone/internal/tui/spacemenu"
 	"github.com/example/dopadone/internal/tui/theme"
 	"github.com/example/dopadone/internal/tui/toast"
 	"github.com/example/dopadone/internal/tui/tree"
@@ -59,6 +60,9 @@ type Model struct {
 	helpModal  *help.HelpModal
 	isHelpOpen bool
 
+	spaceMenu       *spacemenu.SpaceMenu
+	isSpaceMenuOpen bool
+
 	toasts []toast.Toast
 }
 
@@ -106,6 +110,9 @@ func InitialModel(
 
 		helpModal:  nil,
 		isHelpOpen: false,
+
+		spaceMenu:       nil,
+		isSpaceMenuOpen: false,
 
 		areaModal:       nil,
 		isAreaModalOpen: false,
@@ -271,6 +278,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.helpModal = nil
 		return m, nil
 
+	case spacemenu.CloseMsg:
+		m.isSpaceMenuOpen = false
+		m.spaceMenu = nil
+		return m, nil
+
+	case spacemenu.ActionMsg:
+		return m.handleSpaceMenuAction(msg)
+
 	case tea.KeyMsg:
 		if m.isHelpOpen {
 			switch msg.String() {
@@ -302,9 +317,29 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		}
 
+		if m.isSpaceMenuOpen && m.spaceMenu != nil {
+			switch msg.String() {
+			case "q", "ctrl+c":
+				if m.spaceMenu != nil && m.spaceMenu.State() == spacemenu.StateMain {
+					return m, tea.Quit
+				}
+			}
+			var cmd tea.Cmd
+			m.spaceMenu, cmd = m.spaceMenu.Update(msg)
+			return m, cmd
+		}
+
 		switch msg.String() {
 		case "q", "ctrl+c":
 			return m, tea.Quit
+		case " ":
+			if !m.isModalOpen && !m.isAreaModalOpen && !m.isHelpOpen {
+				m.isSpaceMenuOpen = true
+				m.spaceMenu = spacemenu.New()
+				m.spaceMenu, _ = m.spaceMenu.Update(tea.WindowSizeMsg{Width: m.width, Height: m.height})
+				return m, nil
+			}
+			m.handleEnterOrSpace()
 		case "h", "left":
 			m.focus = m.focus.Prev()
 		case "l", "right":
@@ -323,7 +358,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, m.SwitchToPreviousArea()
 		case "]":
 			return m, m.SwitchToNextArea()
-		case "enter", " ":
+		case "enter":
 			m.handleEnterOrSpace()
 		case "x":
 			if m.focus == FocusTasks && len(m.tasks) > 0 {
@@ -346,6 +381,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		if m.areaModal != nil {
 			m.areaModal, _ = m.areaModal.Update(msg)
+		}
+		if m.spaceMenu != nil {
+			m.spaceMenu, _ = m.spaceMenu.Update(msg)
 		}
 	}
 
@@ -371,6 +409,22 @@ func (m *Model) toggleTaskCompletion() tea.Cmd {
 	task.Status = newStatus
 
 	return ToggleTaskStatusCmd(m.taskSvc, task.ID, newStatus, originalStatus, m.selectedTaskIndex)
+}
+
+func (m Model) handleSpaceMenuAction(msg spacemenu.ActionMsg) (tea.Model, tea.Cmd) {
+	m.isSpaceMenuOpen = false
+	m.spaceMenu = nil
+
+	switch msg.Action {
+	case spacemenu.ActionQuit:
+		return m, tea.Quit
+	case spacemenu.ActionConfig:
+		return m.handleOpenAreaModal()
+	case spacemenu.ActionCreateArea, spacemenu.ActionEditArea, spacemenu.ActionDeleteArea:
+		return m.handleOpenAreaModal()
+	}
+
+	return m, nil
 }
 
 func (m Model) View() string {
@@ -442,6 +496,16 @@ func (m Model) View() string {
 			lipgloss.Center,
 			lipgloss.Center,
 			overlay(baseView, m.areaModal.View(), m.width, m.height),
+		)
+	}
+
+	if m.isSpaceMenuOpen && m.spaceMenu != nil {
+		return lipgloss.Place(
+			m.width,
+			m.height,
+			lipgloss.Center,
+			lipgloss.Center,
+			overlay(baseView, m.spaceMenu.View(), m.width, m.height),
 		)
 	}
 

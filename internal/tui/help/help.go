@@ -139,6 +139,7 @@ func (h *HelpModal) getCategories() []Category {
 		{
 			Name: "General",
 			Shortcuts: []Shortcut{
+				{Key: "Space", Description: "Open command menu"},
 				{Key: "?", Description: "Show this help"},
 				{Key: "q, Ctrl+C", Description: "Quit"},
 			},
