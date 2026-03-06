@@ -241,6 +241,53 @@ The layout calculation follows these steps:
 - Minimum width constraints prevent unusable narrow columns
 - Text truncation ensures clean borders at all sizes
 
+### Responsive Layout Modes
+
+The three-column browser automatically switches between two layout modes based on terminal width:
+
+#### Stacked Layout (width < 120 cols)
+
+For narrow terminals, the layout stacks Subareas and Projects vertically:
+
+```
+┌──────────────┬──────┐
+│  Subareas    │      │
+│  (Top)       │      │
+├──────────────┤ Tasks│
+│  Projects    │      │
+│  (Bottom)    │      │
+└──────────────┴──────┘
+```
+
+**Column Widths**:
+- **Left side (Subareas+Projects combined)**: 25% of width
+- **Right side (Tasks)**: 75% of width
+
+**Height Distribution**:
+- Subareas and Projects share equal height
+- Tasks column uses full available height
+
+#### Side-by-Side Layout (width >= 120 cols)
+
+For wide terminals, all three columns are side-by-side:
+
+```
+┌─────┬────────┬──────────┐
+│Sub- │Projects│  Tasks   │
+│areas│        │          │
+└─────┴────────┴──────────┘
+```
+
+**Column Widths**: Proportional 25/25/50 split (see Proportional Column Layout section)
+
+#### Layout Switching
+
+- **Threshold**: 120 columns
+- **Behavior**: Instant, no animation
+- **Trigger**: Automatic on terminal resize
+
+**Testing**: Resize terminal from 119→120 cols to see instant layout switch.
+
 #### Text Truncation
 
 To prevent text wrapping in bordered panels (BubbleTea Golden Rule #2), all text is automatically truncated:
