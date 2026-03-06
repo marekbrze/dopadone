@@ -359,7 +359,7 @@ Create/update user guide:
 
 1. Run all tests: `go test ./internal/tui/... -v -cover`
 2. Run linting: `golangci-lint run` or `go vet ./...`
-3. Build verification: `go build ./cmd/projectdb`
+3. Build verification: `go build ./cmd/dopa`
 4. Manual testing:
    - AC #1-9: All functionality tests
    - AC #10-12: Test coverage verification

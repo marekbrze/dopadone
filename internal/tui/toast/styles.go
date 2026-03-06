@@ -2,7 +2,7 @@ package toast
 
 import (
 	"github.com/charmbracelet/lipgloss"
-	"github.com/example/projectdb/internal/tui/theme"
+	"github.com/example/dopadone/internal/tui/theme"
 )
 
 var (

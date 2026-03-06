@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/example/projectdb/internal/cli"
-	"github.com/example/projectdb/internal/cli/filter"
-	"github.com/example/projectdb/internal/cli/output"
-	"github.com/example/projectdb/internal/domain"
-	"github.com/example/projectdb/internal/service"
+	"github.com/example/dopadone/internal/cli"
+	"github.com/example/dopadone/internal/cli/filter"
+	"github.com/example/dopadone/internal/cli/output"
+	"github.com/example/dopadone/internal/domain"
+	"github.com/example/dopadone/internal/service"
 	"github.com/spf13/cobra"
 )
 
@@ -25,10 +25,10 @@ var tasksCreateCmd = &cobra.Command{
 	Short: "Create a new task",
 	Long:  "Create a new task under a project.",
 	Example: `  # Create a basic task
-  projectdb tasks create --project-id "proj-123" --title "Write documentation"
+  dopa tasks create --project-id "proj-123" --title "Write documentation"
 
   # Create a task with all options
-  projectdb tasks create --project-id "proj-123" --title "API Integration" \
+  dopa tasks create --project-id "proj-123" --title "API Integration" \
     --description "Integrate with external API" \
     --status in_progress --priority high \
     --start-date 2024-01-15 --deadline 2024-01-31 \
@@ -41,19 +41,19 @@ var tasksListCmd = &cobra.Command{
 	Short: "List all tasks",
 	Long:  "List all tasks, optionally filtered by project, status, priority, or next flag.",
 	Example: `  # List all tasks
-  projectdb tasks list
+  dopa tasks list
 
   # List tasks by project
-  projectdb tasks list --project-id "proj-123"
+  dopa tasks list --project-id "proj-123"
 
   # List tasks marked as next
-  projectdb tasks list --next
+  dopa tasks list --next
 
   # List tasks by status
-  projectdb tasks list --status in_progress
+  dopa tasks list --status in_progress
 
   # Output as JSON
-  projectdb tasks list --json`,
+  dopa tasks list --json`,
 	Run: runTasksList,
 }
 
@@ -62,7 +62,7 @@ var tasksNextCmd = &cobra.Command{
 	Short: "List tasks marked as 'next'",
 	Long:  "List all tasks marked with the --next flag (priority/focused tasks).",
 	Example: `  # List all next tasks
-  projectdb tasks next`,
+  dopa tasks next`,
 	Run: runTasksNext,
 }
 
@@ -71,7 +71,7 @@ var tasksGetCmd = &cobra.Command{
 	Short: "Get a task by ID",
 	Long:  "Display details of a specific task by its ID.",
 	Example: `  # Get a task by ID
-  projectdb tasks get "task-123"`,
+  dopa tasks get "task-123"`,
 	Args: cobra.ExactArgs(1),
 	Run:  runTasksGet,
 }
@@ -81,16 +81,16 @@ var tasksUpdateCmd = &cobra.Command{
 	Short: "Update a task",
 	Long:  "Update a task's fields. All fields are optional.",
 	Example: `  # Update task title
-  projectdb tasks update "task-123" --title "New title"
+  dopa tasks update "task-123" --title "New title"
 
   # Update status and priority
-  projectdb tasks update "task-123" --status done --priority critical
+  dopa tasks update "task-123" --status done --priority critical
 
   # Mark task as next
-  projectdb tasks update "task-123" --next
+  dopa tasks update "task-123" --next
 
   # Remove next flag
-  projectdb tasks update "task-123" --no-next`,
+  dopa tasks update "task-123" --no-next`,
 	Args: cobra.ExactArgs(1),
 	Run:  runTasksUpdate,
 }
@@ -100,10 +100,10 @@ var tasksDeleteCmd = &cobra.Command{
 	Short: "Delete a task",
 	Long:  "Delete a task by ID. By default performs a soft delete.",
 	Example: `  # Soft delete a task (can be recovered)
-  projectdb tasks delete "task-123"
+  dopa tasks delete "task-123"
 
   # Permanently delete a task
-  projectdb tasks delete "task-123" --permanent`,
+  dopa tasks delete "task-123" --permanent`,
 	Args: cobra.ExactArgs(1),
 	Run:  runTasksDelete,
 }

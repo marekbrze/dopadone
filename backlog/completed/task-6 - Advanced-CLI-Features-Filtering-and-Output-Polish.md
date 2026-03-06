@@ -52,7 +52,7 @@ Changes:
 - Created comprehensive tests:
   - filter/parser_test.go: 50+ tests for lexer, parser, evaluator
   - output/formatter_test.go: Tests for table, JSON, YAML formatters
-  - cmd/projectdb/commands_test.go: Tests for flag parsing across all commands
+  - cmd/dopa/commands_test.go: Tests for flag parsing across all commands
 
 Files created/modified:
 - internal/cli/filter/parser.go (new)
@@ -61,10 +61,10 @@ Files created/modified:
 - internal/cli/output/yaml.go (new)
 - internal/cli/output/formatter.go (updated)
 - internal/cli/output/formatter_test.go (updated)
-- cmd/projectdb/areas.go (updated)
-- cmd/projectdb/subareas.go (updated)
-- cmd/projectdb/projects.go (updated)
-- cmd/projectdb/commands_test.go (new)
+- cmd/dopa/areas.go (updated)
+- cmd/dopa/subareas.go (updated)
+- cmd/dopa/projects.go (updated)
+- cmd/dopa/commands_test.go (new)
 
 All tests passing: go test ./...
 <!-- SECTION:FINAL_SUMMARY:END -->

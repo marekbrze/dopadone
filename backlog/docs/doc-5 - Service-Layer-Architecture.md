@@ -259,7 +259,7 @@ type TaskServiceInterface interface {
 
 ### Service Container
 
-Services are managed through a ServiceContainer in `cmd/projectdb/main.go`:
+Services are managed through a ServiceContainer in `cmd/dopa/main.go`:
 
 ```go
 type ServiceContainer struct {
@@ -481,7 +481,7 @@ internal/
     mocks/         # Mock services for TUI testing
       helpers.go   # Mock setup helpers
 
-cmd/projectdb/
+cmd/dopa/
   main.go         # ServiceContainer and GetServices()
   projects.go     # CLI commands using ProjectService
   tasks.go        # CLI commands using TaskService

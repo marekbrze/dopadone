@@ -23,7 +23,7 @@ readme file should mainly focus on using the cli app from the user perspective. 
 - [x] #3 Add comprehensive Usage section with inline command examples for all entities (areas, subareas, projects, tasks)
 - [x] #4 Relocate build/compile instructions to bottom Development section
 - [x] #5 Relocate testing/CI information to bottom Development section
-- [x] #6 Replace schema-heavy introduction with user-focused problem/solution description (what problem does ProjectDB solve?)
+- [x] #6 Replace schema-heavy introduction with user-focused problem/solution description (what problem does Dopadone solve?)
 - [x] #7 Add output format examples showing table vs JSON output
 - [x] #8 Document global flags (--db, --output) in a dedicated section
 <!-- AC:END -->
@@ -69,7 +69,7 @@ readme file should mainly focus on using the cli app from the user perspective. 
 Redesigned README.md to be user-focused with the following structure:
 
 **User-Facing Sections (top):**
-- Problem/solution introduction explaining what ProjectDB solves
+- Problem/solution introduction explaining what Dopadone solves
 - Quick Start with complete CRUD workflow for areas entity
 - Installation covering binary downloads, go install, and build from source equally
 - Comprehensive Usage section with inline examples for areas, subareas, projects, and tasks

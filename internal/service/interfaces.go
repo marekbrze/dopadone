@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 
-	"github.com/example/projectdb/internal/domain"
+	"github.com/example/dopadone/internal/domain"
 )
 
 // Package service provides business logic for project management operations.

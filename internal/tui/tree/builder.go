@@ -3,7 +3,7 @@ package tree
 import (
 	"sort"
 
-	"github.com/example/projectdb/internal/domain"
+	"github.com/example/dopadone/internal/domain"
 )
 
 // Builder constructs tree structures from domain data.

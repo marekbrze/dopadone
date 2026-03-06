@@ -9,7 +9,7 @@ created_date: '2026-03-03'
 
 ## Overview
 
-This document describes the Terminal User Interface (TUI) architecture for ProjectDB, built using the bubbletea framework with Model-Update-View (MVU) pattern.
+This document describes the Terminal User Interface (TUI) architecture for Dopadone, built using the bubbletea framework with Model-Update-View (MVU) pattern.
 
 ## Technology Stack
 
@@ -658,7 +658,7 @@ func (m Model) View() string {
 ## Clean Architecture Integration
 
 ```
-cmd/projectdb/
+cmd/dopa/
     └── tui.go         CLI command (delivery layer)
          │
          ▼
@@ -724,12 +724,12 @@ Manual testing checklist:
 - [ ] Tree expansion persisted per area
 - [ ] q/Ctrl+C exits cleanly
 - [ ] Terminal resize adapts layout
-- [ ] `projectdb tui` command works
+- [ ] `dopa tui` command works
 
 ## CLI Integration
 
 ```go
-// cmd/projectdb/tui.go
+// cmd/dopa/tui.go
 var tuiCmd = &cobra.Command{
     Use:   "tui",
     Short: "Launch the TUI interface",
@@ -755,7 +755,7 @@ var tuiCmd = &cobra.Command{
 }
 ```
 
-Launch: `projectdb tui`
+Launch: `dopa tui`
 
 ## Implementation Status
 

@@ -9,7 +9,7 @@ created_date: '2026-03-03'
 
 ## Overview
 
-The `projectdb` CLI provides a complete command-line interface for managing projects, areas, and subareas in an ADHD-friendly project management system. Built with Cobra, it offers intuitive CRUD operations with colored table output, JSON/YAML support, and advanced filtering capabilities.
+The `dopa` CLI provides a complete command-line interface for managing projects, areas, and subareas in an ADHD-friendly project management system. Built with Cobra, it offers intuitive CRUD operations with colored table output, JSON/YAML support, and advanced filtering capabilities.
 
 ## Installation
 
@@ -29,40 +29,40 @@ cd <repository-name>
 go mod download
 
 # Build the binary
-go build -o projectdb cmd/projectdb/main.go
+go build -o dopa cmd/dopa/main.go
 
 # Or run directly
-go run cmd/projectdb/main.go [command]
+go run cmd/dopa/main.go [command]
 ```
 
 ### Binary Location
 
-After building, the `projectdb` binary will be in your project root or you can install it to your PATH:
+After building, the `dopa` binary will be in your project root or you can install it to your PATH:
 
 ```bash
-go install cmd/projectdb/main.go
+go install cmd/dopa/main.go
 ```
 
 ## Quick Start
 
 ```bash
 # Initialize database (run migrations)
-./projectdb --help
+./dopa --help
 
 # Create an area
-./projectdb areas create --name "Work" --color "#FF5733"
+./dopa areas create --name "Work" --color "#FF5733"
 
 # Create a subarea under that area
-./projectdb subareas create --name "Backend" --area-id "area-123" --color "#3498DB"
+./dopa subareas create --name "Backend" --area-id "area-123" --color "#3498DB"
 
 # Create a project under the subarea
-./projectdb projects create --name "API Redesign" --subarea-id "subarea-456" --priority high
+./dopa projects create --name "API Redesign" --subarea-id "subarea-456" --priority high
 
 # List all projects
-./projectdb projects list
+./dopa projects list
 
 # List projects with filters
-./projectdb projects list --status active --priority high --format json
+./dopa projects list --status active --priority high --format json
 ```
 
 ## Global Flags
@@ -71,7 +71,7 @@ These flags are available for all commands:
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--db` | `./projectdb.db` | Path to SQLite database file |
+| `--db` | `./dopa.db` | Path to SQLite database file |
 | `-o, --output` | `table` | Output format: `table`, `json`, or `yaml` |
 | `-h, --help` | - | Help for any command |
 
@@ -82,7 +82,7 @@ The CLI supports three output formats:
 ### Table Format (Default)
 
 ```bash
-./projectdb areas list
+./dopa areas list
 ```
 
 Output:
@@ -95,9 +95,9 @@ area-def456 Marketing    #E74C3C    2024-01-15 11:00:00  2024-01-15 11:00:00
 ### JSON Format
 
 ```bash
-./projectdb areas list --json
+./dopa areas list --json
 # or
-./projectdb areas list --format json
+./dopa areas list --format json
 ```
 
 Output:
@@ -116,7 +116,7 @@ Output:
 ### YAML Format
 
 ```bash
-./projectdb areas list --format yaml
+./dopa areas list --format yaml
 ```
 
 Output:
@@ -141,7 +141,7 @@ Create a new top-level area.
 ### Syntax
 
 ```bash
-./projectdb areas create --name <name> [--color <hex-color>]
+./dopa areas create --name <name> [--color <hex-color>]
 ```
 
 ### Flags
@@ -155,13 +155,13 @@ Create a new top-level area.
 
 ```bash
 # Create area with required name
-./projectdb areas create --name "Engineering"
+./dopa areas create --name "Engineering"
 
 # Create area with color
-./projectdb areas create --name "Marketing" --color "#FF5733"
+./dopa areas create --name "Marketing" --color "#FF5733"
 
 # Create personal area
-./projectdb areas create --name "Personal Projects" --color "#3498DB"
+./dopa areas create --name "Personal Projects" --color "#3498DB"
 ```
 
 ### Output
@@ -183,7 +183,7 @@ List all areas in the database.
 ### Syntax
 
 ```bash
-./projectdb areas list [--json] [--format table|json|yaml]
+./dopa areas list [--json] [--format table|json|yaml]
 ```
 
 ### Flags
@@ -197,13 +197,13 @@ List all areas in the database.
 
 ```bash
 # List all areas (table format)
-./projectdb areas list
+./dopa areas list
 
 # List as JSON
-./projectdb areas list --json
+./dopa areas list --json
 
 # List as YAML
-./projectdb areas list --format yaml
+./dopa areas list --format yaml
 ```
 
 ## Get Area
@@ -213,7 +213,7 @@ Display details of a single area by ID.
 ### Syntax
 
 ```bash
-./projectdb areas get <area-id>
+./dopa areas get <area-id>
 ```
 
 ### Arguments
@@ -223,7 +223,7 @@ Display details of a single area by ID.
 ### Examples
 
 ```bash
-./projectdb areas get area-abc123
+./dopa areas get area-abc123
 ```
 
 ### Output
@@ -245,7 +245,7 @@ Update an existing area's name and/or color.
 ### Syntax
 
 ```bash
-./projectdb areas update <area-id> [--name <name>] [--color <hex-color>]
+./dopa areas update <area-id> [--name <name>] [--color <hex-color>]
 ```
 
 ### Arguments
@@ -265,13 +265,13 @@ Update an existing area's name and/or color.
 
 ```bash
 # Update name
-./projectdb areas update area-abc123 --name "Engineering Team"
+./dopa areas update area-abc123 --name "Engineering Team"
 
 # Update color
-./projectdb areas update area-abc123 --color "#9B59B6"
+./dopa areas update area-abc123 --color "#9B59B6"
 
 # Update both
-./projectdb areas update area-abc123 --name "Engineering" --color "#3498DB"
+./dopa areas update area-abc123 --name "Engineering" --color "#3498DB"
 ```
 
 ## Delete Area
@@ -281,7 +281,7 @@ Delete an area. By default, performs a soft delete (marks as deleted but retains
 ### Syntax
 
 ```bash
-./projectdb areas delete <area-id> [--permanent]
+./dopa areas delete <area-id> [--permanent]
 ```
 
 ### Arguments
@@ -298,10 +298,10 @@ Delete an area. By default, performs a soft delete (marks as deleted but retains
 
 ```bash
 # Soft delete (default)
-./projectdb areas delete area-abc123
+./dopa areas delete area-abc123
 
 # Permanent delete
-./projectdb areas delete area-abc123 --permanent
+./dopa areas delete area-abc123 --permanent
 ```
 
 **Warning**: Permanent delete cannot be undone!
@@ -319,7 +319,7 @@ Create a new subarea under an area.
 ### Syntax
 
 ```bash
-./projectdb subareas create --name <name> --area-id <area-id> [--color <hex-color>]
+./dopa subareas create --name <name> --area-id <area-id> [--color <hex-color>]
 ```
 
 ### Flags
@@ -334,13 +334,13 @@ Create a new subarea under an area.
 
 ```bash
 # Create subarea with required fields
-./projectdb subareas create --name "Backend" --area-id "area-abc123"
+./dopa subareas create --name "Backend" --area-id "area-abc123"
 
 # Create subarea with custom color
-./projectdb subareas create --name "Frontend" --area-id "area-abc123" --color "#3498DB"
+./dopa subareas create --name "Frontend" --area-id "area-abc123" --color "#3498DB"
 
 # Create multiple subareas under same area
-./projectdb subareas create --name "DevOps" --area-id "area-abc123" --color "#2ECC71"
+./dopa subareas create --name "DevOps" --area-id "area-abc123" --color "#2ECC71"
 ```
 
 ### Output
@@ -363,7 +363,7 @@ List all subareas or filter by area.
 ### Syntax
 
 ```bash
-./projectdb subareas list [--area-id <area-id>] [--json] [--format table|json|yaml]
+./dopa subareas list [--area-id <area-id>] [--json] [--format table|json|yaml]
 ```
 
 ### Flags
@@ -378,16 +378,16 @@ List all subareas or filter by area.
 
 ```bash
 # List all subareas
-./projectdb subareas list
+./dopa subareas list
 
 # List subareas under specific area
-./projectdb subareas list --area-id "area-abc123"
+./dopa subareas list --area-id "area-abc123"
 
 # List as JSON
-./projectdb subareas list --json
+./dopa subareas list --json
 
 # List filtered subareas as YAML
-./projectdb subareas list --area-id "area-abc123" --format yaml
+./dopa subareas list --area-id "area-abc123" --format yaml
 ```
 
 ## Get Subarea
@@ -397,7 +397,7 @@ Display details of a single subarea by ID.
 ### Syntax
 
 ```bash
-./projectdb subareas get <subarea-id>
+./dopa subareas get <subarea-id>
 ```
 
 ### Arguments
@@ -407,7 +407,7 @@ Display details of a single subarea by ID.
 ### Examples
 
 ```bash
-./projectdb subareas get subarea-xyz789
+./dopa subareas get subarea-xyz789
 ```
 
 ## Update Subarea
@@ -417,7 +417,7 @@ Update an existing subarea's name and/or color.
 ### Syntax
 
 ```bash
-./projectdb subareas update <subarea-id> [--name <name>] [--color <hex-color>]
+./dopa subareas update <subarea-id> [--name <name>] [--color <hex-color>]
 ```
 
 ### Arguments
@@ -437,13 +437,13 @@ Update an existing subarea's name and/or color.
 
 ```bash
 # Update name
-./projectdb subareas update subarea-xyz789 --name "Backend Services"
+./dopa subareas update subarea-xyz789 --name "Backend Services"
 
 # Update color
-./projectdb subareas update subarea-xyz789 --color "#E74C3C"
+./dopa subareas update subarea-xyz789 --color "#E74C3C"
 
 # Update both
-./projectdb subareas update subarea-xyz789 --name "Backend" --color "#3498DB"
+./dopa subareas update subarea-xyz789 --name "Backend" --color "#3498DB"
 ```
 
 ## Delete Subarea
@@ -453,7 +453,7 @@ Delete a subarea (soft delete by default).
 ### Syntax
 
 ```bash
-./projectdb subareas delete <subarea-id> [--permanent]
+./dopa subareas delete <subarea-id> [--permanent]
 ```
 
 ### Arguments
@@ -470,10 +470,10 @@ Delete a subarea (soft delete by default).
 
 ```bash
 # Soft delete
-./projectdb subareas delete subarea-xyz789
+./dopa subareas delete subarea-xyz789
 
 # Permanent delete
-./projectdb subareas delete subarea-xyz789 --permanent
+./dopa subareas delete subarea-xyz789 --permanent
 ```
 
 ---
@@ -489,7 +489,7 @@ Create a new project. Must specify either `--subarea-id` OR `--parent-id` (not b
 ### Syntax
 
 ```bash
-./projectdb projects create --name <name> (--subarea-id <id> | --parent-id <id>) [options]
+./dopa projects create --name <name> (--subarea-id <id> | --parent-id <id>) [options]
 ```
 
 ### Required Flags
@@ -517,13 +517,13 @@ Create a new project. Must specify either `--subarea-id` OR `--parent-id` (not b
 
 ```bash
 # Create root project under subarea (minimum)
-./projectdb projects create --name "Website Redesign" --subarea-id "subarea-123"
+./dopa projects create --name "Website Redesign" --subarea-id "subarea-123"
 
 # Create nested project under another project
-./projectdb projects create --name "Backend API" --parent-id "project-456" --priority high
+./dopa projects create --name "Backend API" --parent-id "project-456" --priority high
 
 # Create project with all fields
-./projectdb projects create --name "Q4 Campaign" --subarea-id "subarea-123" \
+./dopa projects create --name "Q4 Campaign" --subarea-id "subarea-123" \
   --status active \
   --priority urgent \
   --progress 25 \
@@ -534,12 +534,12 @@ Create a new project. Must specify either `--subarea-id` OR `--parent-id` (not b
   --description "Marketing campaign for Q4 targeting new demographics"
 
 # Create on-hold project
-./projectdb projects create --name "Research Project" --subarea-id "subarea-456" \
+./dopa projects create --name "Research Project" --subarea-id "subarea-456" \
   --status on_hold \
   --priority low
 
 # Create nested project with description
-./projectdb projects create --name "Database Migration" --parent-id "project-789" \
+./dopa projects create --name "Database Migration" --parent-id "project-789" \
   --priority high \
   --description "## Objective\nMigrate from PostgreSQL to SQLite\n\n## Tasks\n- [ ] Export data\n- [ ] Transform schema"
 ```
@@ -566,7 +566,7 @@ List all projects with optional filtering.
 ### Syntax
 
 ```bash
-./projectdb projects list [options]
+./dopa projects list [options]
 ```
 
 ### Filter Flags
@@ -590,32 +590,32 @@ List all projects with optional filtering.
 
 ```bash
 # List all projects
-./projectdb projects list
+./dopa projects list
 
 # List active projects only
-./projectdb projects list --status active
+./dopa projects list --status active
 
 # List high priority projects
-./projectdb projects list --priority high
+./dopa projects list --priority high
 
 # List projects under a subarea
-./projectdb projects list --subarea-id "subarea-123"
+./dopa projects list --subarea-id "subarea-123"
 
 # List nested projects under a parent
-./projectdb projects list --parent-id "project-456"
+./dopa projects list --parent-id "project-456"
 
 # Combine filters
-./projectdb projects list --status active --priority high
+./dopa projects list --status active --priority high
 
 # Output as JSON
-./projectdb projects list --json
+./dopa projects list --json
 
 # Output as YAML
-./projectdb projects list --format yaml
+./dopa projects list --format yaml
 
 # Advanced filtering
-./projectdb projects list --filter 'status=active AND priority>=high'
-./projectdb projects list --filter 'progress>=50 OR status=completed'
+./dopa projects list --filter 'status=active AND priority>=high'
+./dopa projects list --filter 'progress>=50 OR status=completed'
 ```
 
 ## Get Project
@@ -625,7 +625,7 @@ Display details of a single project by ID.
 ### Syntax
 
 ```bash
-./projectdb projects get <project-id>
+./dopa projects get <project-id>
 ```
 
 ### Arguments
@@ -635,7 +635,7 @@ Display details of a single project by ID.
 ### Examples
 
 ```bash
-./projectdb projects get project-def456
+./dopa projects get project-def456
 ```
 
 ### Output
@@ -665,7 +665,7 @@ Update any editable field of a project.
 ### Syntax
 
 ```bash
-./projectdb projects update <project-id> [options]
+./dopa projects update <project-id> [options]
 ```
 
 ### Arguments
@@ -694,19 +694,19 @@ All optional flags from create are available for update:
 
 ```bash
 # Update name
-./projectdb projects update project-123 --name "Website Redesign v2"
+./dopa projects update project-123 --name "Website Redesign v2"
 
 # Update status to completed
-./projectdb projects update project-123 --status completed
+./dopa projects update project-123 --status completed
 
 # Update progress
-./projectdb projects update project-123 --progress 75
+./dopa projects update project-123 --progress 75
 
 # Update priority and progress
-./projectdb projects update project-123 --priority urgent --progress 80
+./dopa projects update project-123 --priority urgent --progress 80
 
 # Update multiple fields
-./projectdb projects update project-123 \
+./dopa projects update project-123 \
   --name "New Website" \
   --status active \
   --priority high \
@@ -714,7 +714,7 @@ All optional flags from create are available for update:
   --deadline 2024-12-31
 
 # Mark project as completed
-./projectdb projects update project-123 --status completed --progress 100
+./dopa projects update project-123 --status completed --progress 100
 ```
 
 ## Delete Project
@@ -724,7 +724,7 @@ Delete a project (soft delete by default).
 ### Syntax
 
 ```bash
-./projectdb projects delete <project-id> [--permanent]
+./dopa projects delete <project-id> [--permanent]
 ```
 
 ### Arguments
@@ -741,10 +741,10 @@ Delete a project (soft delete by default).
 
 ```bash
 # Soft delete (default)
-./projectdb projects delete project-123
+./dopa projects delete project-123
 
 # Permanent delete
-./projectdb projects delete project-123 --permanent
+./dopa projects delete project-123 --permanent
 ```
 
 **Warning**: Permanent delete cannot be undone and will also delete nested projects!
@@ -775,26 +775,26 @@ The `--filter` flag supports complex query expressions for list commands.
 Use parentheses for complex conditions:
 
 ```bash
-./projectdb projects list --filter '(status=active OR status=on_hold) AND priority>=medium'
+./dopa projects list --filter '(status=active OR status=on_hold) AND priority>=medium'
 ```
 
 ### Filter Examples
 
 ```bash
 # Active projects with high priority
-./projectdb projects list --filter 'status=active AND priority>=high'
+./dopa projects list --filter 'status=active AND priority>=high'
 
 # Projects with progress over 50% or already completed
-./projectdb projects list --filter 'progress>50 OR status=completed'
+./dopa projects list --filter 'progress>50 OR status=completed'
 
 # Not archived and not low priority
-./projectdb projects list --filter 'status!=archived AND priority!=low'
+./dopa projects list --filter 'status!=archived AND priority!=low'
 
 # Complex condition with grouping
-./projectdb projects list --filter '(status=active AND progress<25) OR priority=urgent'
+./dopa projects list --filter '(status=active AND progress<25) OR priority=urgent'
 
 # Progress range
-./projectdb projects list --filter 'progress>=25 AND progress<=75'
+./dopa projects list --filter 'progress>=25 AND progress<=75'
 ```
 
 ### Valid Field Names
@@ -808,27 +808,27 @@ Use parentheses for complex conditions:
 ### Specifying Database Path
 
 ```bash
-# Use default database (./projectdb.db)
-./projectdb areas list
+# Use default database (./dopa.db)
+./dopa areas list
 
 # Use custom database path
-./projectdb --db /path/to/custom.db areas list
+./dopa --db /path/to/custom.db areas list
 
 # Use environment-specific database
-./projectdb --db ./databases/production.db projects list
+./dopa --db ./databases/production.db projects list
 ```
 
 ### Database Location Best Practices
 
 ```bash
 # Development
-./projectdb --db ./data/dev.db areas create --name "Dev Area"
+./dopa --db ./data/dev.db areas create --name "Dev Area"
 
 # Testing
-./projectdb --db ./data/test.db projects list
+./dopa --db ./data/test.db projects list
 
 # Production
-./projectdb --db /var/lib/projectdb/prod.db projects list --format json
+./dopa --db /var/lib/dopa/prod.db projects list --format json
 ```
 
 ## Working with Nested Projects
@@ -837,19 +837,19 @@ Projects can be nested recursively to create hierarchies:
 
 ```bash
 # Create root project
-./projectdb projects create --name "Website Redesign" --subarea-id "subarea-123"
+./dopa projects create --name "Website Redesign" --subarea-id "subarea-123"
 
 # Create nested project (Phase 1)
-./projectdb projects create --name "Phase 1: Planning" --parent-id "project-root" --priority high
+./dopa projects create --name "Phase 1: Planning" --parent-id "project-root" --priority high
 
 # Create sub-project under Phase 1
-./projectdb projects create --name "Requirements Gathering" --parent-id "project-phase1" --priority high
+./dopa projects create --name "Requirements Gathering" --parent-id "project-phase1" --priority high
 
 # Create another nested project (Phase 2)
-./projectdb projects create --name "Phase 2: Development" --parent-id "project-root" --priority medium
+./dopa projects create --name "Phase 2: Development" --parent-id "project-root" --priority medium
 
 # List all projects under parent
-./projectdb projects list --parent-id "project-root"
+./dopa projects list --parent-id "project-root"
 ```
 
 ### Project Hierarchy Example
@@ -875,61 +875,61 @@ Website Redesign (root)
 
 ```bash
 # 1. Create top-level areas
-./projectdb areas create --name "Work" --color "#3498DB"
-./projectdb areas create --name "Personal" --color "#2ECC71"
+./dopa areas create --name "Work" --color "#3498DB"
+./dopa areas create --name "Personal" --color "#2ECC71"
 
 # 2. Create subareas for Work
-./projectdb subareas create --name "Client Projects" --area-id "work-area-id"
-./projectdb subareas create --name "Internal Tools" --area-id "work-area-id"
+./dopa subareas create --name "Client Projects" --area-id "work-area-id"
+./dopa subareas create --name "Internal Tools" --area-id "work-area-id"
 
 # 3. Create projects
-./projectdb projects create --name "Client ABC Website" --subarea-id "client-subarea-id" --priority high
-./projectdb projects create --name "Internal Dashboard" --subarea-id "internal-subarea-id" --priority medium
+./dopa projects create --name "Client ABC Website" --subarea-id "client-subarea-id" --priority high
+./dopa projects create --name "Internal Dashboard" --subarea-id "internal-subarea-id" --priority medium
 ```
 
 ## Tracking Project Progress
 
 ```bash
 # Create project
-./projectdb projects create --name "Q1 Initiative" --subarea-id "sub-123" \
+./dopa projects create --name "Q1 Initiative" --subarea-id "sub-123" \
   --priority high --goal "Complete Q1 objectives"
 
 # Update progress as work progresses
-./projectdb projects update project-id --progress 25
-./projectdb projects update project-id --progress 50
-./projectdb projects update project-id --progress 75
+./dopa projects update project-id --progress 25
+./dopa projects update project-id --progress 50
+./dopa projects update project-id --progress 75
 
 # Mark as completed
-./projectdb projects update project-id --status completed --progress 100
+./dopa projects update project-id --status completed --progress 100
 ```
 
 ## Reviewing and Reporting
 
 ```bash
 # Review all active projects
-./projectdb projects list --status active --format json > active-projects.json
+./dopa projects list --status active --format json > active-projects.json
 
 # Find overdue projects (high priority not completed)
-./projectdb projects list --filter 'priority>=high AND status!=completed'
+./dopa projects list --filter 'priority>=high AND status!=completed'
 
 # Generate report of completed work
-./projectdb projects list --status completed --format yaml > completed-report.yaml
+./dopa projects list --status completed --format yaml > completed-report.yaml
 
 # Review project hierarchy
-./projectdb projects list --parent-id "parent-project-id" --format json
+./dopa projects list --parent-id "parent-project-id" --format json
 ```
 
 ## Managing Priorities
 
 ```bash
 # Find all urgent projects
-./projectdb projects list --priority urgent
+./dopa projects list --priority urgent
 
 # Escalate project priority
-./projectdb projects update project-id --priority urgent
+./dopa projects update project-id --priority urgent
 
 # Review high priority items
-./projectdb projects list --filter 'priority=high OR priority=urgent' --status active
+./dopa projects list --filter 'priority=high OR priority=urgent' --status active
 ```
 
 ## Bulk Operations Workflow
@@ -937,14 +937,14 @@ Website Redesign (root)
 ```bash
 # Create multiple areas
 for area in "Engineering" "Marketing" "Sales"; do
-  ./projectdb areas create --name "$area"
+  ./dopa areas create --name "$area"
 done
 
 # List all and save to file
-./projectdb areas list --json > areas-backup.json
+./dopa areas list --json > areas-backup.json
 
 # Filter and export
-./projectdb projects list --status active --format yaml > active-projects.yaml
+./dopa projects list --status active --format yaml > active-projects.yaml
 ```
 
 ---
@@ -955,25 +955,25 @@ done
 
 ```bash
 # Good
-./projectdb projects create --name "Q4 Marketing Campaign" --subarea-id "sub-123"
+./dopa projects create --name "Q4 Marketing Campaign" --subarea-id "sub-123"
 
 # Avoid
-./projectdb projects create --name "Project 1" --subarea-id "sub-123"
+./dopa projects create --name "Project 1" --subarea-id "sub-123"
 ```
 
 ## 2. Leverage Colors for Visual Organization
 
 ```bash
 # Use consistent color coding
-./projectdb areas create --name "Engineering" --color "#3498DB"  # Blue
-./projectdb areas create --name "Marketing" --color "#E74C3C"   # Red
-./projectdb areas create --name "Sales" --color "#2ECC71"       # Green
+./dopa areas create --name "Engineering" --color "#3498DB"  # Blue
+./dopa areas create --name "Marketing" --color "#E74C3C"   # Red
+./dopa areas create --name "Sales" --color "#2ECC71"       # Green
 ```
 
 ## 3. Set Clear Goals and Descriptions
 
 ```bash
-./projectdb projects create --name "API Migration" --subarea-id "sub-123" \
+./dopa projects create --name "API Migration" --subarea-id "sub-123" \
   --goal "Migrate all services to new API by end of Q2" \
   --description "## Objectives\n- Update authentication\n- Migrate endpoints\n- Update documentation"
 ```
@@ -998,34 +998,34 @@ done
 
 ```bash
 # Weekly review of active projects
-./projectdb projects list --status active
+./dopa projects list --status active
 
 # Find stale projects (on hold for too long)
-./projectdb projects list --status on_hold
+./dopa projects list --status on_hold
 
 # Review high priority items
-./projectdb projects list --filter 'priority>=high AND status=active'
+./dopa projects list --filter 'priority>=high AND status=active'
 ```
 
 ## 6. Use Soft Delete by Default
 
 ```bash
 # Safe: soft delete (can be recovered)
-./projectdb projects delete project-id
+./dopa projects delete project-id
 
 # Dangerous: permanent delete (cannot be undone)
-./projectdb projects delete project-id --permanent
+./dopa projects delete project-id --permanent
 ```
 
 ## 7. Export Regularly
 
 ```bash
 # Backup database regularly
-cp ./projectdb.db ./backups/projectdb-$(date +%Y%m%d).db
+cp ./dopa.db ./backups/dopa-$(date +%Y%m%d).db
 
 # Export critical data
-./projectdb projects list --format json > backups/projects-$(date +%Y%m%d).json
-./projectdb areas list --format json > backups/areas-$(date +%Y%m%d).json
+./dopa projects list --format json > backups/projects-$(date +%Y%m%d).json
+./dopa areas list --format json > backups/areas-$(date +%Y%m%d).json
 ```
 
 ---
@@ -1037,12 +1037,12 @@ cp ./projectdb.db ./backups/projectdb-$(date +%Y%m%d).db
 ### Database Not Found
 
 ```bash
-Error: database file not found: ./projectdb.db
+Error: database file not found: ./dopa.db
 ```
 
 **Solution**: Ensure the database file exists or specify the correct path:
 ```bash
-./projectdb --db /correct/path/to/database.db areas list
+./dopa --db /correct/path/to/database.db areas list
 ```
 
 ### Invalid Color Format
@@ -1053,7 +1053,7 @@ Error: invalid color format: must be hex (e.g., #FF5733)
 
 **Solution**: Use proper hex color format with `#` prefix:
 ```bash
-./projectdb areas create --name "Test" --color "#FF5733"
+./dopa areas create --name "Test" --color "#FF5733"
 ```
 
 ### Missing Required Fields
@@ -1064,7 +1064,7 @@ Error: name is required
 
 **Solution**: Provide all required flags:
 ```bash
-./projectdb areas create --name "My Area"
+./dopa areas create --name "My Area"
 ```
 
 ### Invalid Status/Priority Values
@@ -1075,7 +1075,7 @@ Error: invalid status: must be one of [active completed on_hold archived]
 
 **Solution**: Use valid enum values:
 ```bash
-./projectdb projects create --name "Test" --subarea-id "sub-123" --status active --priority high
+./dopa projects create --name "Test" --subarea-id "sub-123" --status active --priority high
 ```
 
 ### Subarea-Id and Parent-Id Conflict
@@ -1087,22 +1087,22 @@ Error: cannot specify both subarea-id and parent-id
 **Solution**: Specify only one parent reference:
 ```bash
 # Root project
-./projectdb projects create --name "Test" --subarea-id "sub-123"
+./dopa projects create --name "Test" --subarea-id "sub-123"
 
 # Nested project
-./projectdb projects create --name "Test" --parent-id "proj-456"
+./dopa projects create --name "Test" --parent-id "proj-456"
 ```
 
 ## Getting Help
 
 ```bash
 # General help
-./projectdb --help
+./dopa --help
 
 # Command-specific help
-./projectdb areas --help
-./projectdb projects create --help
-./projectdb projects list --help
+./dopa areas --help
+./dopa projects create --help
+./dopa projects list --help
 ```
 
 ---
@@ -1121,7 +1121,7 @@ Use these codes in scripts:
 
 ```bash
 #!/bin/bash
-./projectdb areas create --name "Test"
+./dopa areas create --name "Test"
 if [ $? -eq 0 ]; then
   echo "Success!"
 elif [ $? -eq 2 ]; then

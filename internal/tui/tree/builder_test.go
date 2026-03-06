@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/example/projectdb/internal/domain"
+	"github.com/example/dopadone/internal/domain"
 )
 
 func createTestProject(id, name, parentID, subareaID string, position int) domain.Project {

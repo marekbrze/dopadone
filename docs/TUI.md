@@ -1,6 +1,6 @@
 # Terminal User Interface (TUI) Documentation
 
-This document provides comprehensive documentation for the ProjectDB Terminal User Interface, including architecture, components, and implementation details.
+This document provides comprehensive documentation for the Dopadone Terminal User Interface, including architecture, components, and implementation details.
 
 ## Overview
 
@@ -68,7 +68,7 @@ type Model struct {
 
 **Initialization**:
 ```go
-// In cmd/projectdb/tui.go
+// In cmd/dopa/tui.go
 func runTUI() error {
     // Get service container
     container := db.GetServices()
@@ -604,7 +604,7 @@ Comprehensive test suite covering:
 All tests use mock services instead of database connections:
 
 ```go
-import "github.com/example/projectdb/internal/tui/mocks"
+import "github.com/example/dopa/internal/tui/mocks"
 
 func TestLoadAreas(t *testing.T) {
     // Create mock services
@@ -1033,7 +1033,7 @@ Potential improvements for future versions:
 Enable debug logging:
 ```bash
 export TUI_DEBUG=1
-projectdb tui
+dopa tui
 ```
 
 ## Related Documentation

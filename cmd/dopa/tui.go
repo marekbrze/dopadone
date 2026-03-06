@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/example/projectdb/internal/tui"
+	"github.com/example/dopadone/internal/tui"
 	"github.com/spf13/cobra"
 )
 

@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/example/projectdb/internal/cli"
-	"github.com/example/projectdb/internal/cli/filter"
-	"github.com/example/projectdb/internal/cli/output"
-	"github.com/example/projectdb/internal/domain"
+	"github.com/example/dopadone/internal/cli"
+	"github.com/example/dopadone/internal/cli/filter"
+	"github.com/example/dopadone/internal/cli/output"
+	"github.com/example/dopadone/internal/domain"
 	"github.com/spf13/cobra"
 )
 
@@ -24,10 +24,10 @@ var areasCreateCmd = &cobra.Command{
 	Short: "Create a new area",
 	Long:  "Create a new area with a name and optional color.",
 	Example: `  # Create an area with required name
-  projectdb areas create --name "Engineering"
+  dopa areas create --name "Engineering"
 
   # Create an area with a color
-  projectdb areas create --name "Marketing" --color "#FF5733"`,
+  dopa areas create --name "Marketing" --color "#FF5733"`,
 	Run: runAreasCreate,
 }
 
@@ -36,17 +36,17 @@ var areasListCmd = &cobra.Command{
 	Short: "List all areas",
 	Long:  "List all areas in the database.",
 	Example: `  # List all areas
-  projectdb areas list
+  dopa areas list
 
   # Output as JSON
-  projectdb areas list --json
-  projectdb areas list --format=json
+  dopa areas list --json
+  dopa areas list --format=json
 
   # Output as YAML
-  projectdb areas list --format=yaml
+  dopa areas list --format=yaml
 
   # Filter areas
-  projectdb areas list --filter 'name=Engineering'`,
+  dopa areas list --filter 'name=Engineering'`,
 	Run: runAreasList,
 }
 
@@ -55,7 +55,7 @@ var areasGetCmd = &cobra.Command{
 	Short: "Get an area by ID",
 	Long:  "Display details of a specific area by its ID.",
 	Example: `  # Get an area by ID
-  projectdb areas get "area-123"`,
+  dopa areas get "area-123"`,
 	Args: cobra.ExactArgs(1),
 	Run:  runAreasGet,
 }
@@ -65,13 +65,13 @@ var areasUpdateCmd = &cobra.Command{
 	Short: "Update an area",
 	Long:  "Update an area's name and/or color.",
 	Example: `  # Update an area's name
-  projectdb areas update "area-123" --name "New Name"
+  dopa areas update "area-123" --name "New Name"
 
   # Update an area's color
-  projectdb areas update "area-123" --color "#00FF00"
+  dopa areas update "area-123" --color "#00FF00"
 
   # Update both name and color
-  projectdb areas update "area-123" --name "Updated" --color "#0000FF"`,
+  dopa areas update "area-123" --name "Updated" --color "#0000FF"`,
 	Args: cobra.ExactArgs(1),
 	Run:  runAreasUpdate,
 }
@@ -81,10 +81,10 @@ var areasDeleteCmd = &cobra.Command{
 	Short: "Delete an area",
 	Long:  "Delete an area by ID. By default performs a soft delete.",
 	Example: `  # Soft delete an area (can be recovered)
-  projectdb areas delete "area-123"
+  dopa areas delete "area-123"
 
   # Permanently delete an area
-  projectdb areas delete "area-123" --permanent`,
+  dopa areas delete "area-123" --permanent`,
 	Args: cobra.ExactArgs(1),
 	Run:  runAreasDelete,
 }

@@ -3,7 +3,7 @@ package tui
 import (
 	"testing"
 
-	"github.com/example/projectdb/internal/domain"
+	"github.com/example/dopadone/internal/domain"
 )
 
 func TestLoadAreasMsg(t *testing.T) {

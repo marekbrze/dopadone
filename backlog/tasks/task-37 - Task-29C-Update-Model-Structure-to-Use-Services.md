@@ -108,7 +108,7 @@ Replace single repo db.Querier field in Model struct with 4 service interface fi
 - Change signature to accept 4 service parameters
 - Pass all 4 services to InitialModel()
 
-**2.2 Update caller in cmd/projectdb/tui.go:15**
+**2.2 Update caller in cmd/dopa/tui.go:15**
 - Use GetServices() to obtain ServiceContainer
 - Extract individual services
 - Pass to tui.New()
@@ -192,7 +192,7 @@ Replace single repo db.Querier field in Model struct with 4 service interface fi
 
 **5.1 Compilation Verification (15 min)**
 - go build ./internal/tui/...
-- go build ./cmd/projectdb/...
+- go build ./cmd/dopa/...
 
 **5.2 Test Verification (30 min)**
 - go test ./internal/tui/... -v
@@ -202,10 +202,10 @@ Replace single repo db.Querier field in Model struct with 4 service interface fi
 
 **5.3 Lint Verification (15 min)**
 - golangci-lint run ./internal/tui/...
-- golangci-lint run ./cmd/projectdb/...
+- golangci-lint run ./cmd/dopa/...
 
 **5.4 Manual Verification (30 min)**
-- Build and run: go run ./cmd/projectdb tui
+- Build and run: go run ./cmd/dopa tui
 - Test: startup, navigation, area switching, quick add, help, area management
 - Verify: no panics or errors
 
@@ -313,7 +313,7 @@ Replace single repo db.Querier field in Model struct with 4 service interface fi
 **Production Code** (3 files):
 1. internal/tui/app.go
 2. internal/tui/tui.go
-3. cmd/projectdb/tui.go
+3. cmd/dopa/tui.go
 
 **Test Infrastructure** (3 NEW files):
 4. internal/tui/mocks/services.go
@@ -360,8 +360,8 @@ Replace single repo db.Querier field in Model struct with 4 service interface fi
 - Reviewed task-37 requirements and dependencies
 - Examined current Model structure (internal/tui/app.go)
 - Examined current initialization pattern (internal/tui/tui.go)
-- Examined caller code (cmd/projectdb/tui.go)
-- Reviewed existing ServiceContainer pattern (cmd/projectdb/main.go)
+- Examined caller code (cmd/dopa/tui.go)
+- Reviewed existing ServiceContainer pattern (cmd/dopa/main.go)
 - Reviewed existing test patterns (internal/tui/app_test.go)
 - Loaded golang-pro, golang-patterns, bubbletea, and golang-testing skills
 
@@ -385,7 +385,7 @@ Replace single repo db.Querier field in Model struct with 4 service interface fi
 **Key files**:
 - internal/tui/app.go (Model struct, InitialModel)
 - internal/tui/tui.go (New function)
-- cmd/projectdb/tui.go (caller)
+- cmd/dopa/tui.go (caller)
 - New: internal/tui/mocks/services.go
 - All internal/tui/*_test.go files
 
@@ -399,8 +399,8 @@ Ready for implementation.
 - Reviewed task-37 requirements and dependencies
 - Examined current Model structure (internal/tui/app.go)
 - Examined current initialization pattern (internal/tui/tui.go)
-- Examined caller code (cmd/projectdb/tui.go)
-- Reviewed existing ServiceContainer pattern (cmd/projectdb/main.go)
+- Examined caller code (cmd/dopa/tui.go)
+- Reviewed existing ServiceContainer pattern (cmd/dopa/main.go)
 - Reviewed existing test patterns (internal/tui/app_test.go)
 - Counted test surface: 94 tests across 12 test files
 - Loaded golang-pro, golang-patterns, bubbletea, and golang-testing skills
@@ -459,7 +459,7 @@ Ready for implementation.
 4. Service initialization → Use helpers, clear documentation
 
 **Key Files**:
-- Production: internal/tui/app.go, internal/tui/tui.go, cmd/projectdb/tui.go
+- Production: internal/tui/app.go, internal/tui/tui.go, cmd/dopa/tui.go
 - Infrastructure: internal/tui/mocks/services.go, internal/tui/mocks/helpers.go
 - Tests: All internal/tui/*_test.go files (94 tests)
 - Documentation: docs/architecture.md, internal/tui/mocks/README.md
@@ -507,7 +507,7 @@ Updated test files:
 
 Verification:
 - ✅ go build ./internal/tui/... succeeds
-- ✅ go build ./cmd/projectdb/... succeeds
+- ✅ go build ./cmd/dopa/... succeeds
 - Tests compile successfully (ready for execution)
 <!-- SECTION:NOTES:END -->
 
@@ -549,7 +549,7 @@ Replaced single repo db.Querier field in Model struct with 4 service interface f
 7. **internal/tui/navigator.go**
    - Updated navigation methods to use services
 
-8. **cmd/projectdb/tui.go**
+8. **cmd/dopa/tui.go**
    - Updated caller code to use GetServices() to obtain ServiceContainer
    - Extract individual services and pass to tui.New()
    - Handle service cleanup with defer

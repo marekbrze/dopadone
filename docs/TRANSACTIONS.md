@@ -1,10 +1,10 @@
 # Transaction Support
 
-This document describes the transaction support system in ProjectDB, which ensures data consistency for multi-entity operations.
+This document describes the transaction support system in Dopadone, which ensures data consistency for multi-entity operations.
 
 ## Overview
 
-ProjectDB uses database transactions to ensure **atomic** operations when modifying multiple entities. This guarantees that complex operations (like cascade deletes or batch updates) either complete entirely or roll back completely, leaving the database in a consistent state.
+Dopadone uses database transactions to ensure **atomic** operations when modifying multiple entities. This guarantees that complex operations (like cascade deletes or batch updates) either complete entirely or roll back completely, leaving the database in a consistent state.
 
 ## Architecture
 

@@ -23,7 +23,7 @@ Task is a single unit of work within a project. Tasks can be created, listed, up
 - [x] #3 Add domain entity Task in internal/domain/task.go with NewTask factory and validation
 - [x] #4 Add SQL queries in queries/tasks.sql for CreateTask, GetTask, ListTasks, UpdateTask, DeleteTask (soft delete)
 - [x] #5 Run sqlc generate to create internal/db/tasks.sql.go
-- [x] #6 Add CLI commands in cmd/projectdb/tasks.go: task create, task list, task get, task update, task delete
+- [x] #6 Add CLI commands in cmd/dopa/tasks.go: task create, task list, task get, task update, task delete
 - [x] #7 Add is_next boolean field to tasks table (default false) and domain entity for marking priority tasks
 <!-- AC:END -->
 
@@ -96,7 +96,7 @@ Task is a single unit of work within a project. Tasks can be created, listed, up
    - Update `internal/db/querier.go` with new interface methods
 
 ### Phase 6: CLI Commands (AC#6)
-1. Create `cmd/projectdb/tasks.go`:
+1. Create `cmd/dopa/tasks.go`:
    - Root command: `tasks`
    - Subcommands:
      * `create`: Create new task (--project-id required, --title, --status, --priority, --next, etc.)
@@ -141,7 +141,7 @@ Changes:
 - Created internal/domain/task.go with Task entity, NewTask factory, and validation
 - Added queries/tasks.sql with CreateTask, GetTaskByID, ListTasksByProject, ListNextTasks, ListTasksByStatus, ListTasksByPriority, UpdateTask, SoftDeleteTask, ToggleIsNext queries
 - Generated internal/db/tasks.sql.go via sqlc
-- Created cmd/projectdb/tasks.go with task create/list/next/get/update/delete CLI commands
+- Created cmd/dopa/tasks.go with task create/list/next/get/update/delete CLI commands
 - Added task parser functions to internal/cli/validation.go
 - Updated db_test.go to verify tasks table and indexes
 

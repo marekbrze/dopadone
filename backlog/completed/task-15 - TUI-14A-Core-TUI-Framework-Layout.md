@@ -33,7 +33,7 @@ Build the foundational TUI structure using bubbletea. Includes main app model (M
 - [x] #5 Given focus is on any column, When pressing Tab, Then focus cycles through columns in order (Subareas → Projects → Tasks → Subareas)
 - [x] #6 Given focus is on any column, When pressing q or Ctrl+C, Then the application exits cleanly
 - [x] #7 Given the TUI is running, When the terminal is resized, Then the layout adapts to the new dimensions
-- [x] #8 Add 'tui' subcommand to CLI: 'projectdb tui' launches the TUI
+- [x] #8 Add 'tui' subcommand to CLI: 'dopa tui' launches the TUI
 - [x] #9 Unit tests exist for focus state transitions (column-to-column and within-column navigation)
 - [x] #10 Follow clean architecture: TUI components in delivery layer depend on domain types, not vice versa. App model defined in internal/tui package.
 - [x] #11 Use bubbletea best practices: explicit Model struct, Update returns (Model, Cmd), View returns string. No side effects in View.
@@ -135,7 +135,7 @@ This task is appropriately sized as the core framework. Splitting would create a
 **Depends on Phase 3 completion**
 
 **Track E: TUI Subcommand**
-- File: `cmd/projectdb/tui.go` (new file)
+- File: `cmd/dopa/tui.go` (new file)
 - Implementation:
   - Create tuiCmd cobra.Command
   - Run function:
@@ -143,7 +143,7 @@ This task is appropriately sized as the core framework. Splitting would create a
     - Create tea program: tea.NewProgram(InitialModel())
     - Run with alt screen: p.Run()
   - Register in main.go init(): rootCmd.AddCommand(tuiCmd)
-- Testing: `projectdb tui` launches and displays UI (AC #8)
+- Testing: `dopa tui` launches and displays UI (AC #8)
 
 ### Phase 5: Testing & Validation (Sequential)
 **Final phase before completion**
@@ -163,7 +163,7 @@ This task is appropriately sized as the core framework. Splitting would create a
    - AC #3-5: Focus navigation works (h/l/arrows/Tab)
    - AC #6: q/Ctrl+C exits cleanly
    - AC #7: Terminal resize adapts layout
-   - AC #8: `projectdb tui` command works
+   - AC #8: `dopa tui` command works
    - AC #10: Review imports (TUI depends on domain, not vice versa)
    - AC #11: Code review for bubbletea patterns
 
@@ -221,7 +221,7 @@ This task is appropriately sized as the core framework. Splitting would create a
 - [ ] Unit tests pass: `go test ./internal/tui -v`
 - [ ] Code passes: `go vet ./...`
 - [ ] Code passes: linting (golangci-lint or manual review)
-- [ ] `projectdb tui` command works
+- [ ] `dopa tui` command works
 - [ ] Focus state transitions tested
 - [ ] Terminal resize tested (manual)
 - [ ] Clean architecture verified (imports direction)
@@ -296,7 +296,7 @@ This task is appropriately sized as the core framework. Splitting would create a
 - Configured with alt screen mode
 
 ## Phase 4: CLI Integration (Completed)
-### TUI Subcommand (cmd/projectdb/tui.go)
+### TUI Subcommand (cmd/dopa/tui.go)
 - Created tuiCmd cobra.Command
 - Run function creates and executes tea program
 - Registered in main via init()
@@ -316,7 +316,7 @@ This task is appropriately sized as the core framework. Splitting would create a
 ### Code Quality
 - go vet: No errors
 - Build: All packages compile successfully
-- go run ./cmd/projectdb tui --help: Command works correctly
+- go run ./cmd/dopa tui --help: Command works correctly
 
 ## Architecture Verification
 ✓ TUI in internal/tui package (delivery layer)
@@ -335,7 +335,7 @@ This task is appropriately sized as the core framework. Splitting would create a
 - Ready for user review (not committed per user request)
 
 ## Manual Testing Notes
-The TUI can be launched with: `go run ./cmd/projectdb tui`
+The TUI can be launched with: `go run ./cmd/dopa tui`
 - Tabs render at top with visual highlighting
 - 3-column layout displays with borders
 - h/l/arrow keys navigate between columns with wrapping
@@ -370,7 +370,7 @@ Implemented core TUI framework using bubbletea with Model-Update-View pattern, p
 - WindowSizeMsg handler for terminal resize support
 
 ### CLI Integration
-- Added `projectdb tui` command in `cmd/projectdb/tui.go`
+- Added `dopa tui` command in `cmd/dopa/tui.go`
 - Launches TUI with alt screen mode
 
 ### Testing
@@ -395,13 +395,13 @@ go test ./internal/tui -v  # All 8 tests passing
 
 # Build verification
 go build ./internal/tui/...
-go build ./cmd/projectdb/...
+go build ./cmd/dopa/...
 
 # Command verification
-go run ./cmd/projectdb tui --help
+go run ./cmd/dopa tui --help
 
 # Code quality
-go vet ./internal/tui/... ./cmd/projectdb/...  # No issues
+go vet ./internal/tui/... ./cmd/dopa/...  # No issues
 ```
 
 ## Next Steps (tasks 16-19)
@@ -418,7 +418,7 @@ go vet ./internal/tui/... ./cmd/projectdb/...  # No issues
 - `internal/tui/views/tabs.go` - Area tabs component
 - `internal/tui/views/columns.go` - 3-column layout component
 - `internal/tui/tui_test.go` - Unit tests for focus state
-- `cmd/projectdb/tui.go` - TUI subcommand
+- `cmd/dopa/tui.go` - TUI subcommand
 
 ## Dependencies Added
 - github.com/charmbracelet/bubbletea v1.3.10

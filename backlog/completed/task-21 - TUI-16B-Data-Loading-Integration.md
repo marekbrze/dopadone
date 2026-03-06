@@ -102,7 +102,7 @@ Phase 3: View Integration
 - Write unit tests
 
 Phase 4: Entry Point Wiring
-- Update cmd/projectdb/tui.go to accept db.Querier
+- Update cmd/dopa/tui.go to accept db.Querier
 - Wire repository to InitialModel
 - Write integration tests
 
@@ -175,7 +175,7 @@ Phase 6: Final Validation
 - Updated InitialModel to accept db.Querier parameter and initialize spinner
 - Updated Init() to start loading areas on startup
 - Updated tui.New() to accept repository parameter
-- Updated cmd/projectdb/tui.go to wire database connection to TUI
+- Updated cmd/dopa/tui.go to wire database connection to TUI
 - Created constants.go with spinner IDs, empty state messages, and loading messages
 
 ## Phase 2 & 3 Complete
@@ -246,7 +246,7 @@ Changes:
 - Added render methods for subareas, projects, and tasks
 - Integrated empty state messages with keyboard hints
 - Wired repository through tui.New() to InitialModel
-- Updated cmd/projectdb/tui.go to inject database connection
+- Updated cmd/dopa/tui.go to inject database connection
 
 Testing:
 - Created MockQuerier for isolated testing
@@ -268,7 +268,7 @@ Files changed:
 - internal/tui/constants.go (new)
 - internal/tui/app.go (extended)
 - internal/tui/tui.go (updated)
-- cmd/projectdb/tui.go (wired)
+- cmd/dopa/tui.go (wired)
 - go.mod (added bubbles)
 - 5 new test files
 <!-- SECTION:FINAL_SUMMARY:END -->

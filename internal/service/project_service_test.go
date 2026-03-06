@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/example/projectdb/internal/db"
-	"github.com/example/projectdb/internal/domain"
+	"github.com/example/dopadone/internal/db"
+	"github.com/example/dopadone/internal/domain"
 )
 
 type mockProjectQuerier struct {

@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/example/projectdb/internal/cli"
-	"github.com/example/projectdb/internal/cli/filter"
-	"github.com/example/projectdb/internal/cli/output"
-	"github.com/example/projectdb/internal/domain"
-	"github.com/example/projectdb/internal/service"
+	"github.com/example/dopadone/internal/cli"
+	"github.com/example/dopadone/internal/cli/filter"
+	"github.com/example/dopadone/internal/cli/output"
+	"github.com/example/dopadone/internal/domain"
+	"github.com/example/dopadone/internal/service"
 	"github.com/spf13/cobra"
 )
 
@@ -25,13 +25,13 @@ var projectsCreateCmd = &cobra.Command{
 	Short: "Create a new project",
 	Long:  "Create a new project. Must specify either --subarea-id OR --parent-id (not both).",
 	Example: `  # Create a project under a subarea (root project)
-  projectdb projects create --name "Website Redesign" --subarea-id "subarea-123"
+  dopa projects create --name "Website Redesign" --subarea-id "subarea-123"
 
   # Create a nested project under another project
-  projectdb projects create --name "Backend API" --parent-id "project-456" --priority high
+  dopa projects create --name "Backend API" --parent-id "project-456" --priority high
 
   # Create a project with all optional fields
-  projectdb projects create --name "Q4 Campaign" --subarea-id "subarea-123" \
+  dopa projects create --name "Q4 Campaign" --subarea-id "subarea-123" \
     --status active --priority urgent --progress 25 \
     --start-date 2024-10-01 --deadline 2024-12-31 \
     --color "#FF5733" --goal "Launch campaign by year end" \
@@ -44,28 +44,28 @@ var projectsListCmd = &cobra.Command{
 	Short: "List all projects",
 	Long:  "List all projects, optionally filtered by status, priority, subarea, or parent.",
 	Example: `  # List all projects
-  projectdb projects list
+  dopa projects list
 
   # List projects by status
-  projectdb projects list --status active
+  dopa projects list --status active
 
   # List high priority projects
-  projectdb projects list --priority high
+  dopa projects list --priority high
 
   # List projects under a subarea
-  projectdb projects list --subarea-id "subarea-123"
+  dopa projects list --subarea-id "subarea-123"
 
   # List nested projects under a parent
-  projectdb projects list --parent-id "project-456"
+  dopa projects list --parent-id "project-456"
 
   # Output as JSON
-  projectdb projects list --json
+  dopa projects list --json
 
   # Output as YAML
-  projectdb projects list --format=yaml
+  dopa projects list --format=yaml
 
   # Filter with query syntax
-  projectdb projects list --filter 'status=active AND priority>=high'`,
+  dopa projects list --filter 'status=active AND priority>=high'`,
 	Run: runProjectsList,
 }
 
@@ -74,7 +74,7 @@ var projectsGetCmd = &cobra.Command{
 	Short: "Get a project by ID",
 	Long:  "Display details of a specific project by its ID.",
 	Example: `  # Get a project by ID
-  projectdb projects get "project-123"`,
+  dopa projects get "project-123"`,
 	Args: cobra.ExactArgs(1),
 	Run:  runProjectsGet,
 }
@@ -84,16 +84,16 @@ var projectsUpdateCmd = &cobra.Command{
 	Short: "Update a project",
 	Long:  "Update a project's fields. All fields are optional.",
 	Example: `  # Update a project's name
-  projectdb projects update "project-123" --name "New Project Name"
+  dopa projects update "project-123" --name "New Project Name"
 
   # Update status and priority
-  projectdb projects update "project-123" --status completed --priority high
+  dopa projects update "project-123" --status completed --priority high
 
   # Update progress and deadline
-  projectdb projects update "project-123" --progress 75 --deadline 2024-12-31
+  dopa projects update "project-123" --progress 75 --deadline 2024-12-31
 
   # Update multiple fields
-  projectdb projects update "project-123" --name "Updated" --status on_hold --color "#00FF00"`,
+  dopa projects update "project-123" --name "Updated" --status on_hold --color "#00FF00"`,
 	Args: cobra.ExactArgs(1),
 	Run:  runProjectsUpdate,
 }
@@ -103,10 +103,10 @@ var projectsDeleteCmd = &cobra.Command{
 	Short: "Delete a project",
 	Long:  "Delete a project by ID. By default performs a soft delete.",
 	Example: `  # Soft delete a project (can be recovered)
-  projectdb projects delete "project-123"
+  dopa projects delete "project-123"
 
   # Permanently delete a project
-  projectdb projects delete "project-123" --permanent`,
+  dopa projects delete "project-123" --permanent`,
 	Args: cobra.ExactArgs(1),
 	Run:  runProjectsDelete,
 }

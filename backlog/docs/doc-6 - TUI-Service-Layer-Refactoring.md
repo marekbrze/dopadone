@@ -211,7 +211,7 @@ func LoadProjectsCmd(projectSvc service.ProjectServiceInterface, subareaID *stri
    ) *tea.Program
    ```
 
-3. **Caller Code** (`cmd/projectdb/tui.go`):
+3. **Caller Code** (`cmd/dopa/tui.go`):
    ```go
    // BEFORE
    repo := db.New(dbConn)

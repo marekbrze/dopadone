@@ -3,8 +3,8 @@ package mocks
 import (
 	"context"
 
-	"github.com/example/projectdb/internal/domain"
-	"github.com/example/projectdb/internal/service"
+	"github.com/example/dopadone/internal/domain"
+	"github.com/example/dopadone/internal/service"
 )
 
 func NewMockServices() (*MockAreaService, *MockSubareaService, *MockProjectService, *MockTaskService) {

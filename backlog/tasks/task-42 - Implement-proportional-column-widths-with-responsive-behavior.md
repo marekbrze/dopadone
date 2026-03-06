@@ -470,7 +470,7 @@ go test -race ./internal/tui/views/...
 
 ### Test Procedure
 
-1. Start TUI: `go run ./cmd/projectdb tui`
+1. Start TUI: `go run ./cmd/dopa tui`
 2. Set terminal to 80 cols, verify layout
 3. Resize to 90 cols, verify instant adjustment
 4. Resize to 120 cols, verify standard layout

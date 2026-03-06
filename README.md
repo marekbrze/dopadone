@@ -1,8 +1,8 @@
-# ProjectDB - CLI Project Management for Developers
+# Dopadone - CLI Project Management for Developers
 
 **Organize your projects, tasks, and workflows from the command line.**
 
-ProjectDB is a lightweight, SQLite-based project management tool designed for developers who prefer staying in the terminal. It provides a clean hierarchical structure for organizing work without the overhead of bloated project management software.
+Dopadone is a lightweight, SQLite-based project management tool designed for developers who prefer staying in the terminal. It provides a clean hierarchical structure for organizing work without the overhead of bloated project management software.
 
 **The problem:** You need to track projects, sub-projects, and tasks across multiple areas of your life (work, personal, side projects), but existing tools are either too heavy, require a web browser, or don't fit a developer's workflow.
 
@@ -14,24 +14,24 @@ Get started in 30 seconds with a complete workflow using **Areas** (top-level co
 
 ```bash
 # Install (one of these methods)
-go install github.com/example/projectdb/cmd/projectdb@latest
+go install github.com/example/dopa/cmd/dopa@latest
 # OR: download binary from releases
 # OR: make build
 
 # Initialize database with migrations
-projectdb migrate up
+dopa migrate up
 
 # CREATE: Add a new area
-projectdb area create --name "Work" --color "#3B82F6"
+dopa area create --name "Work" --color "#3B82F6"
 
 # READ: List all areas
-projectdb area list
+dopa area list
 
 # UPDATE: Modify an area
-projectdb area update <area-id> --name "Professional Work"
+dopa area update <area-id> --name "Professional Work"
 
 # DELETE: Remove an area (soft delete by default)
-projectdb area delete <area-id>
+dopa area delete <area-id>
 ```
 
 Once you understand areas, the same CRUD pattern applies to subareas, projects, and tasks.
@@ -44,31 +44,31 @@ Download the latest release for your platform:
 
 | Platform | Architecture | Binary |
 |----------|--------------|--------|
-| Linux | amd64 | `projectdb-linux-amd64` |
-| macOS | amd64 | `projectdb-darwin-amd64` |
-| macOS | arm64 (M1/M2) | `projectdb-darwin-arm64` |
-| Windows | amd64 | `projectdb-windows-amd64.exe` |
+| Linux | amd64 | `dopa-linux-amd64` |
+| macOS | amd64 | `dopa-darwin-amd64` |
+| macOS | arm64 (M1/M2) | `dopa-darwin-arm64` |
+| Windows | amd64 | `dopa-windows-amd64.exe` |
 
 After downloading, make it executable and move to your PATH:
 
 ```bash
-chmod +x projectdb-*
-sudo mv projectdb-* /usr/local/bin/projectdb
+chmod +x dopa-*
+sudo mv dopa-* /usr/local/bin/dopa
 ```
 
 ### Option 2: Install with Go
 
 ```bash
-go install github.com/example/projectdb/cmd/projectdb@latest
+go install github.com/example/dopa/cmd/dopa@latest
 ```
 
 ### Option 3: Build from Source
 
 ```bash
-git clone https://github.com/example/projectdb.git
-cd projectdb
+git clone https://github.com/example/dopa.git
+cd dopa
 make build
-# Binary will be at bin/projectdb
+# Binary will be at bin/dopa
 ```
 
 ## Usage
@@ -89,24 +89,24 @@ Top-level containers for organizing your work:
 
 ```bash
 # Create
-projectdb area create --name "Personal" --color "#10B981"
-projectdb area create --name "Work" --color "#3B82F6"
+dopa area create --name "Personal" --color "#10B981"
+dopa area create --name "Work" --color "#3B82F6"
 
 # List
-projectdb area list
-projectdb area list --format json
-projectdb area list --filter 'name=Work'
+dopa area list
+dopa area list --format json
+dopa area list --filter 'name=Work'
 
 # Get details
-projectdb area get <area-id>
+dopa area get <area-id>
 
 # Update
-projectdb area update <area-id> --name "Professional"
-projectdb area update <area-id> --color "#8B5CF6"
+dopa area update <area-id> --name "Professional"
+dopa area update <area-id> --color "#8B5CF6"
 
 # Delete (soft delete by default, recoverable)
-projectdb area delete <area-id>
-projectdb area delete <area-id> --permanent  # Hard delete
+dopa area delete <area-id>
+dopa area delete <area-id> --permanent  # Hard delete
 ```
 
 ### Subareas
@@ -115,17 +115,17 @@ Subdivisions within areas:
 
 ```bash
 # Create (requires parent area)
-projectdb subarea create --name "Backend" --area-id <area-id>
-projectdb subarea create --name "Frontend" --area-id <area-id> --color "#EC4899"
+dopa subarea create --name "Backend" --area-id <area-id>
+dopa subarea create --name "Frontend" --area-id <area-id> --color "#EC4899"
 
 # List
-projectdb subarea list
-projectdb subarea list --filter 'area_id=<area-id>'
+dopa subarea list
+dopa subarea list --filter 'area_id=<area-id>'
 
 # Get, Update, Delete (same pattern as areas)
-projectdb subarea get <subarea-id>
-projectdb subarea update <subarea-id> --name "API Development"
-projectdb subarea delete <subarea-id>
+dopa subarea get <subarea-id>
+dopa subarea update <subarea-id> --name "API Development"
+dopa subarea delete <subarea-id>
 ```
 
 ### Projects
@@ -134,31 +134,31 @@ Projects can be root-level (linked to subarea) or nested (linked to parent proje
 
 ```bash
 # Create root project (linked to subarea)
-projectdb project create --name "Website Redesign" --subarea-id <subarea-id>
+dopa project create --name "Website Redesign" --subarea-id <subarea-id>
 
 # Create nested sub-project (linked to parent project)
-projectdb project create --name "API Integration" --parent-id <project-id>
+dopa project create --name "API Integration" --parent-id <project-id>
 
 # Create with all options
-projectdb project create --name "Q4 Campaign" --subarea-id <subarea-id> \
+dopa project create --name "Q4 Campaign" --subarea-id <subarea-id> \
   --status active --priority high --progress 25 \
   --start-date 2024-10-01 --deadline 2024-12-31 \
   --goal "Launch by year end" --description "Marketing campaign"
 
 # List with filters
-projectdb project list
-projectdb project list --status active
-projectdb project list --priority high
-projectdb project list --subarea-id <subarea-id>
-projectdb project list --parent-id <project-id>
-projectdb project list --filter 'status=active AND priority>=high'
+dopa project list
+dopa project list --status active
+dopa project list --priority high
+dopa project list --subarea-id <subarea-id>
+dopa project list --parent-id <project-id>
+dopa project list --filter 'status=active AND priority>=high'
 
 # Update
-projectdb project update <project-id> --status completed --progress 100
-projectdb project update <project-id> --priority urgent --deadline 2024-12-31
+dopa project update <project-id> --status completed --progress 100
+dopa project update <project-id> --priority urgent --deadline 2024-12-31
 
 # Delete
-projectdb project delete <project-id>
+dopa project delete <project-id>
 ```
 
 **Project Status Options:** `active`, `completed`, `on_hold`, `archived`
@@ -171,29 +171,29 @@ Individual work items within projects:
 
 ```bash
 # Create
-projectdb task create --project-id <project-id> --title "Write documentation"
-projectdb task create --project-id <project-id> --title "API Integration" \
+dopa task create --project-id <project-id> --title "Write documentation"
+dopa task create --project-id <project-id> --title "API Integration" \
   --description "Integrate with external API" \
   --status in_progress --priority high \
   --start-date 2024-01-15 --deadline 2024-01-31 \
   --context "backend" --duration 60 --next
 
 # List
-projectdb task list
-projectdb task list --project-id <project-id>
-projectdb task list --status in_progress
-projectdb task list --next  # Show only priority tasks
+dopa task list
+dopa task list --project-id <project-id>
+dopa task list --status in_progress
+dopa task list --next  # Show only priority tasks
 
 # Show next/priority tasks
-projectdb task next
+dopa task next
 
 # Update
-projectdb task update <task-id> --status done
-projectdb task update <task-id> --next     # Mark as priority
-projectdb task update <task-id> --no-next  # Remove priority flag
+dopa task update <task-id> --status done
+dopa task update <task-id> --next     # Mark as priority
+dopa task update <task-id> --no-next  # Remove priority flag
 
 # Delete
-projectdb task delete <task-id>
+dopa task delete <task-id>
 ```
 
 **Task Status Options:** `todo`, `in_progress`, `waiting`, `done`
@@ -208,14 +208,14 @@ Control output format with `--format` or `-o`:
 
 ```bash
 # Table format (default)
-projectdb area list
+dopa area list
 
 # JSON format
-projectdb area list --format json
-projectdb area list -o json
+dopa area list --format json
+dopa area list -o json
 
 # YAML format
-projectdb area list --format yaml
+dopa area list --format yaml
 ```
 
 ### Table Output Example
@@ -243,7 +243,7 @@ These flags work with all commands:
 
 | Flag | Description | Default |
 |------|-------------|---------|
-| `--db` | Path to SQLite database file | `./projectdb.db` |
+| `--db` | Path to SQLite database file | `./dopa.db` |
 | `-o, --output` | Output format (`table`, `json`) | `table` |
 | `--format` | Extended output format (`table`, `json`, `yaml`) | `table` |
 
@@ -251,22 +251,22 @@ Examples:
 
 ```bash
 # Use a custom database location
-projectdb --db /path/to/my.db area list
+dopa --db /path/to/my.db area list
 
 # Output as JSON for scripting
-projectdb -o json project list --status active
+dopa -o json project list --status active
 
 # Combine with other tools
-projectdb --format json task list | jq '.[] | select(.priority=="high")'
+dopa --format json task list | jq '.[] | select(.priority=="high")'
 ```
 
 ## Terminal User Interface (TUI)
 
-ProjectDB includes an interactive terminal UI for visual browsing and management:
+Dopadone includes an interactive terminal UI for visual browsing and management:
 
 ```bash
 # Launch the TUI
-projectdb tui
+dopa tui
 ```
 
 The TUI provides:
@@ -309,20 +309,20 @@ For comprehensive TUI documentation including architecture, components, and impl
 
 ## Database Migrations
 
-ProjectDB manages its own schema via embedded migrations:
+Dopadone manages its own schema via embedded migrations:
 
 ```bash
 # Apply migrations (run once after install)
-projectdb migrate up
+dopa migrate up
 
 # Check migration status
-projectdb migrate status
+dopa migrate status
 
 # Rollback last migration
-projectdb migrate down
+dopa migrate down
 
 # Reset database (warning: destroys data)
-projectdb migrate reset
+dopa migrate reset
 ```
 
 ---
@@ -339,7 +339,7 @@ projectdb migrate reset
 ### Build Commands
 
 ```bash
-make build          # Build binary to bin/projectdb
+make build          # Build binary to bin/dopa
 make build-all      # Cross-compile for all platforms
 make dist           # Build + create distribution archives
 make clean          # Remove build artifacts
@@ -416,7 +416,7 @@ go test ./internal/db/... -v -run "TestCompleteHierarchy|TestSoftDeleteCascade"
 
 ### Transaction Support
 
-ProjectDB uses database transactions for operations that modify multiple entities:
+Dopadone uses database transactions for operations that modify multiple entities:
 
 - **HardDelete operations**: Cascade deletes wrapped in transactions (tasks→projects→subareas→area)
 - **Batch operations**: Sort order updates and bulk changes are atomic

@@ -323,7 +323,7 @@ func LoadProjectsCmd(projectSvc service.ProjectServiceInterface, subareaID *stri
 ### 4.1: Compilation Verification
 ```bash
 go build ./internal/tui/...
-go build ./cmd/projectdb/...
+go build ./cmd/dopa/...
 ```
 
 ### 4.2: Test Verification
@@ -352,7 +352,7 @@ golangci-lint run ./internal/tui/...
 ### 4.4: Manual Verification (5 min)
 ```bash
 # Build and run TUI
-go run ./cmd/projectdb tui
+go run ./cmd/dopa tui
 
 # Test scenarios:
 # 1. Navigate to a subarea with projects

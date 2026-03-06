@@ -1,6 +1,6 @@
 package tui
 
-import "github.com/example/projectdb/internal/tui/tree"
+import "github.com/example/dopadone/internal/tui/tree"
 
 func (m *Model) navigateTreeUp() {
 	if m.projectTree == nil {

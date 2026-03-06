@@ -34,7 +34,7 @@ Implement full CRUD operations for Subareas entity via CLI with area relationshi
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
-1. Create cmd/projectdb/subareas.go with Cobra command structure\n2. Implement subareas create command with --name, --area-id, --color flags\n3. Implement subareas list command with --area-id filter (lists all when not specified)\n4. Implement subareas get command for single subarea display\n5. Implement subareas update command with --name, --color flags\n6. Implement subareas delete command with --permanent flag (soft delete by default)\n7. Add examples to all commands for help text\n8. Register subareas parent command in main.go
+1. Create cmd/dopa/subareas.go with Cobra command structure\n2. Implement subareas create command with --name, --area-id, --color flags\n3. Implement subareas list command with --area-id filter (lists all when not specified)\n4. Implement subareas get command for single subarea display\n5. Implement subareas update command with --name, --color flags\n6. Implement subareas delete command with --permanent flag (soft delete by default)\n7. Add examples to all commands for help text\n8. Register subareas parent command in main.go
 <!-- SECTION:PLAN:END -->
 
 ## Final Summary
@@ -43,7 +43,7 @@ Implement full CRUD operations for Subareas entity via CLI with area relationshi
 Implemented complete CRUD CLI commands for Subareas entity.
 
 Changes:
-- Created cmd/projectdb/subareas.go with 5 subcommands (create, list, get, update, delete)
+- Created cmd/dopa/subareas.go with 5 subcommands (create, list, get, update, delete)
 - Implemented subareas create with --name, --area-id (required) and --color flags
 - Implemented subareas list with --area-id filter, --json flag, and --format=table|json
 - Implemented subareas get for single subarea display (JSON output)

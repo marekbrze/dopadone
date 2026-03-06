@@ -3,8 +3,8 @@
 
 set -e
 
-DB_PATH="${1:-./projectdb.db}"
-CMD="go run ./cmd/projectdb --db $DB_PATH"
+DB_PATH="${1:-./dopa.db}"
+CMD="go run ./cmd/dopa --db $DB_PATH"
 
 echo "Seeding database at $DB_PATH..."
 echo ""
@@ -73,7 +73,7 @@ $CMD projects create --name "Analytics Dashboard" --subarea-id $SUB5 --output js
 $CMD projects create --name "Data Pipeline" --subarea-id $SUB5 --output json > /dev/null
 
 # Side Projects - Open Source
-PROJ6=$($CMD projects create --name "ProjectDB" --subarea-id $SUB6 --output json | grep -o '"id"[[:space:]]*:[[:space:]]*"[^"]*"' | grep -o '"[^"]*"$' | tr -d '"')
+PROJ6=$($CMD projects create --name "Dopadone" --subarea-id $SUB6 --output json | grep -o '"id"[[:space:]]*:[[:space:]]*"[^"]*"' | grep -o '"[^"]*"$' | tr -d '"')
 $CMD projects create --name "Core Features" --parent-id $PROJ6 --output json > /dev/null
 $CMD projects create --name "TUI Interface" --parent-id $PROJ6 --output json > /dev/null
 $CMD projects create --name "CLI Commands" --parent-id $PROJ6 --output json > /dev/null
@@ -141,7 +141,7 @@ echo "$PROJ_DATA" | while IFS='|' read PROJ_ID PROJ_NAME; do
                 $CMD tasks create --title "Implement core functionality" --project-id "$PROJ_ID" > /dev/null 2>&1
                 $CMD tasks create --title "Test on devices" --project-id "$PROJ_ID" > /dev/null 2>&1
                 ;;
-            *ProjectDB*|*Open*|*Source*)
+            *Dopadone*|*Open*|*Source*)
                 # Open source tasks
                 $CMD tasks create --title "Write documentation" --project-id "$PROJ_ID" > /dev/null 2>&1
                 $CMD tasks create --title "Set up CI/CD" --project-id "$PROJ_ID" > /dev/null 2>&1
@@ -164,4 +164,4 @@ echo ""
 echo "Summary:"
 $CMD areas list
 echo ""
-echo "Run 'go run ./cmd/projectdb tui' to test the TUI with this data."
+echo "Run 'go run ./cmd/dopa tui' to test the TUI with this data."

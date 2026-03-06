@@ -34,7 +34,7 @@ Implement full CRUD operations for Areas entity via CLI using existing domain va
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
-1. Create cmd/projectdb/areas.go with cobra command struct
+1. Create cmd/dopa/areas.go with cobra command struct
 2. Implement areas create subcommand with flags
 3. Implement areas list subcommand with output formatting
 4. Implement areas get subcommand
@@ -47,7 +47,7 @@ Implement full CRUD operations for Areas entity via CLI using existing domain va
 ## Final Summary
 
 <!-- SECTION:FINAL_SUMMARY:BEGIN -->
-Implemented full Areas CRUD CLI commands in cmd/projectdb/areas.go following existing patterns from projects.go and subareas.go.
+Implemented full Areas CRUD CLI commands in cmd/dopa/areas.go following existing patterns from projects.go and subareas.go.
 
 Commands implemented:
 - `areas create`: Creates new area with --name (required) and optional --color flags

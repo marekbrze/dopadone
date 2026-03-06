@@ -1,11 +1,11 @@
 #!/bin/bash
-# Install script for projectdb
-# Usage: curl -sSL https://raw.githubusercontent.com/example/projectdb/main/scripts/install.sh | sh
+# Install script for dopa
+# Usage: curl -sSL https://raw.githubusercontent.com/example/dopa/main/scripts/install.sh | sh
 
 set -e
 
-REPO="example/projectdb"
-BINARY_NAME="projectdb"
+REPO="example/dopa"
+BINARY_NAME="dopa"
 INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
 
 detect_platform() {

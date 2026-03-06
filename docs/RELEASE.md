@@ -1,6 +1,6 @@
 # Release Process
 
-This document describes how to release new versions of projectdb.
+This document describes how to release new versions of dopa.
 
 ## Versioning
 
@@ -63,12 +63,12 @@ Once the tag is pushed, GitHub Actions will:
 
 ### 5. Verify the Release
 
-1. Check the [Releases page](https://github.com/example/projectdb/releases)
+1. Check the [Releases page](https://github.com/example/dopa/releases)
 2. Download and test the binaries
 3. Verify the version command shows correct info:
 
 ```bash
-./projectdb version --all
+./dopa version --all
 ```
 
 ## Pre-release Versions
@@ -105,7 +105,7 @@ VERSION=v1.0.0 make build-versioned
 
 If a release has critical issues:
 
-1. Go to [Releases](https://github.com/example/projectdb/releases)
+1. Go to [Releases](https://github.com/example/dopa/releases)
 2. Find the problematic release
 3. Click "Delete" to remove it
 4. Delete the tag locally and remotely:
@@ -122,7 +122,7 @@ git push origin :refs/tags/v1.0.1
 ## Checking Your Version
 
 ```bash
-projectdb version --all
+dopa version --all
 ```
 
 ## Automatic Upgrade (Recommended)
@@ -133,13 +133,13 @@ The `upgrade` command handles everything automatically:
 - Runs database migrations
 
 ```bash
-projectdb upgrade
+dopa upgrade
 ```
 
 To skip migrations during upgrade:
 
 ```bash
-projectdb upgrade --skip-migrate
+dopa upgrade --skip-migrate
 ```
 
 ## Manual Migrations
@@ -148,16 +148,16 @@ Database migrations are embedded in the binary. To run them manually:
 
 ```bash
 # Check migration status
-projectdb migrate status
+dopa migrate status
 
 # Apply pending migrations
-projectdb migrate up
+dopa migrate up
 
 # Rollback last migration
-projectdb migrate down
+dopa migrate down
 
 # Reset database (rollback all, then apply all)
-projectdb migrate reset
+dopa migrate reset
 ```
 
 ## Manual Installation
@@ -165,40 +165,40 @@ projectdb migrate reset
 ### Option 1: Quick Install (Linux/macOS)
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/example/projectdb/main/scripts/install.sh | sh
+curl -sSL https://raw.githubusercontent.com/example/dopa/main/scripts/install.sh | sh
 ```
 
 ### Option 2: Manual Download
 
-1. Go to [Releases](https://github.com/example/projectdb/releases/latest)
+1. Go to [Releases](https://github.com/example/dopa/releases/latest)
 2. Download the archive for your platform:
-   - Linux: `projectdb-linux-amd64.tar.gz`
-   - macOS (Intel): `projectdb-darwin-amd64.tar.gz`
-   - macOS (Apple Silicon): `projectdb-darwin-arm64.tar.gz`
-   - Windows: `projectdb-windows-amd64.zip`
+   - Linux: `dopa-linux-amd64.tar.gz`
+   - macOS (Intel): `dopa-darwin-amd64.tar.gz`
+   - macOS (Apple Silicon): `dopa-darwin-arm64.tar.gz`
+   - Windows: `dopa-windows-amd64.zip`
 
 3. Extract and install:
 
 **Linux/macOS:**
 ```bash
-tar xzf projectdb-linux-amd64.tar.gz
-sudo mv projectdb /usr/local/bin/
+tar xzf dopa-linux-amd64.tar.gz
+sudo mv dopa /usr/local/bin/
 ```
 
 **Windows (PowerShell):**
 ```powershell
-Expand-Archive projectdb-windows-amd64.zip
-Move-Item projectdb.exe -Destination "$env:USERPROFILE\bin\"
+Expand-Archive dopa-windows-amd64.zip
+Move-Item dopa.exe -Destination "$env:USERPROFILE\bin\"
 ```
 
 4. Run migrations:
 ```bash
-projectdb migrate up
+dopa migrate up
 ```
 
 5. Verify:
 ```bash
-projectdb version
+dopa version
 ```
 
 ## Specific Version Installation
@@ -207,7 +207,7 @@ To install a specific version:
 
 ```bash
 VERSION=v1.0.0
-curl -sSL https://github.com/example/projectdb/releases/download/${VERSION}/projectdb-linux-amd64.tar.gz | tar xz
-sudo mv projectdb /usr/local/bin/
-projectdb migrate up
+curl -sSL https://github.com/example/dopa/releases/download/${VERSION}/dopa-linux-amd64.tar.gz | tar xz
+sudo mv dopa /usr/local/bin/
+dopa migrate up
 ```

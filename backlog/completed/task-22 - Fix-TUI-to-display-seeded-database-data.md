@@ -173,7 +173,7 @@ This task can be completed in a **single implementation cycle** with clearly seq
 
 **Step 5.2: Run TUI and verify**
 ```bash
-go run ./cmd/projectdb tui --db ./test-tui.db
+go run ./cmd/dopa tui --db ./test-tui.db
 ```
 
 **Step 5.3: Verify all ACs visually**
@@ -306,7 +306,7 @@ Fixed TUI to display seeded database data by implementing dynamic tab updates an
 ## Testing
 ```bash
 go test ./internal/tui/... -v
-go build ./cmd/projectdb
+go build ./cmd/dopa
 ```
 
 ## Files Modified

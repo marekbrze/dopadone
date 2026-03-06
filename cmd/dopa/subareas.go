@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/example/projectdb/internal/cli"
-	"github.com/example/projectdb/internal/cli/filter"
-	"github.com/example/projectdb/internal/cli/output"
-	"github.com/example/projectdb/internal/domain"
-	"github.com/example/projectdb/internal/service"
+	"github.com/example/dopadone/internal/cli"
+	"github.com/example/dopadone/internal/cli/filter"
+	"github.com/example/dopadone/internal/cli/output"
+	"github.com/example/dopadone/internal/domain"
+	"github.com/example/dopadone/internal/service"
 	"github.com/spf13/cobra"
 )
 
@@ -25,10 +25,10 @@ var subareasCreateCmd = &cobra.Command{
 	Short: "Create a new subarea",
 	Long:  "Create a new subarea under a specified area.",
 	Example: `  # Create a subarea with required fields
-  projectdb subareas create --name "Backend" --area-id "area-123"
+  dopa subareas create --name "Backend" --area-id "area-123"
 
   # Create a subarea with a color
-  projectdb subareas create --name "Frontend" --area-id "area-123" --color "#FF5733"`,
+  dopa subareas create --name "Frontend" --area-id "area-123" --color "#FF5733"`,
 	Run: runSubareasCreate,
 }
 
@@ -37,20 +37,20 @@ var subareasListCmd = &cobra.Command{
 	Short: "List all subareas",
 	Long:  "List all subareas, optionally filtered by area ID.",
 	Example: `  # List all subareas
-  projectdb subareas list
+  dopa subareas list
 
   # List subareas for a specific area
-  projectdb subareas list --area-id "area-123"
+  dopa subareas list --area-id "area-123"
 
   # Output as JSON
-  projectdb subareas list --json
-  projectdb subareas list --format=json
+  dopa subareas list --json
+  dopa subareas list --format=json
 
   # Output as YAML
-  projectdb subareas list --format=yaml
+  dopa subareas list --format=yaml
 
   # Filter subareas
-  projectdb subareas list --filter 'name=Backend'`,
+  dopa subareas list --filter 'name=Backend'`,
 	Run: runSubareasList,
 }
 
@@ -59,7 +59,7 @@ var subareasGetCmd = &cobra.Command{
 	Short: "Get a subarea by ID",
 	Long:  "Display details of a specific subarea by its ID.",
 	Example: `  # Get a subarea by ID
-  projectdb subareas get "subarea-123"`,
+  dopa subareas get "subarea-123"`,
 	Args: cobra.ExactArgs(1),
 	Run:  runSubareasGet,
 }
@@ -69,13 +69,13 @@ var subareasUpdateCmd = &cobra.Command{
 	Short: "Update a subarea",
 	Long:  "Update a subarea's name and/or color.",
 	Example: `  # Update a subarea's name
-  projectdb subareas update "subarea-123" --name "New Name"
+  dopa subareas update "subarea-123" --name "New Name"
 
   # Update a subarea's color
-  projectdb subareas update "subarea-123" --color "#00FF00"
+  dopa subareas update "subarea-123" --color "#00FF00"
 
   # Update both name and color
-  projectdb subareas update "subarea-123" --name "Updated" --color "#0000FF"`,
+  dopa subareas update "subarea-123" --name "Updated" --color "#0000FF"`,
 	Args: cobra.ExactArgs(1),
 	Run:  runSubareasUpdate,
 }
@@ -85,10 +85,10 @@ var subareasDeleteCmd = &cobra.Command{
 	Short: "Delete a subarea",
 	Long:  "Delete a subarea by ID. By default performs a soft delete.",
 	Example: `  # Soft delete a subarea (can be recovered)
-  projectdb subareas delete "subarea-123"
+  dopa subareas delete "subarea-123"
 
   # Permanently delete a subarea
-  projectdb subareas delete "subarea-123" --permanent`,
+  dopa subareas delete "subarea-123" --permanent`,
 	Args: cobra.ExactArgs(1),
 	Run:  runSubareasDelete,
 }

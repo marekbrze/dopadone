@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/charmbracelet/bubbletea"
-	"github.com/example/projectdb/internal/domain"
-	"github.com/example/projectdb/internal/service"
+	"github.com/example/dopadone/internal/domain"
+	"github.com/example/dopadone/internal/service"
 )
 
 func LoadAreasCmd(areaSvc service.AreaServiceInterface) tea.Cmd {

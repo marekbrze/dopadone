@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/example/projectdb/internal/domain"
-	"github.com/example/projectdb/internal/tui/mocks"
-	"github.com/example/projectdb/internal/tui/modal"
-	"github.com/example/projectdb/internal/tui/tree"
+	"github.com/example/dopadone/internal/domain"
+	"github.com/example/dopadone/internal/tui/mocks"
+	"github.com/example/dopadone/internal/tui/modal"
+	"github.com/example/dopadone/internal/tui/tree"
 )
 
 func TestInitialModel(t *testing.T) {
@@ -482,26 +482,29 @@ func TestGetParentContextForSubprojects(t *testing.T) {
 	}
 	model.selectedSubareaIndex = 0
 
-	t.Run("returns_subproject_when_project_selected", func(t *testing.T) {
+	t.Run("returns_project_with_checkbox_when_project_selected", func(t *testing.T) {
 		model.selectedProjectID = "project-1"
 		model.projectTree = &tree.TreeNode{
 			ID:   "project-1",
 			Name: "Test Project",
 		}
 
-		parentName, entityType, parentID, subareaID := model.getParentContext()
+		parentName, entityType, parentID, subareaID, showCheckbox := model.getParentContext()
 
 		if parentName != "Test Project" {
 			t.Errorf("Expected parent name 'Test Project', got '%s'", parentName)
 		}
-		if entityType != modal.EntityTypeSubproject {
-			t.Errorf("Expected entity type Subproject, got %s", entityType)
+		if entityType != modal.EntityTypeProject {
+			t.Errorf("Expected entity type Project, got %s", entityType)
 		}
 		if parentID != "project-1" {
 			t.Errorf("Expected parent ID 'project-1', got '%s'", parentID)
 		}
-		if subareaID != nil {
-			t.Error("Expected subareaID to be nil for subprojects")
+		if subareaID == nil || *subareaID != "subarea-1" {
+			t.Error("Expected subareaID to be 'subarea-1'")
+		}
+		if !showCheckbox {
+			t.Error("Expected showCheckbox to be true when project selected in subarea context")
 		}
 	})
 
@@ -509,7 +512,7 @@ func TestGetParentContextForSubprojects(t *testing.T) {
 		model.selectedProjectID = ""
 		model.selectedSubareaIndex = 0
 
-		parentName, entityType, parentID, subareaID := model.getParentContext()
+		parentName, entityType, parentID, subareaID, showCheckbox := model.getParentContext()
 
 		if parentName != "Test Subarea" {
 			t.Errorf("Expected parent name 'Test Subarea', got '%s'", parentName)
@@ -522,6 +525,9 @@ func TestGetParentContextForSubprojects(t *testing.T) {
 		}
 		if subareaID == nil || *subareaID != "subarea-1" {
 			t.Error("Expected subareaID to be 'subarea-1'")
+		}
+		if showCheckbox {
+			t.Error("Expected showCheckbox to be false for regular projects")
 		}
 	})
 }

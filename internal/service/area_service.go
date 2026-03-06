@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/example/projectdb/internal/converter"
-	"github.com/example/projectdb/internal/db"
-	"github.com/example/projectdb/internal/domain"
+	"github.com/example/dopadone/internal/converter"
+	"github.com/example/dopadone/internal/db"
+	"github.com/example/dopadone/internal/domain"
 )
 
 // AreaStats contains statistics about an area's children

@@ -5,9 +5,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/example/projectdb/internal/domain"
-	"github.com/example/projectdb/internal/service"
-	"github.com/example/projectdb/internal/tui/mocks"
+	"github.com/example/dopadone/internal/domain"
+	"github.com/example/dopadone/internal/service"
+	"github.com/example/dopadone/internal/tui/mocks"
 )
 
 func TestLoadAreasCmd(t *testing.T) {

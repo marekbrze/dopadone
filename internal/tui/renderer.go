@@ -2,7 +2,7 @@ package tui
 
 import (
 	"github.com/charmbracelet/lipgloss"
-	"github.com/example/projectdb/internal/tui/tree"
+	"github.com/example/dopadone/internal/tui/tree"
 )
 
 func (m *Model) RenderSubareas() string {

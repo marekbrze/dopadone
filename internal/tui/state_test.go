@@ -3,8 +3,8 @@ package tui
 import (
 	"testing"
 
-	"github.com/example/projectdb/internal/domain"
-	"github.com/example/projectdb/internal/tui/tree"
+	"github.com/example/dopadone/internal/domain"
+	"github.com/example/dopadone/internal/tui/tree"
 )
 
 func TestNewAreaState(t *testing.T) {

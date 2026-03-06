@@ -44,7 +44,7 @@ Implement a distribution and upgrade flow for the Go CLI/TUI application. Users 
 ## Final Summary
 
 <!-- SECTION:FINAL_SUMMARY:BEGIN -->
-Implemented complete distribution and upgrade flow for projectdb CLI.
+Implemented complete distribution and upgrade flow for dopa CLI.
 
 Changes:
 - Created internal/version package with ldflags-injectable version info (Version, GitCommit, BuildDate)
@@ -63,8 +63,8 @@ Supported platforms:
 - Windows (amd64)
 
 Commands added:
-- projectdb version [--all] - Show version info
-- projectdb update - Check for updates and show upgrade instructions
+- dopa version [--all] - Show version info
+- dopa update - Check for updates and show upgrade instructions
 
 Tests run: go test ./... (all passing)
 Build verification: make build-all (all 4 platforms)
@@ -73,5 +73,5 @@ Updated: Added embedded migrations and fully automated upgrade command.
 - Migrations are now embedded in the binary using go:embed
 - Added 'migrate' command with subcommands: up, down, status, reset
 - 'upgrade' command now downloads, replaces binary, AND runs migrations automatically
-- Users just run: projectdb upgrade
+- Users just run: dopa upgrade
 <!-- SECTION:FINAL_SUMMARY:END -->

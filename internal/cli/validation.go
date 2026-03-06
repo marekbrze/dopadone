@@ -3,7 +3,7 @@ package cli
 import (
 	"time"
 
-	"github.com/example/projectdb/internal/domain"
+	"github.com/example/dopadone/internal/domain"
 )
 
 func ParseProjectStatus(s string) (domain.ProjectStatus, error) {

@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/example/projectdb/internal/db"
-	"github.com/example/projectdb/internal/domain"
+	"github.com/example/dopadone/internal/db"
+	"github.com/example/dopadone/internal/domain"
 )
 
 func nullStringToString(ns sql.NullString) string {

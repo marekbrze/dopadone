@@ -3,13 +3,13 @@
 
 set -e
 
-CMD="go run ./cmd/projectdb --db projectdb.db"
+CMD="go run ./cmd/dopa --db dopadone.db"
 
 case "$1" in
     seed)
         echo "Seeding database with unique tasks..."
-        rm -f projectdb.db
-        ./scripts/seed-test-data.sh projectdb.db
+        rm -f dopadone.db
+        ./scripts/seed-test-data.sh dopadone.db
         ;;
     
     tui)

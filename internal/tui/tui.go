@@ -2,7 +2,7 @@ package tui
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/example/projectdb/internal/service"
+	"github.com/example/dopadone/internal/service"
 )
 
 func New(

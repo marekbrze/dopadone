@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/example/projectdb/internal/cli"
-	"github.com/example/projectdb/internal/cli/output"
-	"github.com/example/projectdb/internal/db"
-	"github.com/example/projectdb/internal/migrate"
-	"github.com/example/projectdb/internal/service"
-	"github.com/example/projectdb/internal/version"
+	"github.com/example/dopadone/internal/cli"
+	"github.com/example/dopadone/internal/cli/output"
+	"github.com/example/dopadone/internal/db"
+	"github.com/example/dopadone/internal/migrate"
+	"github.com/example/dopadone/internal/service"
+	"github.com/example/dopadone/internal/version"
 	"github.com/spf13/cobra"
 )
 
@@ -22,8 +22,8 @@ var (
 )
 
 var rootCmd = &cobra.Command{
-	Use:     "projectdb",
-	Short:   "Project database CLI tool",
+	Use:     "dopa",
+	Short:   "Dopadone - ADHD-friendly task and project management",
 	Long:    "A CLI tool for managing projects, areas, and subareas in a SQLite database.",
 	Version: version.Version,
 }
@@ -35,7 +35,7 @@ var versionCmd = &cobra.Command{
 		if showAll {
 			fmt.Println(version.BuildInfo())
 		} else {
-			fmt.Printf("projectdb %s\n", version.Version)
+			fmt.Printf("dopa %s\n", version.Version)
 		}
 	},
 }
@@ -138,7 +138,7 @@ var migrateResetCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(&dbPath, "db", "./projectdb.db", "path to database file")
+	rootCmd.PersistentFlags().StringVar(&dbPath, "db", "./dopadone.db", "path to database file")
 	rootCmd.PersistentFlags().StringVarP(&outputFormat, "output", "o", "table", "output format (table|json)")
 	versionCmd.Flags().BoolVar(&showAll, "all", false, "show detailed build information")
 	upgradeCmd.Flags().BoolVar(&skipMigrate, "skip-migrate", false, "skip running migrations after upgrade")

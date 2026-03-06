@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide covers the complete development workflow for ProjectDB, including database seeding, testing, and common development tasks.
+This guide covers the complete development workflow for Dopadone, including database seeding, testing, and common development tasks.
 
 ## Quick Start
 
@@ -39,7 +39,7 @@ The seed script uses pattern matching to create appropriate tasks:
 | **Organization** (`*Basement*`, `*Organization*`) | "Declutter items", "Buy storage containers", "Organize by category" |
 | **Business/Analytics** (`*E-commerce*`, `*Analytics*`, `*Dashboard*`, `*Pipeline*`) | "Gather requirements", "Design system architecture", "Implement MVP" |
 | **Mobile Apps** (`*Habit*`, `*Tracker*`, `*Note*`, `*App*`, `*Mobile*`) | "Design UI mockups", "Implement core functionality", "Test on devices" |
-| **Open Source** (`*ProjectDB*`, `*Open*`, `*Source*`) | "Write documentation", "Set up CI/CD", "Create release" |
+| **Open Source** (`*Dopadone*`, `*Open*`, `*Source*`) | "Write documentation", "Set up CI/CD", "Create release" |
 | **Fitness** (`*Training*`, `*Running*`, `*Base*`, `*Speed*`, `*Long*`) | "Plan workout schedule", "Buy running gear", "Track progress" |
 | **Meal Prep** (`*Meal*`, `*Prep*`) | "Plan weekly menu", "Create shopping list", "Prep ingredients" |
 | **Default/Generic** | "Research options", "Create action plan", "Execute plan" |
@@ -65,7 +65,7 @@ The seed script creates:
 make seed
 
 # Method 3: Direct script call
-./scripts/seed-test-data.sh projectdb.db
+./scripts/seed-test-data.sh dopa.db
 ```
 
 ### Customizing Seed Data
@@ -104,7 +104,7 @@ go test ./... -cover
 
 Tests use isolated databases:
 - `test-*.db` - Temporary test databases (auto-cleaned)
-- `projectdb.db` - Main development database (used by seed script)
+- `dopa.db` - Main development database (used by seed script)
 
 ## TUI Development
 
@@ -115,7 +115,7 @@ Tests use isolated databases:
 ./dev.sh tui
 
 # Method 2: Using go run
-go run ./cmd/projectdb tui
+go run ./cmd/dopa tui
 
 # Method 3: Using make
 make run
@@ -135,7 +135,7 @@ make run
 1. **Create migration**:
    ```bash
    # Create new migration file
-   goose -dir migrations sqlite3 projectdb.db create add_entity_name sql
+   goose -dir migrations sqlite3 dopa.db create add_entity_name sql
    ```
 
 2. **Write schema**:
@@ -156,7 +156,7 @@ make run
    ```
 
 4. **Implement domain logic** in `internal/domain/`
-5. **Add CLI commands** in `cmd/projectdb/`
+5. **Add CLI commands** in `cmd/dopa/`
 6. **Write tests** in corresponding test files
 
 ### Modifying Existing Entities
@@ -172,14 +172,14 @@ make run
 
 ```bash
 # Check database state
-sqlite3 projectdb.db ".schema"
-sqlite3 projectdb.db "SELECT COUNT(*) FROM tasks;"
+sqlite3 dopa.db ".schema"
+sqlite3 dopa.db "SELECT COUNT(*) FROM tasks;"
 
 # Check task distribution
-sqlite3 projectdb.db "SELECT p.name, COUNT(t.id) FROM projects p LEFT JOIN tasks t ON p.id = t.project_id GROUP BY p.id;"
+sqlite3 dopa.db "SELECT p.name, COUNT(t.id) FROM projects p LEFT JOIN tasks t ON p.id = t.project_id GROUP BY p.id;"
 
 # Verify task-project links
-sqlite3 projectdb.db "SELECT t.title, p.name FROM tasks t JOIN projects p ON t.project_id = p.id LIMIT 10;"
+sqlite3 dopa.db "SELECT t.title, p.name FROM tasks t JOIN projects p ON t.project_id = p.id LIMIT 10;"
 ```
 
 ## Development Environment Setup
@@ -196,7 +196,7 @@ sqlite3 projectdb.db "SELECT t.title, p.name FROM tasks t JOIN projects p ON t.p
 ```bash
 # Clone repository
 git clone <repository-url>
-cd projectdb
+cd dopa
 
 # Install dependencies
 make install-deps
@@ -217,8 +217,8 @@ make test
 ## Code Organization
 
 ```
-projectdb/
-├── cmd/projectdb/          # CLI commands
+dopa/
+├── cmd/dopa/          # CLI commands
 │   ├── main.go            # Entry point
 │   ├── areas.go           # Area CRUD commands
 │   ├── subareas.go        # Subarea CRUD commands
@@ -292,14 +292,14 @@ projectdb/
 **Solution**:
 ```bash
 # Reseed database
-rm projectdb.db
+rm dopa.db
 ./dev.sh seed
 
 # Verify tasks exist
-sqlite3 projectdb.db "SELECT COUNT(*) FROM tasks;"
+sqlite3 dopa.db "SELECT COUNT(*) FROM tasks;"
 
 # Check task-project links
-sqlite3 projectdb.db "SELECT t.title, p.name FROM tasks t JOIN projects p ON t.project_id = p.id LIMIT 5;"
+sqlite3 dopa.db "SELECT t.title, p.name FROM tasks t JOIN projects p ON t.project_id = p.id LIMIT 5;"
 ```
 
 #### "Foreign key constraint failed"
@@ -318,7 +318,7 @@ sqlite3 projectdb.db "SELECT t.title, p.name FROM tasks t JOIN projects p ON t.p
 make migrate-reset
 
 # Or manually check state
-goose -dir migrations sqlite3 projectdb.db status
+goose -dir migrations sqlite3 dopa.db status
 ```
 
 ## Additional Resources

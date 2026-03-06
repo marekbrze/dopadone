@@ -4,8 +4,8 @@
         build-all build-linux build-darwin-amd64 build-darwin-arm64 build-windows
 
 # Variables
-BINARY_NAME=projectdb
-DB_PATH=projectdb.db
+BINARY_NAME=dopa
+DB_PATH=dopadone.db
 MIGRATIONS_DIR=migrations
 GO=go
 GOOSE=goose
@@ -15,9 +15,9 @@ VERSION?=dev
 GIT_COMMIT?=$(shell git rev-parse HEAD 2>/dev/null || echo "unknown")
 BUILD_DATE?=$(shell date -u +%Y-%m-%dT%H:%M:%SZ)
 LDFLAGS=-s -w \
-	-X github.com/example/projectdb/internal/version.Version=$(VERSION) \
-	-X github.com/example/projectdb/internal/version.GitCommit=$(GIT_COMMIT) \
-	-X github.com/example/projectdb/internal/version.BuildDate=$(BUILD_DATE)
+	-X github.com/example/dopadone/internal/version.Version=$(VERSION) \
+	-X github.com/example/dopadone/internal/version.GitCommit=$(GIT_COMMIT) \
+	-X github.com/example/dopadone/internal/version.BuildDate=$(BUILD_DATE)
 
 # Default target
 .DEFAULT_GOAL := help

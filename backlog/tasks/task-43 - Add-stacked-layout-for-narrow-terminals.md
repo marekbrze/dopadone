@@ -496,7 +496,7 @@ func TestLayoutModeSwitching(t *testing.T) {
 
 ### Test Procedure
 
-1. Start TUI: `go run ./cmd/projectdb tui`
+1. Start TUI: `go run ./cmd/dopa tui`
 2. Set terminal to 119 cols, verify stacked layout
 3. Resize to 120 cols, verify instant switch to side-by-side
 4. Resize to 121 cols, verify side-by-side maintained

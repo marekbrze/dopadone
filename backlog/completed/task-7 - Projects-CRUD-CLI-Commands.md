@@ -35,7 +35,7 @@ Implement full CRUD operations for Projects entity via CLI - the most complex en
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
-1. Create cmd/projectdb/projects.go file with cobra command structure (following subareas.go pattern)
+1. Create cmd/dopa/projects.go file with cobra command structure (following subareas.go pattern)
 2. Implement 'projects create' command with all required/optional flags:
    - Required: --name
    - One required (XOR): --subarea-id OR --parent-id
@@ -56,7 +56,7 @@ Implement full CRUD operations for Projects entity via CLI - the most complex en
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
-Implemented full CRUD operations for Projects entity via CLI following the same pattern as subareas.go. Created cmd/projectdb/projects.go with all required subcommands. Fixed critical bug where create and update commands were sharing the same flag variables, causing validation failures. Separated variables into projCreate* and projUpdate* prefixes to prevent cross-contamination. All validation working correctly including XOR constraint for subarea-id vs parent-id, status/priority/progress values, and date range validation.
+Implemented full CRUD operations for Projects entity via CLI following the same pattern as subareas.go. Created cmd/dopa/projects.go with all required subcommands. Fixed critical bug where create and update commands were sharing the same flag variables, causing validation failures. Separated variables into projCreate* and projUpdate* prefixes to prevent cross-contamination. All validation working correctly including XOR constraint for subarea-id vs parent-id, status/priority/progress values, and date range validation.
 <!-- SECTION:NOTES:END -->
 
 ## Final Summary
@@ -65,7 +65,7 @@ Implemented full CRUD operations for Projects entity via CLI following the same 
 Implemented complete CRUD CLI commands for Projects entity with all required functionality:
 
 **Changes:**
-- Created cmd/projectdb/projects.go with 5 subcommands: create, list, get, update, delete
+- Created cmd/dopa/projects.go with 5 subcommands: create, list, get, update, delete
 - Implemented comprehensive flag support for all project fields
 - Added XOR validation for subarea-id vs parent-id constraint
 - Integrated all existing validation helpers (status, priority, progress, color, date range)

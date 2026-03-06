@@ -93,16 +93,16 @@ Create missing service layer implementations (ProjectService, TaskService, Subar
 7. Create test suite
 
 ### Phase 4: Refactor CLI layer
-1. Update cmd/projectdb/projects.go:
+1. Update cmd/dopa/projects.go:
    - Remove direct db calls
    - Inject ProjectService dependency
    - Replace business logic with service calls
    - Keep only CLI-specific validation (flag parsing)
-2. Update cmd/projectdb/tasks.go:
+2. Update cmd/dopa/tasks.go:
    - Remove direct db calls
    - Inject TaskService dependency
    - Replace status/priority logic with service calls
-3. Update cmd/projectdb/subareas.go:
+3. Update cmd/dopa/subareas.go:
    - Remove direct db calls
    - Inject SubareaService dependency
 

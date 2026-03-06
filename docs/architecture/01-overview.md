@@ -1,0 +1,545 @@
+# Architecture Overview
+
+## Layered Architecture
+
+Dopadone follows a **layered architecture** pattern with clear separation of concerns:
+
+```
+┌─────────────────────────────────────────────────────┐
+│                   Presentation Layer                 │
+│  ┌──────────────────┐      ┌────────────────────┐  │
+│  │   CLI (Cobra)    │      │  TUI (Bubble Tea)  │  │
+│  │  cmd/dopa/  │      │   internal/tui/    │  │
+│  └────────┬─────────┘      └──────────┬─────────┘  │
+└───────────┼───────────────────────────┼────────────┘
+            │                           │
+            └───────────┬───────────────┘
+                        ▼
+┌─────────────────────────────────────────────────────┐
+│                   Service Layer                      │
+│  ┌─────────────────────────────────────────────┐   │
+│  │  AreaService | SubareaService               │   │
+│  │  ProjectService | TaskService               │   │
+│  │  internal/service/                          │   │
+│  └────────────────────┬────────────────────────┘   │
+└───────────────────────┼────────────────────────────┘
+                        ▼
+┌─────────────────────────────────────────────────────┐
+│                  Converter Layer                     │
+│  ┌─────────────────────────────────────────────┐   │
+│  │  DB Types ↔ Domain Types                    │   │
+│  │  internal/converter/                        │   │
+│  └────────────────────┬────────────────────────┘   │
+└───────────────────────┼────────────────────────────┘
+                        ▼
+┌─────────────────────────────────────────────────────┐
+│                  Repository Layer                    │
+│  ┌─────────────────────────────────────────────┐   │
+│  │  db.Querier Interface                       │   │
+│  │  SQL Queries (sqlc generated)               │   │
+│  │  internal/db/                               │   │
+│  └────────────────────┬────────────────────────┘   │
+└───────────────────────┼────────────────────────────┘
+                        ▼
+┌─────────────────────────────────────────────────────┐
+│                  Domain Layer                        │
+│  ┌─────────────────────────────────────────────┐   │
+│  │  Entities: Task, Project, Area, Subarea     │   │
+│  │  Value Objects: Status, Priority, Color     │   │
+│  │  Factory Methods: NewTask, NewProject       │   │
+│  │  internal/domain/                           │   │
+│  └─────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────┘
+```
+
+## Layer Responsibilities
+
+### 1. Domain Layer
+**Purpose**: Core business entities and value objects
+
+**Responsibilities**:
+- Define entities (Task, Project, Area, Subarea)
+- Define value objects (Status, Priority, Color, Duration)
+- Enforce business invariants through factory methods
+- Provide domain validation
+
+**Key Files**:
+- `internal/domain/task.go` - Task entity with factory method
+- `internal/domain/project.go` - Project entity
+- `internal/domain/area.go` - Area entity
+- `internal/domain/value_objects.go` - Value objects
+
+**Dependencies**: None (bottom layer)
+
+**See Also**: [Domain Layer](02-domain-layer.md)
+
+---
+
+### 2. Repository Layer
+**Purpose**: Data access abstraction
+
+**Responsibilities**:
+- Define db.Querier interface
+- Execute SQL queries (generated by sqlc)
+- Handle database transactions
+- Implement soft delete pattern
+
+**Key Files**:
+- `internal/db/querier.go` - Repository interface
+- `internal/db/tasks.sql.go` - Task queries
+- `internal/db/projects.sql.go` - Project queries
+- `internal/db/transaction.go` - Transaction handling
+
+**Dependencies**: None (uses standard library and sqlc types)
+
+**See Also**: [Repository Layer](05-repository-layer.md)
+
+---
+
+### 3. Converter Layer
+**Purpose**: Transform types between layers
+
+**Responsibilities**:
+- Convert database types to domain types
+- Handle NULL values
+- Provide bidirectional conversions
+- Centralize transformation logic
+
+**Key Files**:
+- `internal/converter/converter.go` - Conversion functions
+
+**Dependencies**: Domain layer, DB types
+
+**See Also**: [Converter Layer](04-converter-layer.md)
+
+---
+
+### 4. Service Layer
+**Purpose**: Business logic orchestration
+
+**Responsibilities**:
+- Implement business rules
+- Orchestrate repository calls
+- Apply business validation
+- Handle errors with context
+- Provide service interfaces for testability
+
+**Key Files**:
+- `internal/service/interfaces.go` - Service interfaces
+- `internal/service/task_service.go` - Task business logic
+- `internal/service/project_service.go` - Project business logic
+- `internal/service/area_service.go` - Area business logic
+- `internal/service/subarea_service.go` - Subarea business logic
+
+**Dependencies**: Repository layer (via db.Querier interface), Domain layer
+
+**See Also**: [Service Layer](03-service-layer.md)
+
+---
+
+### 5. Presentation Layer
+**Purpose**: User interface (CLI and TUI)
+
+**CLI Responsibilities**:
+- Parse command-line arguments
+- Call service methods
+- Format and display output
+- Handle user-friendly errors
+
+**TUI Responsibilities**:
+- Interactive terminal interface
+- Keyboard/mouse event handling
+- Real-time updates
+- Modal dialogs and forms
+
+**Key Files**:
+- `cmd/dopa/main.go` - Entry point and service container
+- `cmd/dopa/tasks.go` - Task CLI commands
+- `cmd/dopa/projects.go` - Project CLI commands
+- `cmd/dopa/areas.go` - Area CLI commands
+- `internal/tui/app.go` - TUI main application
+- `internal/tui/commands.go` - TUI command functions
+
+**Dependencies**: Service layer (via service interfaces)
+
+**See Also**: [CLI Layer](06-cli-layer.md), [TUI Documentation](../TUI.md)
+
+---
+
+## Data Flow
+
+### Request Flow (Create Task Example)
+
+```
+User Input (CLI/TUI)
+    ↓
+1. Presentation Layer
+   - Parse input flags/fields
+   - Validate UI-specific constraints
+   - Create service params
+    ↓
+2. Service Layer
+   - Apply business validation via domain factory
+   - Execute business logic
+   - Call repository
+    ↓
+3. Converter Layer
+   - Convert domain params → DB params
+    ↓
+4. Repository Layer
+   - Execute SQL INSERT
+   - Return DB type
+    ↓
+5. Converter Layer
+   - Convert DB type → domain type
+    ↓
+6. Service Layer
+   - Return domain entity
+    ↓
+7. Presentation Layer
+   - Format domain entity
+   - Display to user
+```
+
+### Code Example: Create Task Flow
+
+```go
+// 1. CLI Layer (cmd/dopa/tasks.go)
+func runTasksCreate(cmd *cobra.Command, args []string) error {
+    title, _ := cmd.Flags().GetString("title")
+    projectID, _ := cmd.Flags().GetString("project-id")
+    
+    // Call service
+    services := GetServices()
+    task, err := services.Tasks.Create(ctx, service.CreateTaskParams{
+        ProjectID: projectID,
+        Title:     title,
+        Status:    domain.TaskStatusTodo,
+        Priority:  domain.PriorityMedium,
+    })
+    
+    if err != nil {
+        return cli.WrapError(err, "failed to create task")
+    }
+    
+    return output.Write(task)
+}
+
+// 2. Service Layer (internal/service/task_service.go)
+func (s *TaskService) Create(ctx context.Context, params CreateTaskParams) (*domain.Task, error) {
+    // Business validation using domain factory
+    task, err := domain.NewTask(domain.NewTaskParams{
+        ProjectID:         params.ProjectID,
+        Title:             params.Title,
+        Status:            params.Status,
+        Priority:          params.Priority,
+        Description:       params.Description,
+        StartDate:         params.StartDate,
+        Deadline:          params.Deadline,
+        Context:           params.Context,
+        EstimatedDuration: params.EstimatedDuration,
+        IsNext:            params.IsNext,
+    })
+    if err != nil {
+        return nil, fmt.Errorf("create task: %w", err)
+    }
+    
+    // Convert domain → DB params
+    dbParams := db.CreateTaskParams{
+        ID:          task.ID,
+        ProjectID:   task.ProjectID,
+        Title:       task.Title,
+        Description: sql.NullString{String: task.Description, Valid: task.Description != ""},
+        Priority:    task.Priority.String(),
+        Status:      task.Status.String(),
+        CreatedAt:   task.CreatedAt,
+        UpdatedAt:   task.UpdatedAt,
+        // ... other fields
+    }
+    
+    // Call repository
+    dbTask, err := s.repo.CreateTask(ctx, dbParams)
+    if err != nil {
+        return nil, fmt.Errorf("create task: %w", err)
+    }
+    
+    // Convert DB → domain
+    result := converter.DbTaskToDomain(dbTask)
+    return &result, nil
+}
+
+// 3. Repository Layer (internal/db/tasks.sql.go)
+// Generated by sqlc from queries/tasks.sql
+func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, error) {
+    row := q.db.QueryRowContext(ctx, createTask, 
+        arg.ID, arg.ProjectID, arg.Title, arg.Description, ...)
+    // ...
+}
+
+// 4. Converter Layer (internal/converter/converter.go)
+func DbTaskToDomain(dbTask db.Task) domain.Task {
+    status, _ := domain.ParseTaskStatus(dbTask.Status)
+    priority, _ := domain.ParseTaskPriority(dbTask.Priority)
+    
+    return domain.Task{
+        ID:          dbTask.ID,
+        ProjectID:   dbTask.ProjectID,
+        Title:       dbTask.Title,
+        Description: nullStringToString(dbTask.Description),
+        Status:      status,
+        Priority:    priority,
+        CreatedAt:   dbTask.CreatedAt,
+        UpdatedAt:   dbTask.UpdatedAt,
+        // ... other fields
+    }
+}
+```
+
+---
+
+## Dependency Injection
+
+### Service Container Pattern
+
+All services are created once and injected where needed:
+
+```go
+// cmd/dopa/main.go
+type ServiceContainer struct {
+    Projects  *service.ProjectService
+    Tasks     *service.TaskService
+    Subareas  *service.SubareaService
+    Areas     *service.AreaService
+}
+
+func GetServices() (*ServiceContainer, error) {
+    db, err := GetDB()
+    if err != nil {
+        return nil, err
+    }
+    
+    querier := db.New(db)
+    txManager := db.NewTransactionManager()
+    
+    return &ServiceContainer{
+        Projects:  service.NewProjectService(querier, txManager),
+        Tasks:     service.NewTaskService(querier, txManager),
+        Subareas:  service.NewSubareaService(querier, txManager),
+        Areas:     service.NewAreaService(querier, txManager),
+    }, nil
+}
+```
+
+### Benefits
+
+1. **Testability**: Inject mocks for testing
+2. **Flexibility**: Swap implementations easily
+3. **Loose Coupling**: Depend on interfaces, not implementations
+4. **Clear Dependencies**: Explicit in constructors
+
+### Injection Examples
+
+**CLI**:
+```go
+services := GetServices()
+task, err := services.Tasks.Create(ctx, params)
+```
+
+**TUI**:
+```go
+func NewApp(
+    areaSvc service.AreaServiceInterface,
+    subareaSvc service.SubareaServiceInterface,
+    projectSvc service.ProjectServiceInterface,
+    taskSvc service.TaskServiceInterface,
+) tea.Model {
+    return Model{
+        areaSvc:    areaSvc,
+        subareaSvc: subareaSvc,
+        projectSvc: projectSvc,
+        taskSvc:    taskSvc,
+    }
+}
+```
+
+**Testing**:
+```go
+mockTaskSvc := &MockTaskService{
+    CreateFunc: func(ctx context.Context, params service.CreateTaskParams) (*domain.Task, error) {
+        return &domain.Task{ID: "test-id", Title: "Test"}, nil
+    },
+}
+
+services := &ServiceContainer{
+    Tasks: mockTaskSvc,
+}
+```
+
+---
+
+## Module Organization
+
+### Directory Structure
+
+```
+dopa/
+├── cmd/
+│   └── dopa/          # CLI commands
+│       ├── main.go         # Entry point, service container
+│       ├── tasks.go        # Task commands
+│       ├── projects.go     # Project commands
+│       ├── areas.go        # Area commands
+│       └── subareas.go     # Subarea commands
+│
+├── internal/
+│   ├── domain/             # Domain layer
+│   │   ├── task.go         # Task entity
+│   │   ├── project.go      # Project entity
+│   │   ├── area.go         # Area entity
+│   │   ├── subarea.go      # Subarea entity
+│   │   └── value_objects.go # Value objects
+│   │
+│   ├── db/                 # Repository layer
+│   │   ├── db.go           # Database connection
+│   │   ├── querier.go      # Repository interface
+│   │   ├── models.go       # DB models (generated)
+│   │   ├── transaction.go  # Transaction manager
+│   │   ├── tasks.sql.go    # Task queries (generated)
+│   │   ├── projects.sql.go # Project queries (generated)
+│   │   └── queries/        # SQL files (sqlc source)
+│   │
+│   ├── converter/          # Converter layer
+│   │   └── converter.go    # Type conversions
+│   │
+│   ├── service/            # Service layer
+│   │   ├── interfaces.go   # Service interfaces
+│   │   ├── task_service.go # Task business logic
+│   │   ├── project_service.go
+│   │   ├── area_service.go
+│   │   └── subarea_service.go
+│   │
+│   ├── tui/                # TUI layer
+│   │   ├── app.go          # Main application
+│   │   ├── commands.go     # TUI commands
+│   │   └── ...             # Other TUI components
+│   │
+│   └── cli/                # CLI utilities
+│       ├── output/         # Output formatting
+│       ├── filter/         # Filter parsing
+│       └── errors.go       # CLI error handling
+│
+├── docs/                   # Documentation
+│   ├── START_HERE.md
+│   ├── architecture/
+│   └── TUI.md
+│
+└── testdata/               # Test fixtures
+```
+
+### Package Dependencies
+
+```
+cmd/dopa → internal/service → internal/db
+                    ↓                  ↓
+             internal/converter → internal/domain
+                    ↓
+              internal/tui → internal/service
+```
+
+**Rules**:
+- `internal/domain` has NO dependencies (bottom layer)
+- `internal/db` has no project dependencies (standard library + sqlc)
+- `internal/converter` depends on `internal/domain` and `internal/db`
+- `internal/service` depends on `internal/db`, `internal/converter`, and `internal/domain`
+- `cmd/dopa` and `internal/tui` depend on `internal/service`
+
+---
+
+## Design Principles
+
+### 1. Separation of Concerns
+Each layer has a single, well-defined responsibility.
+
+### 2. Dependency Inversion
+High-level modules (services) don't depend on low-level modules (database). Both depend on abstractions (interfaces).
+
+### 3. Interface Segregation
+Small, focused interfaces. Services define what they need, not what implementations provide.
+
+### 4. Single Responsibility
+Each service, entity, and module has one reason to change.
+
+### 5. Open/Closed
+Open for extension (new services, new entities), closed for modification (existing interfaces stable).
+
+---
+
+## Common Patterns
+
+### Repository Pattern
+Abstraction over data access:
+```go
+type Querier interface {
+    CreateTask(ctx context.Context, arg CreateTaskParams) (Task, error)
+    GetTaskByID(ctx context.Context, id string) (Task, error)
+    ListTasksByProject(ctx context.Context, projectID string) ([]Task, error)
+    // ...
+}
+```
+
+### Factory Pattern
+Create validated entities:
+```go
+func NewTask(params NewTaskParams) (*Task, error) {
+    if params.Title == "" {
+        return nil, ErrTaskTitleEmpty
+    }
+    if !params.Status.IsValid() {
+        return nil, ErrTaskInvalidStatus
+    }
+    // ... more validation
+    
+    return &Task{
+        ID:      uuid.New().String(),
+        Title:   params.Title,
+        Status:  params.Status,
+        // ... other fields
+    }, nil
+}
+```
+
+### Strategy Pattern (Services)
+Different implementations for same interface:
+```go
+type TaskServiceInterface interface {
+    Create(ctx context.Context, params CreateTaskParams) (*domain.Task, error)
+    GetByID(ctx context.Context, id string) (*domain.Task, error)
+    // ... other methods
+}
+
+// Production implementation
+type TaskService struct {
+    repo db.Querier
+}
+
+// Mock implementation for testing
+type MockTaskService struct {
+    CreateFunc func(ctx context.Context, params CreateTaskParams) (*domain.Task, error)
+    GetByIDFunc func(ctx context.Context, id string) (*domain.Task, error)
+}
+```
+
+---
+
+## Next Steps
+
+Now that you understand the high-level architecture:
+
+1. **Learn about domain models**: [Domain Layer](02-domain-layer.md)
+2. **Understand business logic**: [Service Layer](03-service-layer.md)
+3. **See how data flows**: [Converter Layer](04-converter-layer.md) → [Repository Layer](05-repository-layer.md)
+4. **Explore testing**: [Testing Strategy](07-testing-strategy.md)
+
+---
+
+**Navigation**: [← Back to Architecture](README.md) | [Next: Domain Layer →](02-domain-layer.md)

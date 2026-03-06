@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/example/projectdb/internal/db"
-	"github.com/example/projectdb/internal/service"
+	"github.com/example/dopadone/internal/db"
+	"github.com/example/dopadone/internal/service"
 	_ "modernc.org/sqlite"
 )
 

@@ -12,10 +12,10 @@ labels:
   - bug
 dependencies: []
 references:
-  - cmd/projectdb/areas.go
-  - cmd/projectdb/subareas.go
-  - cmd/projectdb/projects.go
-  - cmd/projectdb/tasks.go
+  - cmd/dopa/areas.go
+  - cmd/dopa/subareas.go
+  - cmd/dopa/projects.go
+  - cmd/dopa/tasks.go
   - scripts/seed-test-data.sh
 priority: high
 ---

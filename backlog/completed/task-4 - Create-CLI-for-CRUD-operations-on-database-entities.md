@@ -30,7 +30,7 @@ SUPERSEDED - This task has been split into more atomic tasks: TASK-8 (CLI Founda
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 CLI structure: cmd/projectdb/ with cobra root command, subcommands for areas/subareas/projects
+- [ ] #1 CLI structure: cmd/dopa/ with cobra root command, subcommands for areas/subareas/projects
 - [ ] #2 areas command: create (name, color flags), list (--json, --format=table), get <id>, update <id> (--name, --color), delete <id> (--permanent)
 - [ ] #3 subareas command: create (name, area-id, color flags), list (--area-id, --json), get <id>, update <id> (--name, --color), delete <id> (--permanent)
 - [ ] #4 projects command: create (name, subarea-id OR parent-id required, status, priority, progress, deadline, start-date, color, goal, description), list (--status, --priority, --subarea-id, --parent-id, --json), get <id>, update <id> (all editable fields), delete <id> (--permanent)
@@ -38,7 +38,7 @@ SUPERSEDED - This task has been split into more atomic tasks: TASK-8 (CLI Founda
 - [ ] #6 Output formatting: Default table view with colored headers, --json for machine-readable output, --format=json|table|yaml
 - [ ] #7 Validation: Use existing domain types (ProjectStatus, Priority, Progress, Color) with proper error messages
 - [ ] #8 Error handling: User-friendly error messages, exit codes (0=success, 1=error, 2=validation error), no stack traces in output
-- [ ] #9 Database path: --db flag to specify database file (default: ./projectdb.db), error if not found
+- [ ] #9 Database path: --db flag to specify database file (default: ./dopa.db), error if not found
 - [ ] #10 Help documentation: Cobra auto-generated help with examples for each command
 - [ ] #11 Unit tests: Test command flag parsing, validation, and output formatting
 <!-- AC:END -->
