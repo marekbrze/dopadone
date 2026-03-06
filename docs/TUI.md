@@ -290,17 +290,33 @@ For wide terminals, all three columns are side-by-side:
 
 #### Text Truncation
 
-To prevent text wrapping in bordered panels (BubbleTea Golden Rule #2), all text is automatically truncated:
+To prevent text wrapping in bordered panels (BubbleTea Golden Rule #2), all text is automatically truncated with intelligent partial-content preservation:
 
+**Implementation**: `views/columns.go` - `truncateString()` function
+
+**Behavior**:
+- **Partial content preservation**: Shows as many characters as possible before appending ellipsis (…)
+- **Example**: "Very Long Project Name" with maxLen=15 → "Very Long Pro…" (not just "…")
 - **Maximum text width**: `columnWidth - 4` (accounting for 2 border chars + 2 padding chars)
-- **Truncation style**: Ellipsis (…) appended to truncated text
-- **Example**: "Very Long Project Name" → "Very Long Proje…"
 - **Applies to**: Column titles, item names, and all content lines
+
+**Advanced Features**:
+- **ANSI escape code preservation**: Colored text remains visible in truncated portion (e.g., `"\x1b[31mRed Text\x1b[0m"` preserves color codes)
+- **Unicode-aware truncation**: Multi-byte characters (emojis 🎉, CJK characters 日本語) handled correctly without breaking character boundaries
+- **Edge case handling**: Very narrow columns (maxLen ≤ 1) show first character + ellipsis for minimal context
+
+**Implementation Details**:
+- Uses rune-based iteration for proper Unicode handling
+- Tracks ANSI escape state to preserve color/formatting codes
+- Calculates visible character count separately from total byte length
 
 This ensures:
 - No horizontal scrolling needed
 - Clean, aligned borders
-- Readable content at all terminal sizes
+- Maximum readability at all terminal sizes
+- Users can differentiate between long values even in narrow columns
+
+**Test Coverage**: Comprehensive tests in `columns_test.go` covering basic truncation, ANSI codes, Unicode characters, and edge cases (44 tests total).
 
 ### 3. Project Tree Navigation
 
