@@ -68,8 +68,8 @@ func TestRenderWithCollapsedNodes(t *testing.T) {
 		t.Errorf("expected collapsed node's children to not be rendered, got '%s'", result)
 	}
 
-	if !strings.Contains(result, CollapsedIcon) {
-		t.Errorf("expected collapsed indicator '%s', got '%s'", CollapsedIcon, result)
+	if !strings.Contains(result, "▸") {
+		t.Errorf("expected collapsed indicator '▸', got '%s'", result)
 	}
 }
 
@@ -89,8 +89,8 @@ func TestRenderWithExpandedNodes(t *testing.T) {
 		t.Errorf("expected expanded node's children to be rendered, got '%s'", result)
 	}
 
-	if !strings.Contains(result, ExpandedIcon) {
-		t.Errorf("expected expanded indicator '%s', got '%s'", ExpandedIcon, result)
+	if !strings.Contains(result, "▾") {
+		t.Errorf("expected expanded indicator '▾', got '%s'", result)
 	}
 }
 
@@ -119,8 +119,12 @@ func TestRenderTreeIndicators(t *testing.T) {
 
 	result := renderer.Render(root, "")
 
-	if !strings.Contains(result, "├─") && !strings.Contains(result, "└─") {
-		t.Errorf("expected tree indicators in output, got '%s'", result)
+	if strings.Contains(result, "├─") || strings.Contains(result, "└─") || strings.Contains(result, "│") {
+		t.Errorf("expected no box-drawing characters in output, got '%s'", result)
+	}
+
+	if strings.Contains(result, "  ") {
+		t.Logf("output uses simple indentation: %s", result)
 	}
 }
 
@@ -130,8 +134,8 @@ func TestRenderLeafNodeNoIndicator(t *testing.T) {
 
 	result := renderer.Render(root, "")
 
-	if strings.Contains(result, "[+]") || strings.Contains(result, "[-]") {
-		t.Errorf("expected leaf node to have no expand/collapse indicator, got '%s'", result)
+	if strings.Contains(result, "▸") || strings.Contains(result, "▾") {
+		t.Errorf("expected leaf node to have no arrow indicator (▸/▾), got '%s'", result)
 	}
 }
 

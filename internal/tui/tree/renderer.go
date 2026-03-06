@@ -32,8 +32,8 @@ func NewRenderer() *Renderer {
 
 // Render produces a string representation of the tree with visual indicators.
 // The output includes:
-//   - Tree branch indicators (├─, └─, │)
-//   - Expand/collapse indicators ([+]/[-]) for non-leaf nodes
+//   - Simple indentation for depth levels
+//   - Arrow indicators (▸/▾) for collapsed/expanded non-leaf nodes
 //   - Selected node highlighting via lipgloss
 //
 // The selectedID parameter identifies which node should be highlighted.
@@ -79,20 +79,12 @@ func (r *Renderer) renderNode(node *TreeNode, selectedID string, levels []bool, 
 func (r *Renderer) buildLine(node *TreeNode, levels []bool, isLast bool, selectedID string) string {
 	var prefix strings.Builder
 
-	for _, hasMore := range levels {
-		if hasMore {
-			prefix.WriteString(r.style.Vertical)
-		} else {
-			prefix.WriteString(r.style.Indent)
-		}
+	for i := 0; i < len(levels); i++ {
+		prefix.WriteString(r.style.Indent)
 	}
 
 	if !node.IsRoot() || (node.Name != "root" || node.ID != "") {
-		if isLast {
-			prefix.WriteString(r.style.Last)
-		} else {
-			prefix.WriteString(r.style.Branch)
-		}
+		prefix.WriteString(r.style.Indent)
 	}
 
 	indicator := ""
@@ -102,6 +94,8 @@ func (r *Renderer) buildLine(node *TreeNode, levels []bool, isLast bool, selecte
 		} else {
 			indicator = CollapsedIcon + " "
 		}
+	} else {
+		indicator = "  "
 	}
 
 	name := node.Name

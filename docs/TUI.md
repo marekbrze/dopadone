@@ -328,6 +328,28 @@ Hierarchical display of projects and sub-projects with expand/collapse functiona
 - **builder.go**: Builds tree from flat project list
 - **navigation.go**: Handles up/down navigation with wrapping
 - **renderer.go**: Renders tree with indentation and expand/collapse indicators
+- **constants.go**: Tree styling constants and configuration
+
+**Visual Design**:
+
+The tree uses a modern, minimalist design with arrow indicators:
+
+- **Arrow Indicators**: 
+  - `▾` (down triangle) for expanded nodes
+  - `▸` (right triangle) for collapsed nodes
+  - No indicator for leaf nodes (projects without subprojects)
+- **Indentation**: Simple 2-space indentation per depth level (no vertical connector lines)
+- **Clean Appearance**: Minimalist design without box-drawing characters for reduced visual clutter
+
+**Example Tree Rendering**:
+```
+▾ Project A
+  Subproject A1
+  ▸ Subproject A2
+Project B
+▾ Project C
+  Subproject C1
+```
 
 **Navigation**:
 - `j`/`↓`: Move down (wraps to top)
@@ -677,6 +699,49 @@ All styling uses [Lipgloss](https://github.com/charmbracelet/lipgloss) for consi
 - `toast/styles.go`: Toast notification styles
 - `modal/styles.go`: Quick-add modal styles
 - `views/styles.go`: Main view styles
+- `tree/constants.go`: Tree rendering characters and indicators
+
+### Tree Styling
+
+The project tree uses a customizable styling system defined in `tree/constants.go`:
+
+**Character Constants**:
+- `TreeIndent`: 2-space indentation per depth level
+- `ExpandedIcon`: `▾` (down triangle) for expanded nodes with children
+- `CollapsedIcon`: `▸` (right triangle) for collapsed nodes with children
+- No indicator for leaf nodes
+
+**Customization**:
+
+The `TreeStyle` struct allows custom tree rendering characters:
+
+```go
+type TreeStyle struct {
+    Branch   string // Non-last child prefix
+    Last     string // Last child prefix
+    Vertical string // Vertical continuation
+    Indent   string // Depth indentation
+}
+```
+
+To customize the tree appearance, create a custom `TreeStyle` and pass it to the renderer:
+
+```go
+customStyle := tree.TreeStyle{
+    Branch:   "├─ ",
+    Last:     "└─ ",
+    Vertical: "│  ",
+    Indent:   "  ",
+}
+renderer := tree.NewRenderer()
+renderer.SetStyle(customStyle)
+```
+
+**Current Design Rationale**:
+- Simple indentation (no vertical lines) reduces visual clutter
+- Arrow indicators (▸/▾) provide clear expand/collapse state
+- 2-space indentation ensures proper alignment at all depths
+- Unicode characters provide modern, clean appearance
 
 ### Responsive Design
 

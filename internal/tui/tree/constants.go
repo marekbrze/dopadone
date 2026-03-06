@@ -8,16 +8,16 @@ package tree
 const (
 	// TreeIndent is the indentation per depth level (2 spaces).
 	TreeIndent = "  "
-	// TreeBranch is the character for non-last child nodes.
-	TreeBranch = "├─ "
-	// TreeLast is the character for the last child node at a level.
-	TreeLast = "└─ "
-	// TreeVertical is the vertical continuation character.
-	TreeVertical = "│  "
+	// TreeBranch is the indentation for non-last child nodes (simple indent).
+	TreeBranch = "  "
+	// TreeLast is the indentation for the last child node at a level (simple indent).
+	TreeLast = "  "
+	// TreeVertical is the vertical continuation character (simple indent).
+	TreeVertical = "  "
 	// ExpandedIcon indicates a node is expanded and its children are visible.
-	ExpandedIcon = "[-]"
+	ExpandedIcon = "▾"
 	// CollapsedIcon indicates a node is collapsed and its children are hidden.
-	CollapsedIcon = "[+]"
+	CollapsedIcon = "▸"
 	// SelectedIcon marks the currently selected node (reserved for future use).
 	SelectedIcon = "► "
 	// DefaultSelected is the default selection marker (empty).
