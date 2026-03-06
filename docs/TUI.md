@@ -426,11 +426,62 @@ This feature provides explicit control over project hierarchy, allowing users to
 
 **Note**: The checkbox only appears when a project is selected in the Projects column. Behavior remains unchanged for Subareas and Tasks columns.
 
-### 7. Footer with Quick Reference
+### 7. Task Completion Toggle
+
+Quick keyboard shortcut to mark tasks as complete with visual feedback.
+
+**Implementation**: `internal/tui/app.go`, `internal/tui/renderer.go`
+
+**Behavior**:
+- Press `x` to toggle task completion status (Tasks column only)
+- Smart toggle logic:
+  - `todo` → `done`
+  - `in_progress` → `done`
+  - `waiting` → `done`
+  - `done` → `todo`
+- Immediate optimistic UI update
+- Database persistence in background
+- Automatic rollback with error toast if database operation fails
+
+**Visual Feedback**:
+
+Completed tasks display with three visual indicators:
+
+1. **Checkmark Icon**: `✓` prefix before task title
+2. **Strikethrough Text**: Horizontal line through text
+3. **Muted Color**: Dimmed text using theme's muted color
+
+**Example**:
+```
+  Incomplete task
+✓ Completed task (with strikethrough and muted color)
+  In progress task
+✓ Another completed task
+```
+
+**Error Handling**:
+- Optimistic UI update happens immediately
+- If database operation fails:
+  - UI state reverts to original status
+  - Error toast notification appears
+  - User can retry the operation
+
+**Theme Integration**:
+- Completed task colors automatically adapt to terminal theme
+- Light terminal: Muted gray text (`#9CA3AF`)
+- Dark terminal: Slightly lighter gray text (`#6B7280`)
+- See Theme System section for details
+
+**Accessibility**:
+- Multiple visual cues (icon + strikethrough + color) ensure visibility
+- Works with both light and dark terminal themes
+- No reliance on color alone for status indication
+
+### 8. Footer with Quick Reference
 
 Persistent footer showing common keyboard shortcuts.
 
-**Display**: `h/l: columns | j/k: nav | a: add | ?: help | q: quit`
+**Display**: `h/l: columns | j/k: nav | a: add | x: toggle | ?: help | q: quit`
 
 **Implementation**: Footer rendered in main `View()` function
 
@@ -454,6 +505,7 @@ Persistent footer showing common keyboard shortcuts.
 |-----|--------|-------------|
 | `Enter`, `Space` | Toggle Expand/Collapse | Expand or collapse project tree nodes |
 | `a` | Quick Add | Open modal to create new item |
+| `x` | Toggle Task Completion | Mark task as done/undone (Tasks column only) |
 | `Tab`, `Shift+Tab` | Navigate Modal | In quick-add modal: cycle between input and checkbox (when visible) |
 | `Space` | Toggle Checkbox | In quick-add modal: toggle checkbox when focused |
 

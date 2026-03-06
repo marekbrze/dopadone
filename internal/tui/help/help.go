@@ -133,6 +133,7 @@ func (h *HelpModal) getCategories() []Category {
 			Shortcuts: []Shortcut{
 				{Key: "a", Description: "Quick-add item (context-aware)"},
 				{Key: "Enter, Space", Description: "Toggle expand/collapse"},
+				{Key: "x", Description: "Toggle task completion (Tasks column)"},
 			},
 		},
 		{

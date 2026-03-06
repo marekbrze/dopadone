@@ -220,6 +220,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case TaskCreatedMsg:
 		return m.handleTaskCreated(msg)
 
+	case TaskStatusToggledMsg:
+		if msg.Err != nil {
+			if msg.TaskIndex < len(m.tasks) {
+				m.tasks[msg.TaskIndex].Status = msg.OriginalStatus
+			}
+
+			m.addToast(toast.NewError("Failed to update task status: " + msg.Err.Error()))
+			return m, nil
+		}
+
+		return m, nil
+
 	case areamodal.SubmitMsg:
 		return m.handleAreaModalSubmit(msg)
 	case areamodal.UpdateMsg:
@@ -313,6 +325,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, m.SwitchToNextArea()
 		case "enter", " ":
 			m.handleEnterOrSpace()
+		case "x":
+			if m.focus == FocusTasks && len(m.tasks) > 0 {
+				return m, m.toggleTaskCompletion()
+			}
 		case "a":
 			return m.handleQuickAdd()
 		case "?":
@@ -334,6 +350,27 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	return m, nil
+}
+
+func (m *Model) toggleTaskCompletion() tea.Cmd {
+	if len(m.tasks) == 0 || m.selectedTaskIndex >= len(m.tasks) {
+		return nil
+	}
+
+	task := &m.tasks[m.selectedTaskIndex]
+
+	var newStatus domain.TaskStatus
+	if task.IsCompleted() {
+		newStatus = domain.TaskStatusTodo
+	} else {
+		newStatus = domain.TaskStatusDone
+	}
+
+	originalStatus := task.Status
+
+	task.Status = newStatus
+
+	return ToggleTaskStatusCmd(m.taskSvc, task.ID, newStatus, originalStatus, m.selectedTaskIndex)
 }
 
 func (m Model) View() string {

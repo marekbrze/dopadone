@@ -54,11 +54,28 @@ func (m *Model) RenderTasks() string {
 
 	var lines []string
 	for i, task := range m.tasks {
-		if i == m.selectedTaskIndex {
-			lines = append(lines, "  "+m.renderSelectedLine(task.Title))
+		var prefix string
+		var text string
+		var style lipgloss.Style
+
+		if task.IsCompleted() {
+			prefix = "✓ "
+			text = task.Title
+			style = lipgloss.NewStyle().
+				Strikethrough(true).
+				Foreground(m.theme.Muted)
 		} else {
-			lines = append(lines, "  "+task.Title)
+			prefix = "  "
+			text = task.Title
+			style = lipgloss.NewStyle().
+				Foreground(m.theme.Foreground)
 		}
+
+		if i == m.selectedTaskIndex {
+			style = style.Bold(true).Reverse(true)
+		}
+
+		lines = append(lines, "  "+style.Render(prefix+text))
 	}
 	return joinLines(lines)
 }

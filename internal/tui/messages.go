@@ -87,3 +87,10 @@ type AreaDeletedMsg struct {
 type AreasReorderedMsg struct {
 	Err error
 }
+
+type TaskStatusToggledMsg struct {
+	Task           *domain.Task
+	OriginalStatus domain.TaskStatus
+	TaskIndex      int
+	Err            error
+}

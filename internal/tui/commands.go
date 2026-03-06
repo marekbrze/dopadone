@@ -186,3 +186,22 @@ func LoadAreaStatsCmd(areaSvc service.AreaServiceInterface, areaID string) tea.C
 		}
 	}
 }
+
+func ToggleTaskStatusCmd(
+	taskSvc service.TaskServiceInterface,
+	taskID string,
+	newStatus domain.TaskStatus,
+	originalStatus domain.TaskStatus,
+	taskIndex int,
+) tea.Cmd {
+	return func() tea.Msg {
+		task, err := taskSvc.SetStatus(context.Background(), taskID, newStatus)
+
+		return TaskStatusToggledMsg{
+			Task:           task,
+			OriginalStatus: originalStatus,
+			TaskIndex:      taskIndex,
+			Err:            err,
+		}
+	}
+}
