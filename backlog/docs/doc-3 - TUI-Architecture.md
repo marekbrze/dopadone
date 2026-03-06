@@ -856,6 +856,56 @@ Parent task split into 6 subtasks, all completed:
 - All commands follow same pattern: service method calls, domain type returns, no converters needed
 - Benefits: Consistent architecture, easier testing, centralized business logic, type safety
 
+### ✅ Completed: Quick-Add Subproject Checkbox (Task-48)
+- Added `showCheckbox` parameter to `getParentContext()` function signature
+- Function now returns 5 values: `(parentName, entityType, parentID, subareaID, showCheckbox)`
+- `showCheckbox` boolean indicates whether the quick-add modal should display a subproject creation option
+- Returns `true` when a project is selected in the Projects column (allows creating subprojects under projects)
+- Returns `false` for Subareas and Tasks columns, or when no project is selected
+- Modal constructor updated to accept the `showCheckbox` parameter
+- All tests updated to capture the 5th return value and verify checkbox behavior
+
+## Quick-Add Context Detection
+
+The `getParentContext()` function determines the context for the quick-add modal based on the currently focused column and selections:
+
+```go
+func (m *Model) getParentContext() (parentName string, entityType modal.EntityType, parentID string, subareaID *string, showCheckbox bool)
+```
+
+**Return Values:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `parentName` | `string` | Display name of the parent entity (shown in modal header) |
+| `entityType` | `modal.EntityType` | Type of entity to create (Subarea, Project, or Task) |
+| `parentID` | `string` | ID of the parent entity for creation |
+| `subareaID` | `*string` | Optional subarea ID (required for project creation) |
+| `showCheckbox` | `bool` | Whether to show subproject checkbox in modal |
+
+**Context Behavior by Column:**
+
+| Focused Column | Parent Entity | Entity Type Created | showCheckbox |
+|----------------|---------------|---------------------|--------------|
+| Subareas | Area | Subarea | `false` |
+| Projects (no selection) | Subarea | Project (root) | `false` |
+| Projects (project selected) | Project | Project (subproject) | `true` |
+| Tasks | Project | Task | `false` |
+
+**Usage Example:**
+
+```go
+func (m *Model) handleQuickAdd() (tea.Model, tea.Cmd) {
+    parentName, entityType, parentID, subareaID, showCheckbox := m.getParentContext()
+    if parentName == "" {
+        return m, nil
+    }
+    m.modal = modal.New(parentName, entityType, parentID, subareaID, showCheckbox)
+    m.isModalOpen = true
+    return m, nil
+}
+```
+
 ## Design Decisions
 
 1. **bubbletea over other frameworks**: Simple MVU pattern, great community, pure Go
