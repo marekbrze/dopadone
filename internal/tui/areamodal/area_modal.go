@@ -8,6 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/example/projectdb/internal/domain"
+	"github.com/example/projectdb/internal/tui/theme"
 )
 
 type Mode int
@@ -37,17 +38,17 @@ var PredefinedColors = []domain.Color{
 var (
 	ModalBorder = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("62")).
+			BorderForeground(theme.Default.Primary).
 			Padding(1, 2).
 			Width(60)
 
 	TitleStyle = lipgloss.NewStyle().
 			Bold(true).
-			Foreground(lipgloss.Color("62")).
+			Foreground(theme.Default.Primary).
 			MarginBottom(1)
 
 	SelectedItemStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("170")).
+				Foreground(theme.Default.Warning).
 				Bold(true)
 
 	NormalItemStyle = lipgloss.NewStyle()
@@ -57,23 +58,23 @@ var (
 
 	InputField = lipgloss.NewStyle().
 			Border(lipgloss.NormalBorder()).
-			BorderForeground(lipgloss.Color("62")).
+			BorderForeground(theme.Default.Primary).
 			Padding(0, 1).
 			MarginTop(1)
 
 	ErrorText = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("196")).
+			Foreground(theme.Default.Error).
 			Bold(true)
 
 	HintText = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("241")).
+			Foreground(theme.Default.Muted).
 			MarginTop(1)
 
 	StatsStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("214"))
+			Foreground(theme.Default.Warning)
 
 	WarningStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("196")).
+			Foreground(theme.Default.Error).
 			Bold(true)
 )
 

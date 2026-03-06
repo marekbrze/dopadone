@@ -680,6 +680,214 @@ For each release, manually verify:
 - [ ] Terminal resize handling
 - [ ] No visual artifacts or rendering issues
 
+## Theme System
+
+The TUI includes a comprehensive theming system that automatically adapts colors based on the terminal's background color, ensuring readability across different terminal themes.
+
+### Overview
+
+The theme system uses [lipgloss.AdaptiveColor](https://github.com/charmbracelet/lipgloss) to define colors that automatically switch between light and dark variants based on the terminal's color scheme. This eliminates the need for hardcoded ANSI color codes and ensures UI elements remain readable in any terminal theme.
+
+**Key Features**:
+- **Semantic Color Roles**: Colors defined by purpose (primary, secondary, success, error, warning, muted)
+- **Automatic Adaptation**: Colors switch automatically based on terminal background
+- **Configurable**: Theme selection via `backlog/config.yml`
+- **Zero Hardcoded Colors**: All 48 previously hardcoded colors replaced with theme references
+
+### Theme Package
+
+**Location**: `internal/tui/theme/`
+
+**Components**:
+- `theme.go`: Core theme definitions and semantic color roles
+- `loader.go`: Configuration loader and theme mode selection
+- `theme_test.go`: Comprehensive theme tests
+
+### Color Theme Structure
+
+```go
+type ColorTheme struct {
+    Primary    lipgloss.AdaptiveColor  // Primary UI color (tabs, active borders)
+    Secondary  lipgloss.AdaptiveColor  // Secondary text and accents
+    Success    lipgloss.AdaptiveColor  // Success states and confirmations
+    Error      lipgloss.AdaptiveColor  // Error states and warnings
+    Warning    lipgloss.AdaptiveColor  // Warning messages
+    Muted      lipgloss.AdaptiveColor  // Muted/disabled text
+    Dimmed     lipgloss.AdaptiveColor  // Dimmed borders and separators
+    Background lipgloss.AdaptiveColor  // Background color
+    Foreground lipgloss.AdaptiveColor  // Default text color
+}
+```
+
+### Semantic Color Methods
+
+The `ColorTheme` struct provides helper methods for common UI elements:
+
+```go
+theme := theme.Default
+
+// Tab styling
+theme.TabActiveBackground()      // Active tab background
+theme.TabActiveForeground()      // Active tab text
+theme.TabInactiveBackground()    // Inactive tab background
+theme.TabInactiveForeground()    // Inactive tab text
+
+// Column styling
+theme.ColumnFocusedBorder()      // Focused column border
+theme.ColumnUnfocusedBorder()    // Unfocused column border
+theme.ColumnHeader()             // Column header text
+
+// General UI elements
+theme.EmptyText()                // Empty state text
+theme.FooterForeground()         // Footer text color
+theme.FooterBackground()         // Footer background color
+```
+
+### Theme Modes
+
+Three theme modes are supported:
+
+1. **auto** (default): Automatically adapts colors based on terminal background
+2. **light**: Forces light theme colors
+3. **dark**: Forces dark theme colors
+
+### Configuration
+
+Theme mode is configured in `backlog/config.yml`:
+
+```yaml
+project_name: "adhd-coach-v2"
+default_status: "To Do"
+# ... other config ...
+theme: "auto"  # Options: "auto", "light", "dark"
+```
+
+### Theme Loading
+
+Themes are loaded during TUI initialization:
+
+```go
+// In internal/tui/tui.go
+func New(
+    areaSvc service.AreaServiceInterface,
+    subareaSvc service.SubareaServiceInterface,
+    projectSvc service.ProjectServiceInterface,
+    taskSvc service.TaskServiceInterface,
+) tea.Model {
+    // Load theme from config
+    theme, err := theme.LoadTheme("backlog/config.yml")
+    if err != nil {
+        theme = theme.Default
+    }
+    
+    return Model{
+        // ... services ...
+        theme: theme,
+        // ... other fields ...
+    }
+}
+```
+
+### Default Theme Colors
+
+The default theme uses carefully selected colors for optimal readability:
+
+**Light Terminal Background**:
+- Primary: `#0066CC` (Blue)
+- Secondary: `#6B7280` (Gray)
+- Success: `#059669` (Green)
+- Error: `#DC2626` (Red)
+- Warning: `#D97706` (Amber)
+- Muted: `#9CA3AF` (Light Gray)
+
+**Dark Terminal Background**:
+- Primary: `#4D9FFF` (Light Blue)
+- Secondary: `#9CA3AF` (Light Gray)
+- Success: `#10B981` (Light Green)
+- Error: `#EF4444` (Light Red)
+- Warning: `#F59E0B` (Light Amber)
+- Muted: `#6B7280` (Gray)
+
+### Implementation Pattern
+
+All UI components access theme colors through the `Model.theme` field:
+
+```go
+// Before (hardcoded):
+activeTabStyle := lipgloss.NewStyle().
+    Background(lipgloss.Color("#0066CC")).
+    Foreground(lipgloss.Color("#FFFFFF"))
+
+// After (theme-aware):
+activeTabStyle := lipgloss.NewStyle().
+    Background(m.theme.TabActiveBackground()).
+    Foreground(m.theme.TabActiveForeground())
+```
+
+### Component Integration
+
+All TUI components use the theme system:
+
+**Views (`views/styles.go`)**:
+- Tab active/inactive styles
+- Column borders and headers
+- Empty state text
+
+**Modals (`modal/styles.go`)**:
+- Modal borders and backgrounds
+- Input field styling
+- Button styles
+
+**Toasts (`toast/styles.go`)**:
+- Error toast styling
+- Success toast styling
+
+**Help (`help/styles.go`)**:
+- Help modal borders
+- Category headers
+- Shortcut text
+
+**Tree (`tree/renderer.go`)**:
+- Tree node styling
+- Expand/collapse indicators
+
+**Footer (`renderer_footer.go`)**:
+- Footer text and background
+
+### Testing
+
+Theme system includes comprehensive tests:
+
+```bash
+# Run theme tests
+go test ./internal/tui/theme/... -v
+
+# Check coverage
+go test ./internal/tui/theme/... -cover
+```
+
+**Test Coverage**: 60%+ coverage including:
+- Theme loading from config
+- Theme mode selection (auto/light/dark)
+- Color theme validation
+- Default theme values
+
+### Benefits
+
+1. **Readability**: UI elements automatically adapt to terminal theme
+2. **Maintainability**: Centralized color management, no scattered hardcoded values
+3. **Flexibility**: Easy to add new themes or modify existing ones
+4. **User Control**: Users can override automatic detection with manual theme selection
+5. **Consistency**: All components use semantic color roles for uniform appearance
+
+### Future Enhancements
+
+Potential theme system improvements:
+- Custom color palettes via config
+- Multiple theme presets (beyond default)
+- Theme export/import functionality
+- Per-area theme customization
+
 ## Styling
 
 ### Lipgloss Usage
@@ -700,6 +908,7 @@ All styling uses [Lipgloss](https://github.com/charmbracelet/lipgloss) for consi
 - `modal/styles.go`: Quick-add modal styles
 - `views/styles.go`: Main view styles
 - `tree/constants.go`: Tree rendering characters and indicators
+- `theme/theme.go`: Theme definitions and semantic color roles
 
 ### Tree Styling
 

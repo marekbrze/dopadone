@@ -1,42 +1,45 @@
 package modal
 
-import "github.com/charmbracelet/lipgloss"
+import (
+	"github.com/charmbracelet/lipgloss"
+	"github.com/example/projectdb/internal/tui/theme"
+)
 
 var (
 	ModalBorder = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("62")).
+			BorderForeground(theme.Default.Primary).
 			Padding(1, 2)
 
 	InputField = lipgloss.NewStyle().
 			Border(lipgloss.NormalBorder()).
-			BorderForeground(lipgloss.Color("62")).
+			BorderForeground(theme.Default.Primary).
 			Padding(0, 1)
 
 	ErrorText = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("196")).
+			Foreground(theme.Default.Error).
 			Bold(true)
 
 	HintText = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("241"))
+			Foreground(theme.Default.Muted)
 
 	TitleStyle = lipgloss.NewStyle().
 			Bold(true).
-			Foreground(lipgloss.Color("62"))
+			Foreground(theme.Default.Primary)
 
 	OverlayStyle = lipgloss.NewStyle()
 
 	CheckboxStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("241"))
+			Foreground(theme.Default.Muted)
 
 	CheckboxFocusedStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("62")).
+				Foreground(theme.Default.Primary).
 				Bold(true)
 
 	CheckboxCheckedStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("42"))
+				Foreground(theme.Default.Success)
 
 	CheckboxFocusedCheckedStyle = lipgloss.NewStyle().
-					Foreground(lipgloss.Color("42")).
+					Foreground(theme.Default.Success).
 					Bold(true)
 )

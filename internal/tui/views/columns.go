@@ -103,20 +103,57 @@ func truncateString(s string, maxLen int) string {
 	if s == "" {
 		return ""
 	}
+
+	stripped := stripANSI(s)
+	visibleRunes := []rune(stripped)
+	visibleCount := len(visibleRunes)
+
 	if maxLen <= 1 {
+		if visibleCount >= 1 {
+			return string(visibleRunes[0]) + "…"
+		}
 		return "…"
 	}
 
-	stripped := stripANSI(s)
-	if len(stripped) <= maxLen {
+	if visibleCount <= maxLen {
 		return s
 	}
 
-	if len(stripped) > maxLen {
-		return "…"
+	var result strings.Builder
+	targetVisible := maxLen - 1
+	resultVisible := 0
+	inEscape := false
+	escapeStarted := false
+
+	for _, r := range s {
+		if r == '\x1b' && !inEscape {
+			inEscape = true
+			escapeStarted = true
+			result.WriteRune(r)
+			continue
+		}
+
+		if inEscape {
+			result.WriteRune(r)
+			if escapeStarted && r == '[' {
+				escapeStarted = false
+				continue
+			}
+			if !escapeStarted && ((r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z')) {
+				inEscape = false
+			}
+			continue
+		}
+
+		if resultVisible < targetVisible {
+			result.WriteRune(r)
+			resultVisible++
+		} else {
+			break
+		}
 	}
 
-	return s[:maxLen-1] + "…"
+	return result.String() + "…"
 }
 
 func ColumnView(col Column) string {

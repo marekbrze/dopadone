@@ -11,6 +11,7 @@ import (
 	"github.com/example/projectdb/internal/tui/areamodal"
 	"github.com/example/projectdb/internal/tui/help"
 	"github.com/example/projectdb/internal/tui/modal"
+	"github.com/example/projectdb/internal/tui/theme"
 	"github.com/example/projectdb/internal/tui/toast"
 	"github.com/example/projectdb/internal/tui/tree"
 	"github.com/example/projectdb/internal/tui/views"
@@ -21,6 +22,7 @@ type Model struct {
 	subareaSvc  service.SubareaServiceInterface
 	projectSvc  service.ProjectServiceInterface
 	taskSvc     service.TaskServiceInterface
+	theme       theme.ColorTheme
 	focus       FocusColumn
 	width       int
 	height      int
@@ -68,13 +70,14 @@ func InitialModel(
 ) Model {
 	s := spinner.New()
 	s.Spinner = spinner.Dot
-	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
+	s.Style = lipgloss.NewStyle().Foreground(theme.Default.Primary)
 
 	return Model{
 		areaSvc:     areaSvc,
 		subareaSvc:  subareaSvc,
 		projectSvc:  projectSvc,
 		taskSvc:     taskSvc,
+		theme:       theme.Default,
 		focus:       FocusSubareas,
 		width:       0,
 		height:      0,

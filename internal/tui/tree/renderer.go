@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/example/projectdb/internal/tui/theme"
 )
 
 // Renderer produces visual string representations of tree structures.
@@ -24,9 +25,9 @@ func NewRenderer() *Renderer {
 			Bold(true).
 			Reverse(true),
 		expandedStyle: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("248")),
+			Foreground(theme.Default.Secondary),
 		collapsedStyle: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("241")),
+			Foreground(theme.Default.Muted),
 	}
 }
 

@@ -2,6 +2,7 @@ package tui
 
 import (
 	"github.com/charmbracelet/lipgloss"
+	"github.com/example/projectdb/internal/tui/theme"
 	"github.com/example/projectdb/internal/tui/toast"
 )
 
@@ -33,8 +34,8 @@ func (m *Model) RenderFooter() string {
 	}
 
 	footerStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("241")).
-		Background(lipgloss.Color("235")).
+		Foreground(theme.Default.FooterForeground()).
+		Background(theme.Default.FooterBackground()).
 		Padding(0, 1)
 
 	shortcuts := "h/l: columns | j/k: navigate | a: add | ?: help | q: quit"

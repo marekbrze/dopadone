@@ -1,0 +1,26 @@
+mode: set
+github.com/example/projectdb/internal/tui/theme/loader.go:23.55,25.16 2 0
+github.com/example/projectdb/internal/tui/theme/loader.go:25.16,27.3 1 0
+github.com/example/projectdb/internal/tui/theme/loader.go:29.2,29.42 1 0
+github.com/example/projectdb/internal/tui/theme/loader.go:32.53,34.16 2 0
+github.com/example/projectdb/internal/tui/theme/loader.go:34.16,36.3 1 0
+github.com/example/projectdb/internal/tui/theme/loader.go:38.2,39.54 2 0
+github.com/example/projectdb/internal/tui/theme/loader.go:39.54,41.3 1 0
+github.com/example/projectdb/internal/tui/theme/loader.go:43.2,43.21 1 0
+github.com/example/projectdb/internal/tui/theme/loader.go:46.51,47.14 1 1
+github.com/example/projectdb/internal/tui/theme/loader.go:48.21,49.22 1 1
+github.com/example/projectdb/internal/tui/theme/loader.go:50.18,51.30 1 1
+github.com/example/projectdb/internal/tui/theme/loader.go:52.17,53.29 1 1
+github.com/example/projectdb/internal/tui/theme/loader.go:54.10,55.76 1 1
+github.com/example/projectdb/internal/tui/theme/loader.go:59.33,71.2 1 1
+github.com/example/projectdb/internal/tui/theme/loader.go:73.32,85.2 1 1
+github.com/example/projectdb/internal/tui/theme/theme.go:58.66,60.2 1 1
+github.com/example/projectdb/internal/tui/theme/theme.go:62.66,67.2 1 1
+github.com/example/projectdb/internal/tui/theme/theme.go:69.68,74.2 1 1
+github.com/example/projectdb/internal/tui/theme/theme.go:76.68,81.2 1 1
+github.com/example/projectdb/internal/tui/theme/theme.go:83.66,85.2 1 1
+github.com/example/projectdb/internal/tui/theme/theme.go:87.68,89.2 1 1
+github.com/example/projectdb/internal/tui/theme/theme.go:91.59,93.2 1 1
+github.com/example/projectdb/internal/tui/theme/theme.go:95.56,97.2 1 1
+github.com/example/projectdb/internal/tui/theme/theme.go:99.63,101.2 1 1
+github.com/example/projectdb/internal/tui/theme/theme.go:103.63,105.2 1 1

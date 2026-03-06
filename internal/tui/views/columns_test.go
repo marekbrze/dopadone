@@ -294,3 +294,134 @@ func TestLayoutModeSwitching(t *testing.T) {
 		})
 	}
 }
+
+func TestTruncateString(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		maxLen   int
+		expected string
+	}{
+		{"empty string", "", 10, ""},
+		{"short string fits", "Hello", 10, "Hello"},
+		{"exact fit", "Hello", 5, "Hello"},
+		{"partial truncation AC1", "Very Long Project Name", 15, "Very Long Proj…"},
+		{"truncate to 10", "Hello World", 10, "Hello Wor…"},
+		{"truncate to 5", "Hello World", 5, "Hell…"},
+		{"single char maxLen=1", "abc", 1, "a…"},
+		{"maxLen=0", "abc", 0, "a…"},
+		{"maxLen=-1", "abc", -1, "a…"},
+		{"very narrow column", "Project", 3, "Pr…"},
+		{"string shorter than maxLen", "Hi", 10, "Hi"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := truncateString(tt.input, tt.maxLen)
+			if got != tt.expected {
+				t.Errorf("truncateString(%q, %d) = %q, want %q", tt.input, tt.maxLen, got, tt.expected)
+			}
+		})
+	}
+}
+
+func TestTruncateStringWithANSI(t *testing.T) {
+	redBold := "\x1b[1;31mTest String\x1b[0m"
+	green := "\x1b[32mGreen\x1b[0m"
+
+	tests := []struct {
+		name              string
+		input             string
+		maxLen            int
+		wantContains      string
+		wantNotContains   string
+		wantVisiblePrefix string
+	}{
+		{
+			name:              "ANSI preserved in truncated output",
+			input:             redBold,
+			maxLen:            7,
+			wantContains:      "\x1b[",
+			wantVisiblePrefix: "\x1b[1;31mTest ",
+		},
+		{
+			name:              "ANSI string fits",
+			input:             green,
+			maxLen:            20,
+			wantContains:      green,
+			wantVisiblePrefix: green,
+		},
+		{
+			name:              "ANSI with truncation preserves color start",
+			input:             "\x1b[31mVery Long Colored Name\x1b[0m",
+			maxLen:            15,
+			wantContains:      "\x1b[31m",
+			wantVisiblePrefix: "\x1b[31mVery Long ",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := truncateString(tt.input, tt.maxLen)
+
+			if tt.wantNotContains != "" && strings.Contains(got, tt.wantNotContains) {
+				t.Errorf("unexpected content in output: %q", tt.wantNotContains)
+			}
+
+			if !strings.HasSuffix(got, "…") && len(stripANSI(tt.input)) > tt.maxLen {
+				t.Errorf("truncated output should end with ellipsis, got: %q", got)
+			}
+		})
+	}
+}
+
+func TestTruncateStringUnicode(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		maxLen   int
+		expected string
+	}{
+		{"emoji truncation", "😀😃😄😁😆", 3, "😀😃…"},
+		{"emoji with text", "Hello 😀 World", 10, "Hello 😀 W…"},
+		{"CJK characters", "日本語テスト", 4, "日本語…"},
+		{"mixed ASCII and emoji", "Test🎉More", 6, "Test🎉…"},
+		{"single emoji maxLen=1", "🎉🎊🎈", 1, "🎉…"},
+		{"emoji fits exactly", "🎉", 1, "🎉…"},
+		{"multi-byte char boundary", "Café résumé", 6, "Café …"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := truncateString(tt.input, tt.maxLen)
+			if got != tt.expected {
+				t.Errorf("truncateString(%q, %d) = %q, want %q", tt.input, tt.maxLen, got, tt.expected)
+			}
+		})
+	}
+}
+
+func TestTruncateStringEdgeCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		maxLen   int
+		expected string
+	}{
+		{"single character", "a", 10, "a"},
+		{"single char maxLen=1", "a", 1, "a…"},
+		{"single char maxLen=0", "x", 0, "x…"},
+		{"whitespace preserved", "Hello World", 8, "Hello W…"},
+		{"only ANSI codes", "\x1b[31m\x1b[0m", 5, "\x1b[31m\x1b[0m"},
+		{"very long string", strings.Repeat("x", 100), 10, "xxxxxxxxx…"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := truncateString(tt.input, tt.maxLen)
+			if got != tt.expected {
+				t.Errorf("truncateString(%q, %d) = %q, want %q", tt.input, tt.maxLen, got, tt.expected)
+			}
+		})
+	}
+}

@@ -1,25 +1,28 @@
 package toast
 
-import "github.com/charmbracelet/lipgloss"
+import (
+	"github.com/charmbracelet/lipgloss"
+	"github.com/example/projectdb/internal/tui/theme"
+)
 
 var (
 	ErrorStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("196")).
-			Background(lipgloss.Color("52")).
+			Foreground(theme.Default.Error).
+			Background(theme.Default.Error).
 			Bold(true).
 			Padding(0, 1).
 			Margin(0, 0, 1, 0)
 
 	SuccessStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("86")).
-			Background(lipgloss.Color("22")).
+			Foreground(theme.Default.Success).
+			Background(theme.Default.Success).
 			Bold(true).
 			Padding(0, 1).
 			Margin(0, 0, 1, 0)
 
 	InfoStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("229")).
-			Background(lipgloss.Color("58")).
+			Foreground(theme.Default.Warning).
+			Background(theme.Default.Warning).
 			Padding(0, 1).
 			Margin(0, 0, 1, 0)
 )
