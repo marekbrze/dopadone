@@ -205,6 +205,130 @@ type Subarea struct {
 
 ---
 
+## Domain Structures
+
+Domain structures organize entities for specific use cases, such as grouping tasks for hierarchical display.
+
+### GroupedTasks Structure
+
+GroupedTasks organizes tasks by subproject with group metadata for TUI rendering:
+
+**Purpose**: Display tasks hierarchically when a parent project is selected, separating direct tasks from nested subproject tasks.
+
+```go
+// internal/domain/task_group.go
+
+// TaskGroup represents a collection of tasks belonging to a subproject
+type TaskGroup struct {
+    ProjectID   string  // Unique identifier of the subproject
+    ProjectName string  // Display name of the subproject
+    Tasks       []Task  // Tasks belonging to this subproject
+    IsExpanded  bool    // Expansion state for TUI (default: true)
+}
+
+// GroupedTasks organizes tasks by subproject with group metadata
+type GroupedTasks struct {
+    DirectTasks []Task      // Tasks belonging to the selected project
+    Groups      []TaskGroup // Tasks from nested subprojects
+    TotalCount  int         // Total tasks across all groups
+}
+```
+
+**Constructor Pattern**:
+
+```go
+func NewGroupedTasks(tasks []Task, parentProjectID string, projectNames map[string]string) *GroupedTasks {
+    // Handles nil/empty gracefully
+    if tasks == nil {
+        tasks = []Task{}
+    }
+    if projectNames == nil {
+        projectNames = make(map[string]string)
+    }
+    
+    grouped := &GroupedTasks{
+        DirectTasks: []Task{},
+        Groups:      []TaskGroup{},
+    }
+    
+    // Group tasks by project while preserving order
+    // ... grouping logic
+    
+    return grouped
+}
+```
+
+**Mutation Methods**:
+
+```go
+// AddTask adds a task to the appropriate group or DirectTasks
+func (g *GroupedTasks) AddTask(task Task)
+
+// RemoveTask removes a task by ID, returns false if not found
+func (g *GroupedTasks) RemoveTask(taskID string) bool
+
+// ToggleGroup toggles expansion state, returns false if not found
+func (g *GroupedTasks) ToggleGroup(projectID string) bool
+
+// Clear resets all fields to empty/zero
+func (g *GroupedTasks) Clear()
+```
+
+**Design Decisions**:
+- ✅ **Mutable structure**: Supports CRUD operations after construction
+- ✅ **Graceful handling**: No errors returned, handles nil/empty inputs safely
+- ✅ **Order preservation**: Tasks maintain append order, groups maintain discovery order
+- ✅ **Default expanded**: All groups default to `IsExpanded=true` for better UX
+- ✅ **Separation of concerns**: Direct tasks vs. nested tasks clearly separated
+
+**Use Case Example**:
+
+```go
+// In TUI when a project is selected
+func (m *Model) loadTasks(projectID string) {
+    // Get all tasks recursively
+    tasks, _ := m.taskService.ListByProjectRecursive(ctx, projectID)
+    
+    // Get project names for display
+    projectNames := m.getProjectNames()
+    
+    // Group tasks for display
+    m.groupedTasks = domain.NewGroupedTasks(tasks, projectID, projectNames)
+}
+```
+
+**Testing Pattern**:
+
+```go
+func TestNewGroupedTasks(t *testing.T) {
+    tests := []struct {
+        name            string
+        tasks           []domain.Task
+        parentProjectID string
+        projectNames    map[string]string
+        wantDirectCount int
+        wantGroupCount  int
+        wantTotalCount  int
+    }{
+        {
+            name: "direct tasks only",
+            tasks: []domain.Task{
+                {ID: "t1", ProjectID: "proj-1", Title: "Task 1"},
+                {ID: "t2", ProjectID: "proj-1", Title: "Task 2"},
+            },
+            parentProjectID: "proj-1",
+            wantDirectCount: 2,
+            wantGroupCount:  0,
+            wantTotalCount:  2,
+        },
+        // ... more test cases
+    }
+    // ... test implementation
+}
+```
+
+---
+
 ## Value Objects
 
 Value objects encapsulate domain concepts with built-in validation.

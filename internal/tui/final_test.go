@@ -26,7 +26,7 @@ func TestTUIDisplaysSeededData(t *testing.T) {
 	areaSvc := service.NewAreaService(repo, nil)
 	subareaSvc := service.NewSubareaService(repo, nil)
 	projectSvc := service.NewProjectService(repo, nil)
-	taskSvc := service.NewTaskService(repo, nil)
+	taskSvc := service.NewTaskService(repo, nil, nil)
 
 	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc)
 

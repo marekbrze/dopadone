@@ -48,6 +48,7 @@ type Querier interface {
 	ListSubareasByArea(ctx context.Context, areaID string) ([]Subarea, error)
 	ListTasksByPriority(ctx context.Context, priority string) ([]Task, error)
 	ListTasksByProject(ctx context.Context, projectID string) ([]Task, error)
+	ListTasksByProjectRecursive(ctx context.Context, projectID sql.NullString) ([]Task, error)
 	ListTasksByStatus(ctx context.Context, status string) ([]Task, error)
 	SoftDeleteArea(ctx context.Context, arg SoftDeleteAreaParams) (SoftDeleteAreaRow, error)
 	SoftDeleteProject(ctx context.Context, arg SoftDeleteProjectParams) (Project, error)

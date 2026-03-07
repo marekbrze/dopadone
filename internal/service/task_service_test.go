@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -11,17 +13,18 @@ import (
 )
 
 type mockTaskQuerier struct {
-	createTaskFunc          func(ctx context.Context, arg db.CreateTaskParams) (db.Task, error)
-	getTaskByIDFunc         func(ctx context.Context, id string) (db.Task, error)
-	listTasksByProjectFunc  func(ctx context.Context, projectID string) ([]db.Task, error)
-	listNextTasksFunc       func(ctx context.Context) ([]db.Task, error)
-	listTasksByStatusFunc   func(ctx context.Context, status string) ([]db.Task, error)
-	listTasksByPriorityFunc func(ctx context.Context, priority string) ([]db.Task, error)
-	listAllTasksFunc        func(ctx context.Context) ([]db.Task, error)
-	updateTaskFunc          func(ctx context.Context, arg db.UpdateTaskParams) (db.Task, error)
-	softDeleteTaskFunc      func(ctx context.Context, arg db.SoftDeleteTaskParams) (db.Task, error)
-	hardDeleteTaskFunc      func(ctx context.Context, id string) error
-	toggleIsNextFunc        func(ctx context.Context, arg db.ToggleIsNextParams) (db.Task, error)
+	createTaskFunc                  func(ctx context.Context, arg db.CreateTaskParams) (db.Task, error)
+	getTaskByIDFunc                 func(ctx context.Context, id string) (db.Task, error)
+	listTasksByProjectFunc          func(ctx context.Context, projectID string) ([]db.Task, error)
+	listTasksByProjectRecursiveFunc func(ctx context.Context, projectID sql.NullString) ([]db.Task, error)
+	listNextTasksFunc               func(ctx context.Context) ([]db.Task, error)
+	listTasksByStatusFunc           func(ctx context.Context, status string) ([]db.Task, error)
+	listTasksByPriorityFunc         func(ctx context.Context, priority string) ([]db.Task, error)
+	listAllTasksFunc                func(ctx context.Context) ([]db.Task, error)
+	updateTaskFunc                  func(ctx context.Context, arg db.UpdateTaskParams) (db.Task, error)
+	softDeleteTaskFunc              func(ctx context.Context, arg db.SoftDeleteTaskParams) (db.Task, error)
+	hardDeleteTaskFunc              func(ctx context.Context, id string) error
+	toggleIsNextFunc                func(ctx context.Context, arg db.ToggleIsNextParams) (db.Task, error)
 }
 
 func (m *mockTaskQuerier) CreateTask(ctx context.Context, arg db.CreateTaskParams) (db.Task, error) {
@@ -253,6 +256,13 @@ func (m *mockTaskQuerier) DeleteTasksByProjectID(ctx context.Context, projectID 
 	return nil
 }
 
+func (m *mockTaskQuerier) ListTasksByProjectRecursive(ctx context.Context, projectID sql.NullString) ([]db.Task, error) {
+	if m.listTasksByProjectRecursiveFunc != nil {
+		return m.listTasksByProjectRecursiveFunc(ctx, projectID)
+	}
+	return nil, nil
+}
+
 func TestTaskService_Create(t *testing.T) {
 	now := time.Now()
 	tests := []struct {
@@ -314,7 +324,7 @@ func TestTaskService_Create(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := NewTaskService(tt.mock(), nil)
+			svc := NewTaskService(tt.mock(), nil, nil)
 			got, err := svc.Create(context.Background(), tt.params)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("TaskService.Create() error = %v, wantErr %v", err, tt.wantErr)
@@ -374,7 +384,7 @@ func TestTaskService_GetByID(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := NewTaskService(tt.mock(), nil)
+			svc := NewTaskService(tt.mock(), nil, nil)
 			got, err := svc.GetByID(context.Background(), tt.id)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("TaskService.GetByID() error = %v, wantErr %v", err, tt.wantErr)
@@ -428,7 +438,7 @@ func TestTaskService_ListByProject(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := NewTaskService(tt.mock(), nil)
+			svc := NewTaskService(tt.mock(), nil, nil)
 			got, err := svc.ListByProject(context.Background(), tt.projectID)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("TaskService.ListByProject() error = %v, wantErr %v", err, tt.wantErr)
@@ -499,7 +509,7 @@ func TestTaskService_SetStatus(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := NewTaskService(tt.mock(), nil)
+			svc := NewTaskService(tt.mock(), nil, nil)
 			got, err := svc.SetStatus(context.Background(), tt.id, tt.status)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("TaskService.SetStatus() error = %v, wantErr %v", err, tt.wantErr)
@@ -567,7 +577,7 @@ func TestTaskService_ToggleIsNext(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := NewTaskService(tt.mock(), nil)
+			svc := NewTaskService(tt.mock(), nil, nil)
 			got, err := svc.ToggleIsNext(context.Background(), tt.id)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("TaskService.ToggleIsNext() error = %v, wantErr %v", err, tt.wantErr)
@@ -626,7 +636,7 @@ func TestTaskService_MarkCompleted(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := NewTaskService(tt.mock(), nil)
+			svc := NewTaskService(tt.mock(), nil, nil)
 			got, err := svc.MarkCompleted(context.Background(), tt.id)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("TaskService.MarkCompleted() error = %v, wantErr %v", err, tt.wantErr)
@@ -678,7 +688,7 @@ func TestTaskService_ListAll(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := NewTaskService(tt.mock(), nil)
+			svc := NewTaskService(tt.mock(), nil, nil)
 			got, err := svc.ListAll(context.Background())
 			if (err != nil) != tt.wantErr {
 				t.Errorf("TaskService.ListAll() error = %v, wantErr %v", err, tt.wantErr)
@@ -686,6 +696,212 @@ func TestTaskService_ListAll(t *testing.T) {
 			}
 			if len(got) != tt.want {
 				t.Errorf("TaskService.ListAll() returned %d tasks, want %d", len(got), tt.want)
+			}
+		})
+	}
+}
+
+func TestTaskService_ListByProjectRecursive(t *testing.T) {
+	now := time.Now()
+
+	tests := []struct {
+		name    string
+		mock    func() *mockTaskQuerier
+		arg     string
+		want    int
+		wantErr bool
+	}{
+		{
+			name: "empty project ID returns empty slice",
+			mock: func() *mockTaskQuerier {
+				return &mockTaskQuerier{}
+			},
+			arg:     "",
+			want:    0,
+			wantErr: false,
+		},
+		{
+			name: "project with no tasks returns empty slice",
+			mock: func() *mockTaskQuerier {
+				return &mockTaskQuerier{
+					listTasksByProjectRecursiveFunc: func(ctx context.Context, projectID sql.NullString) ([]db.Task, error) {
+						return []db.Task{}, nil
+					},
+				}
+			},
+			arg:     "proj-1",
+			want:    0,
+			wantErr: false,
+		},
+		{
+			name: "project with direct tasks only",
+			mock: func() *mockTaskQuerier {
+				return &mockTaskQuerier{
+					listTasksByProjectRecursiveFunc: func(ctx context.Context, projectID sql.NullString) ([]db.Task, error) {
+						return []db.Task{
+							{
+								ID:        "task-1",
+								ProjectID: "proj-1",
+								Title:     "Task 1",
+								Status:    "todo",
+								Priority:  "medium",
+								IsNext:    1,
+								CreatedAt: now,
+								UpdatedAt: now,
+							},
+							{
+								ID:        "task-2",
+								ProjectID: "proj-1",
+								Title:     "Task 2",
+								Status:    "todo",
+								Priority:  "high",
+								IsNext:    1,
+								CreatedAt: now,
+								UpdatedAt: now,
+							},
+						}, nil
+					},
+				}
+			},
+			arg:     "proj-1",
+			want:    2,
+			wantErr: false,
+		},
+		{
+			name: "project with nested subprojects returns tasks from all levels",
+			mock: func() *mockTaskQuerier {
+				return &mockTaskQuerier{
+					listTasksByProjectRecursiveFunc: func(ctx context.Context, projectID sql.NullString) ([]db.Task, error) {
+						return []db.Task{
+							{ID: "task-1", ProjectID: "proj-1", Title: "Root Task", Status: "todo", Priority: "high", IsNext: 1, CreatedAt: now, UpdatedAt: now},
+							{ID: "task-2", ProjectID: "proj-2", Title: "Child Task 1", Status: "todo", Priority: "medium", IsNext: 1, CreatedAt: now, UpdatedAt: now},
+							{ID: "task-3", ProjectID: "proj-3", Title: "Child Task 2", Status: "todo", Priority: "low", IsNext: 0, CreatedAt: now, UpdatedAt: now},
+							{ID: "task-4", ProjectID: "proj-4", Title: "Grandchild Task", Status: "in_progress", Priority: "high", IsNext: 1, CreatedAt: now, UpdatedAt: now},
+						}, nil
+					},
+				}
+			},
+			arg:     "proj-1",
+			want:    4,
+			wantErr: false,
+		},
+		{
+			name: "mixed deleted and non-deleted - only returns non-deleted",
+			mock: func() *mockTaskQuerier {
+				return &mockTaskQuerier{
+					listTasksByProjectRecursiveFunc: func(ctx context.Context, projectID sql.NullString) ([]db.Task, error) {
+						deletedAt := now
+						return []db.Task{
+							{ID: "task-1", ProjectID: "proj-1", Title: "Active Task", Status: "todo", Priority: "high", IsNext: 1, CreatedAt: now, UpdatedAt: now},
+							{ID: "task-2", ProjectID: "proj-1", Title: "Deleted Task", Status: "todo", Priority: "medium", IsNext: 0, CreatedAt: now, UpdatedAt: now, DeletedAt: &deletedAt},
+						}, nil
+					},
+				}
+			},
+			arg:     "proj-1",
+			want:    2,
+			wantErr: false,
+		},
+		{
+			name: "database error returns wrapped error",
+			mock: func() *mockTaskQuerier {
+				return &mockTaskQuerier{
+					listTasksByProjectRecursiveFunc: func(ctx context.Context, projectID sql.NullString) ([]db.Task, error) {
+						return nil, errors.New("database connection failed")
+					},
+				}
+			},
+			arg:     "proj-1",
+			want:    0,
+			wantErr: true,
+		},
+		{
+			name: "non-existent project ID returns empty slice",
+			mock: func() *mockTaskQuerier {
+				return &mockTaskQuerier{
+					listTasksByProjectRecursiveFunc: func(ctx context.Context, projectID sql.NullString) ([]db.Task, error) {
+						return []db.Task{}, nil
+					},
+				}
+			},
+			arg:     "non-existent",
+			want:    0,
+			wantErr: false,
+		},
+		{
+			name: "multiple tasks per project",
+			mock: func() *mockTaskQuerier {
+				return &mockTaskQuerier{
+					listTasksByProjectRecursiveFunc: func(ctx context.Context, projectID sql.NullString) ([]db.Task, error) {
+						return []db.Task{
+							{ID: "task-1", ProjectID: "proj-1", Title: "Task 1", Status: "todo", Priority: "high", IsNext: 1, CreatedAt: now, UpdatedAt: now},
+							{ID: "task-2", ProjectID: "proj-1", Title: "Task 2", Status: "todo", Priority: "medium", IsNext: 0, CreatedAt: now, UpdatedAt: now},
+							{ID: "task-3", ProjectID: "proj-1", Title: "Task 3", Status: "in_progress", Priority: "low", IsNext: 0, CreatedAt: now, UpdatedAt: now},
+						}, nil
+					},
+				}
+			},
+			arg:     "proj-1",
+			want:    3,
+			wantErr: false,
+		},
+		{
+			name: "tasks with various priorities and statuses - correct ordering",
+			mock: func() *mockTaskQuerier {
+				return &mockTaskQuerier{
+					listTasksByProjectRecursiveFunc: func(ctx context.Context, projectID sql.NullString) ([]db.Task, error) {
+						deadline1 := now.Add(24 * time.Hour)
+						deadline2 := now.Add(48 * time.Hour)
+						return []db.Task{
+							{ID: "task-1", ProjectID: "proj-1", Title: "A Task", Status: "todo", Priority: "low", IsNext: 0, Deadline: &deadline2, CreatedAt: now, UpdatedAt: now},
+							{ID: "task-2", ProjectID: "proj-1", Title: "B Task", Status: "todo", Priority: "high", IsNext: 1, Deadline: &deadline1, CreatedAt: now, UpdatedAt: now},
+							{ID: "task-3", ProjectID: "proj-1", Title: "C Task", Status: "in_progress", Priority: "medium", IsNext: 1, Deadline: nil, CreatedAt: now, UpdatedAt: now},
+						}, nil
+					},
+				}
+			},
+			arg:     "proj-1",
+			want:    3,
+			wantErr: false,
+		},
+		{
+			name: "large dataset - multiple tasks from multiple projects",
+			mock: func() *mockTaskQuerier {
+				return &mockTaskQuerier{
+					listTasksByProjectRecursiveFunc: func(ctx context.Context, projectID sql.NullString) ([]db.Task, error) {
+						tasks := make([]db.Task, 20)
+						for i := 0; i < 20; i++ {
+							tasks[i] = db.Task{
+								ID:        fmt.Sprintf("task-%d", i),
+								ProjectID: fmt.Sprintf("proj-%d", i%5),
+								Title:     fmt.Sprintf("Task %d", i),
+								Status:    "todo",
+								Priority:  "medium",
+								IsNext:    int64(i % 2),
+								CreatedAt: now,
+								UpdatedAt: now,
+							}
+						}
+						return tasks, nil
+					},
+				}
+			},
+			arg:     "proj-1",
+			want:    20,
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			svc := NewTaskService(tt.mock(), nil, nil)
+			got, err := svc.ListByProjectRecursive(context.Background(), tt.arg)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("TaskService.ListByProjectRecursive() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if len(got) != tt.want {
+				t.Errorf("TaskService.ListByProjectRecursive() returned %d tasks, want %d", len(got), tt.want)
 			}
 		})
 	}

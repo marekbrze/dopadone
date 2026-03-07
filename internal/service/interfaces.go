@@ -164,6 +164,9 @@ type TaskServiceInterface interface {
 	// ListByProject retrieves all non-deleted tasks within the specified project.
 	ListByProject(ctx context.Context, projectID string) ([]domain.Task, error)
 
+	// ListByProjectRecursive retrieves all non-deleted tasks from a project and all its nested subprojects.
+	ListByProjectRecursive(ctx context.Context, projectID string) ([]domain.Task, error)
+
 	// ListByStatus retrieves all non-deleted tasks with the specified status.
 	ListByStatus(ctx context.Context, status domain.TaskStatus) ([]domain.Task, error)
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/example/dopadone/internal/converter"
@@ -16,11 +17,12 @@ var (
 )
 
 type TaskService struct {
-	repo db.Querier
+	repo           db.Querier
+	projectService ProjectServiceInterface
 }
 
-func NewTaskService(repo db.Querier, tm *db.TransactionManager) *TaskService {
-	return &TaskService{repo: repo}
+func NewTaskService(repo db.Querier, tm *db.TransactionManager, projectService ProjectServiceInterface) *TaskService {
+	return &TaskService{repo: repo, projectService: projectService}
 }
 
 type CreateTaskParams struct {
@@ -105,6 +107,26 @@ func (s *TaskService) ListByProject(ctx context.Context, projectID string) ([]do
 	rows, err := s.repo.ListTasksByProject(ctx, projectID)
 	if err != nil {
 		return nil, err
+	}
+
+	tasks := make([]domain.Task, len(rows))
+	for i, row := range rows {
+		tasks[i] = converter.DbTaskToDomain(row)
+	}
+	return tasks, nil
+}
+
+func (s *TaskService) ListByProjectRecursive(ctx context.Context, projectID string) ([]domain.Task, error) {
+	if projectID == "" {
+		return []domain.Task{}, nil
+	}
+
+	rows, err := s.repo.ListTasksByProjectRecursive(ctx, sql.NullString{
+		String: projectID,
+		Valid:  true,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("list tasks for project %s recursively: %w", projectID, err)
 	}
 
 	tasks := make([]domain.Task, len(rows))

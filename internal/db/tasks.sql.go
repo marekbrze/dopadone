@@ -288,6 +288,62 @@ func (q *Queries) ListTasksByProject(ctx context.Context, projectID string) ([]T
 	return items, nil
 }
 
+const listTasksByProjectRecursive = `-- name: ListTasksByProjectRecursive :many
+WITH RECURSIVE project_tree AS (
+    SELECT projects.id FROM projects 
+    WHERE projects.id = ?1 AND projects.deleted_at IS NULL
+    
+    UNION ALL
+    
+    SELECT p.id FROM projects p
+    INNER JOIN project_tree pt ON p.parent_id = pt.id
+    WHERE p.deleted_at IS NULL
+)
+SELECT t.id, t.project_id, t.title, t.description, t.start_date, t.deadline, t.priority, t.context, t.estimated_duration, t.status, t.is_next, t.created_at, t.updated_at, t.deleted_at
+FROM tasks t
+INNER JOIN project_tree pt ON t.project_id = pt.id
+WHERE t.deleted_at IS NULL
+ORDER BY t.is_next DESC, t.priority DESC, t.deadline ASC, t.title ASC
+`
+
+func (q *Queries) ListTasksByProjectRecursive(ctx context.Context, projectID sql.NullString) ([]Task, error) {
+	rows, err := q.db.QueryContext(ctx, listTasksByProjectRecursive, projectID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Task{}
+	for rows.Next() {
+		var i Task
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProjectID,
+			&i.Title,
+			&i.Description,
+			&i.StartDate,
+			&i.Deadline,
+			&i.Priority,
+			&i.Context,
+			&i.EstimatedDuration,
+			&i.Status,
+			&i.IsNext,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listTasksByStatus = `-- name: ListTasksByStatus :many
 SELECT id, project_id, title, description, start_date, deadline, priority, context, estimated_duration, status, is_next, created_at, updated_at, deleted_at
 FROM tasks

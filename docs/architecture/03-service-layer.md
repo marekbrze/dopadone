@@ -71,6 +71,7 @@ type TaskServiceInterface interface {
     ListByPriority(ctx context.Context, priority domain.Priority) ([]domain.Task, error)
     ListNext(ctx context.Context) ([]domain.Task, error)
     ListAll(ctx context.Context) ([]domain.Task, error)
+    ListByProjectRecursive(ctx context.Context, projectID string) ([]domain.Task, error)
     Update(ctx context.Context, params UpdateTaskParams) (*domain.Task, error)
     SoftDelete(ctx context.Context, id string) error
     HardDelete(ctx context.Context, id string) error
@@ -448,6 +449,92 @@ func (s *TaskService) Update(ctx context.Context, params UpdateTaskParams) (*dom
     
     result := converter.DbTaskToDomain(dbResult)
     return &result, nil
+}
+```
+
+---
+
+## Advanced Patterns
+
+### Recursive Data Loading
+
+For hierarchical data structures, services can provide recursive loading methods:
+
+```go
+// ListByProjectRecursive retrieves tasks from a project and all nested subprojects
+func (s *TaskService) ListByProjectRecursive(ctx context.Context, projectID string) ([]domain.Task, error) {
+    // Use SQL CTE (Common Table Expression) for efficient recursive loading
+    dbTasks, err := s.repo.ListTasksByProjectRecursive(ctx, projectID)
+    if err != nil {
+        return nil, fmt.Errorf("list tasks recursively: %w", err)
+    }
+    
+    // Convert to domain
+    tasks := make([]domain.Task, len(dbTasks))
+    for i, dbTask := range dbTasks {
+        tasks[i] = converter.DbTaskToDomain(dbTask)
+    }
+    
+    return tasks, nil
+}
+```
+
+**SQL Pattern (WITH RECURSIVE CTE):**
+
+```sql
+-- queries/tasks.sql
+-- name: ListTasksByProjectRecursive :many
+WITH RECURSIVE project_tree AS (
+    -- Base case: start with the root project
+    SELECT id, parent_id, subarea_id
+    FROM projects
+    WHERE id = ? AND deleted_at IS NULL
+    
+    UNION ALL
+    
+    -- Recursive case: find all child projects
+    SELECT p.id, p.parent_id, p.subarea_id
+    FROM projects p
+    INNER JOIN project_tree pt ON p.parent_id = pt.id
+    WHERE p.deleted_at IS NULL
+)
+SELECT t.*
+FROM tasks t
+INNER JOIN project_tree pt ON t.project_id = pt.id
+WHERE t.deleted_at IS NULL
+ORDER BY t.is_next DESC, t.priority DESC, t.deadline ASC, t.title ASC;
+```
+
+**Benefits:**
+- **Single query**: Fetches all tasks in one database call
+- **Performance**: Database engine optimizes the recursive CTE
+- **Consistency**: All data fetched at the same point in time
+- **Simplicity**: No N+1 query problem
+
+**When to Use:**
+- Hierarchical data (projects → subprojects, areas → subareas)
+- Tree traversal (categories, tags, organizational structures)
+- Graph queries (when depth is bounded)
+
+**Dependencies:**
+- Service may need to inject other services for complex operations
+- SQL query uses WITH RECURSIVE (supported by SQLite, PostgreSQL)
+
+**Dependency Injection for Complex Services:**
+
+When services need to coordinate, inject dependencies via constructor:
+
+```go
+type TaskService struct {
+    repo            db.Querier
+    projectService  ProjectServiceInterface  // Injected dependency
+}
+
+func NewTaskService(repo db.Querier, tm *db.TransactionManager, projectService ProjectServiceInterface) *TaskService {
+    return &TaskService{
+        repo:           repo,
+        projectService: projectService,
+    }
 }
 ```
 

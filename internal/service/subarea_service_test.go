@@ -221,6 +221,10 @@ func (m *mockSubareaQuerier) ListAllTasks(ctx context.Context) ([]db.Task, error
 	return nil, nil
 }
 
+func (m *mockSubareaQuerier) ListTasksByProjectRecursive(ctx context.Context, projectID sql.NullString) ([]db.Task, error) {
+	return nil, nil
+}
+
 func (m *mockSubareaQuerier) ListProjectsByPriority(ctx context.Context, priority string) ([]db.Project, error) {
 	return nil, nil
 }
