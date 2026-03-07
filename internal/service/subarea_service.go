@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	ErrSubareaNotFound = errors.New("subarea not found")
+	ErrSubareaNotFound = domain.NewNotFoundError("subarea", "")
 )
 
 type SubareaStats struct {

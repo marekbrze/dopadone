@@ -19,6 +19,7 @@ func (m *Model) SaveCurrentAreaState() {
 	state.SelectedProjectIndex = m.selectedProjectIndex
 	state.SelectedTaskIndex = m.selectedTaskIndex
 	m.saveTreeExpandState(state)
+	m.saveTaskGroupExpandState(state)
 }
 
 func (m *Model) RestoreAreaState(areaID string) {
@@ -27,6 +28,7 @@ func (m *Model) RestoreAreaState(areaID string) {
 	m.selectedProjectIndex = state.SelectedProjectIndex
 	m.selectedTaskIndex = state.SelectedTaskIndex
 	m.restoreTreeExpandState(state)
+	m.restoreTaskGroupExpandState(state)
 }
 
 func (m *Model) saveTreeExpandState(state *AreaState) {
@@ -46,6 +48,33 @@ func (m *Model) restoreTreeExpandState(state *AreaState) {
 	for _, node := range tree.GetAllVisibleNodes(m.projectTree) {
 		if expanded, ok := state.ExpandedProjects[node.ID]; ok {
 			node.IsExpanded = expanded
+		}
+	}
+}
+
+func (m *Model) saveTaskGroupExpandState(state *AreaState) {
+	if m.expandedTaskGroups == nil {
+		return
+	}
+	for groupID, expanded := range m.expandedTaskGroups {
+		state.ExpandedTaskGroups[groupID] = expanded
+	}
+}
+
+func (m *Model) restoreTaskGroupExpandState(state *AreaState) {
+	if m.expandedTaskGroups == nil {
+		m.expandedTaskGroups = make(map[string]bool)
+	}
+	for groupID, expanded := range state.ExpandedTaskGroups {
+		m.expandedTaskGroups[groupID] = expanded
+	}
+
+	if m.groupedTasks != nil {
+		for i := range m.groupedTasks.Groups {
+			groupID := m.groupedTasks.Groups[i].ProjectID
+			if expanded, ok := m.expandedTaskGroups[groupID]; ok {
+				m.groupedTasks.Groups[i].IsExpanded = expanded
+			}
 		}
 	}
 }

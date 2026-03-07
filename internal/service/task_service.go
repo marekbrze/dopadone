@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	ErrTaskNotFound = errors.New("task not found")
+	ErrTaskNotFound = domain.NewNotFoundError("task", "")
 )
 
 type TaskService struct {

@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	ErrProjectNotFound    = errors.New("project not found")
+	ErrProjectNotFound    = domain.NewNotFoundError("project", "")
 	ErrCircularReference  = errors.New("circular reference detected: project cannot be its own ancestor")
 	ErrProjectHasChildren = errors.New("project has non-deleted children and cannot be hard deleted")
 	ErrNotImplemented     = errors.New("method not yet implemented")

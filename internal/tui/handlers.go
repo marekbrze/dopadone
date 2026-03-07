@@ -10,10 +10,38 @@ import (
 )
 
 func (m *Model) handleEnterOrSpace() {
-	if m.focus != FocusProjects {
+	switch m.focus {
+	case FocusProjects:
+		m.toggleTreeExpand()
+	case FocusTasks:
+		m.toggleTaskGroup()
+	}
+}
+
+func (m *Model) toggleTaskGroup() {
+	if !m.isLineGroupHeader(m.selectedTaskIndex) {
 		return
 	}
-	m.toggleTreeExpand()
+
+	group := m.getGroupAtLine(m.selectedTaskIndex)
+	if group == nil {
+		return
+	}
+
+	wasExpanded := m.expandedTaskGroups[group.ProjectID]
+	m.expandedTaskGroups[group.ProjectID] = !wasExpanded
+
+	for i := range m.groupedTasks.Groups {
+		if m.groupedTasks.Groups[i].ProjectID == group.ProjectID {
+			m.groupedTasks.Groups[i].IsExpanded = !wasExpanded
+			break
+		}
+	}
+
+	if wasExpanded {
+		headerLine := m.getGroupHeaderLineForGroup(group.ProjectID)
+		m.selectedTaskIndex = headerLine
+	}
 }
 
 func (m *Model) toggleTreeExpand() {

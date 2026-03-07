@@ -540,6 +540,214 @@ func NewTaskService(repo db.Querier, tm *db.TransactionManager, projectService P
 
 ---
 
+## Error Wrapping Best Practices
+
+The service layer plays a crucial role in translating low-level errors into domain-appropriate errors while preserving error context.
+
+### Error Translation Pattern
+
+Services translate repository/database errors into domain errors:
+
+```go
+func (s *TaskService) GetByID(ctx context.Context, id string) (*domain.Task, error) {
+    res, err := s.repo.GetTaskByID(ctx, id)
+    if err != nil {
+        if errors.Is(err, sql.ErrNoRows) {
+            // Map database error to domain error
+            return nil, domain.NewNotFoundError("task", id)
+        }
+        // Wrap with operation context
+        return nil, domain.NewDatabaseError("GetTaskByID", err)
+    }
+    
+    result := converter.DbTaskToDomain(res)
+    return &result, nil
+}
+```
+
+### Graceful Handling of Empty Results
+
+Services handle edge cases gracefully without errors:
+
+```go
+func (s *TaskService) ListByProjectRecursive(ctx context.Context, projectID string) ([]domain.Task, error) {
+    // Validate input
+    if projectID == "" {
+        return []domain.Task{}, nil  // Empty result, not error
+    }
+    
+    // Check if project exists
+    _, err := s.projectSvc.GetByID(ctx, projectID)
+    if err != nil {
+        if domain.IsNotFound(err) {
+            // Project doesn't exist - return empty, not error
+            return []domain.Task{}, nil
+        }
+        // Database error - wrap with context
+        return nil, fmt.Errorf("check project existence: %w", err)
+    }
+    
+    // Load all tasks
+    allTasks, err := s.db.ListAllTasks(ctx)
+    if err != nil {
+        return nil, fmt.Errorf("list tasks: %w", err)
+    }
+    
+    // Filter and build hierarchy...
+}
+```
+
+### Error Wrapping Principles
+
+**1. Use domain error types**:
+```go
+// ✅ Good: Use domain errors
+return nil, domain.NewNotFoundError("task", id)
+
+// ❌ Bad: Use generic errors
+return nil, fmt.Errorf("task not found")
+```
+
+**2. Add operation context**:
+```go
+// ✅ Good: Wrap with context
+return nil, fmt.Errorf("get task by id: %w", err)
+
+// ❌ Bad: Return raw error
+return nil, err
+```
+
+**3. Handle edge cases gracefully**:
+```go
+// ✅ Good: Empty result for non-existent parent
+if domain.IsNotFound(err) {
+    return []domain.Task{}, nil
+}
+
+// ❌ Bad: Return error for missing parent
+if err != nil {
+    return nil, err
+}
+```
+
+**4. Use sentinel errors for type checking**:
+```go
+// ✅ Good: Check error type
+if domain.IsNotFound(err) {
+    // Handle not found
+}
+
+// ❌ Bad: String comparison
+if err.Error() == "not found" {
+    // Fragile and error-prone
+}
+```
+
+### Error Context Preservation
+
+Always preserve the original error for debugging:
+
+```go
+func (s *TaskService) ListByProject(ctx context.Context, projectID string) ([]domain.Task, error) {
+    dbTasks, err := s.repo.ListTasksByProject(ctx, projectID)
+    if err != nil {
+        // ✅ Preserves original error with %w
+        return nil, fmt.Errorf("list tasks by project %s: %w", projectID, err)
+    }
+    
+    // ... rest of implementation
+}
+```
+
+### Handling Orphaned Data
+
+Services handle orphaned entities gracefully:
+
+```go
+func (s *TaskService) buildProjectHierarchy(ctx context.Context) map[string][]string {
+    projects, err := s.projectSvc.ListAll(ctx)
+    if err != nil {
+        return map[string][]string{}  // Empty map, not error
+    }
+    
+    hierarchy := make(map[string][]string)
+    
+    for _, project := range projects {
+        if project.ParentID != nil {
+            parentID := *project.ParentID
+            
+            // Include even if parent doesn't exist (orphaned)
+            // These won't appear in recursive loading
+            hierarchy[parentID] = append(hierarchy[parentID], project.ID)
+        }
+    }
+    
+    return hierarchy
+}
+```
+
+### Service-to-TUI Error Flow
+
+```
+Repository Error (sql.ErrNoRows)
+        ↓
+Service wraps (domain.NewNotFoundError)
+        ↓
+TUI checks type (domain.IsNotFound)
+        ↓
+User message ("Resource not found")
+```
+
+**Example Flow**:
+
+```go
+// Repository (internal/db/tasks.sql.go)
+func (q *Queries) GetTaskByID(ctx context.Context, id string) (Task, error) {
+    // Returns sql.ErrNoRows if not found
+}
+
+// Service (internal/service/task_service.go)
+func (s *TaskService) GetByID(ctx context.Context, id string) (*domain.Task, error) {
+    task, err := s.repo.GetTaskByID(ctx, id)
+    if err != nil {
+        if errors.Is(err, sql.ErrNoRows) {
+            return nil, domain.NewNotFoundError("task", id)
+        }
+        return nil, domain.NewDatabaseError("GetTaskByID", err)
+    }
+    return converter.DbTaskToDomain(task), nil
+}
+
+// TUI (internal/tui/handlers.go)
+func (m *Model) handleTaskLoaded(msg TaskLoadedMsg) {
+    if msg.Err != nil {
+        if domain.IsNotFound(msg.Err) {
+            m.showError("Task not found")
+        } else if domain.IsDatabaseError(msg.Err) {
+            m.showError("Unable to load task. Please try again.")
+        } else {
+            m.showError("An error occurred")
+        }
+        return
+    }
+    // ... success handling
+}
+```
+
+### Error Handling Checklist
+
+When implementing service methods, ensure:
+
+- ✅ **Use domain errors**: Return domain.NewNotFoundError(), not generic errors
+- ✅ **Wrap with context**: Use `fmt.Errorf("operation: %w", err)` to preserve stack
+- ✅ **Handle empty gracefully**: Return empty slices/maps, not errors, for missing parents
+- ✅ **Check error types**: Use domain.IsNotFound(), not string comparison
+- ✅ **Preserve original error**: Always use `%w` format verb for error wrapping
+- ✅ **Add timeouts**: Use context.WithTimeout for long operations
+- ✅ **Log internally**: Log technical errors for debugging, return clean errors to callers
+
+---
+
 ## Testing Services
 
 Services are tested using **mock implementations** of the repository interface.

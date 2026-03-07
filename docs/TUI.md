@@ -1095,6 +1095,251 @@ The TUI adapts to terminal size:
 
 ## Error Handling
 
+The TUI implements comprehensive error handling across three dimensions: **error state tracking**, **error rendering**, and **user-friendly messaging**.
+
+### Error State Management
+
+The Model tracks errors for each data loading operation:
+
+```go
+// internal/tui/model.go
+
+type Model struct {
+    // ... existing fields ...
+    
+    // Error tracking for each column
+    areaLoadError    error
+    subareaLoadError error
+    projectLoadError error
+    taskLoadError    error
+}
+```
+
+**Benefits**:
+- Errors persist in model state for rendering
+- Allows retry mechanisms
+- Clear separation between loading state and error state
+- Type-safe error checking with domain helpers
+
+**Error Clearing**:
+```go
+func (m *Model) ClearErrors() {
+    m.areaLoadError = nil
+    m.subareaLoadError = nil
+    m.projectLoadError = nil
+    m.taskLoadError = nil
+}
+```
+
+### Error Handling in Message Handlers
+
+Handlers store errors and show user-friendly messages:
+
+```go
+// internal/tui/handlers.go
+
+func (m *Model) handleTasksLoaded(msg TasksLoadedMsg) {
+    m.isLoadingTasks = false
+    
+    if msg.Err != nil {
+        // Store error for rendering
+        m.taskLoadError = msg.Err
+        
+        // Show toast notification
+        m.toasts = append(m.toasts, toast.NewError(
+            m.formatUserError(msg.Err),
+        ))
+        
+        // Reset to safe state
+        m.tasks = []domain.Task{}
+        m.groupedTasks = &domain.GroupedTasks{}
+        
+        return
+    }
+    
+    // Clear error on success
+    m.taskLoadError = nil
+    
+    // ... rest of success handling
+}
+```
+
+### User-Friendly Error Messages
+
+The TUI maps technical errors to user-friendly messages:
+
+```go
+func (m *Model) formatUserError(err error) string {
+    // Check specific error types first
+    if domain.IsNotFound(err) {
+        return "Resource not found"
+    }
+    
+    // Check context errors
+    if errors.Is(err, context.Canceled) {
+        return "Operation cancelled"
+    }
+    if errors.Is(err, context.DeadlineExceeded) {
+        return "Loading took too long. Please try again."
+    }
+    
+    // Check database errors
+    if domain.IsDatabaseError(err) || 
+       strings.Contains(err.Error(), "database") || 
+       strings.Contains(err.Error(), "sql") {
+        return "Unable to load data. Please restart the application."
+    }
+    
+    // Generic fallback
+    return fmt.Sprintf("Error: %v", err)
+}
+```
+
+**Message Constants** (internal/tui/constants.go):
+```go
+const (
+    ErrMsgDatabase  = "Unable to load data. Please restart the application."
+    ErrMsgTimeout   = "Loading took too long. Please try again."
+    ErrMsgCancelled = "Operation cancelled"
+    ErrMsgNotFound  = "Resource not found"
+)
+```
+
+### Error Rendering in Views
+
+Renderers check error state before rendering content:
+
+```go
+// internal/tui/renderer.go
+
+func (m *Model) RenderTasks() string {
+    if m.isLoadingTasks {
+        return m.spinner.View() + " " + LoadingMessageTasks
+    }
+    
+    // Handle error state
+    if m.taskLoadError != nil {
+        return m.renderError(m.taskLoadError, "tasks")
+    }
+    
+    // Handle empty state
+    if m.groupedTasks == nil || m.groupedTasks.TotalCount == 0 {
+        return m.renderEmptyTasks()
+    }
+    
+    // ... normal rendering
+}
+
+func (m *Model) renderError(err error, context string) string {
+    errorStyle := lipgloss.NewStyle().
+        Foreground(lipgloss.Color("9")). // Red
+        PaddingLeft(2).
+        PaddingTop(1)
+    
+    userMsg := m.formatUserError(err)
+    
+    return errorStyle.Render("✗ " + userMsg)
+}
+```
+
+**Error Display**:
+```
+┌─────────────────────────────┐
+│ Projects    Subareas  Tasks │
+│                        [Col]│
+│ ▾ Project A                │
+│   Subproject A1            │
+│                            │
+│                            │
+│ ✗ Unable to load data.     │
+│   Please restart the       │
+│   application.             │
+└─────────────────────────────┘
+```
+
+### Error Type Checking
+
+Use domain helper functions for type-safe error checking:
+
+```go
+// ✅ Good: Use domain helpers
+if domain.IsNotFound(err) {
+    // Handle not found
+} else if domain.IsDatabaseError(err) {
+    // Handle database error
+}
+
+// ❌ Bad: String comparison
+if strings.Contains(err.Error(), "not found") {
+    // Fragile and error-prone
+}
+```
+
+### Empty State vs Error State
+
+**Empty State**: Valid condition (no data)
+```go
+func (m *Model) renderEmptyTasks() string {
+    emptyStyle := lipgloss.NewStyle().
+        Foreground(m.theme.Dimmed).
+        PaddingLeft(2)
+    
+    msg := "No tasks in this project"
+    
+    if len(m.groupedTasks.Groups) > 0 {
+        msg = "No tasks in this project or its subprojects"
+    }
+    
+    return emptyStyle.Render(msg)
+}
+```
+
+**Error State**: Something went wrong
+```go
+func (m *Model) renderError(err error, context string) string {
+    // User-friendly error with red styling
+    return errorStyle.Render("✗ " + userMsg)
+}
+```
+
+**Visual Difference**:
+```
+Empty State (dimmed):
+  No tasks in this project
+
+Error State (red):
+  ✗ Unable to load data. Please restart the application.
+```
+
+### Error Recovery Strategies
+
+**1. Retry on transient errors**:
+```go
+// User can press 'r' to retry loading
+case key.Matches(msg, m.keys.retry):
+    if m.taskLoadError != nil {
+        return m, LoadTasksCmd(m.taskSvc, m.selectedProjectID)
+    }
+```
+
+**2. Clear errors on navigation**:
+```go
+func (m *Model) handleProjectSelected(msg ProjectSelectedMsg) {
+    m.ClearErrors()  // Clear previous errors
+    m.selectedProjectID = msg.ProjectID
+    return m, LoadTasksCmd(m.taskSvc, msg.ProjectID)
+}
+```
+
+**3. Graceful degradation**:
+```go
+// If tasks fail to load, still show project tree
+if m.taskLoadError != nil {
+    // Show error in tasks column
+    // Keep projects column functional
+}
+```
+
 ### Database Errors
 
 All database errors are caught and displayed as toast notifications:
@@ -1114,6 +1359,46 @@ The quick-add modal validates input:
 - Non-empty title required
 - Max length enforcement
 - Whitespace trimming
+
+### Error Handling Best Practices
+
+1. **Never expose technical details**: Map to user-friendly messages
+2. **Use error state tracking**: Store errors in model for rendering
+3. **Type-safe checking**: Use domain.IsNotFound(), not string comparison
+4. **Clear errors appropriately**: Clear on successful loads or navigation
+5. **Provide recovery options**: Allow retry for transient errors
+6. **Graceful degradation**: Keep other columns functional when one fails
+7. **Visual distinction**: Use different styling for empty vs error states
+
+### Testing Error Handling
+
+Test error scenarios with mock services:
+
+```go
+func TestTaskLoadingError(t *testing.T) {
+    mockSvc := &mockTaskService{
+        getError: domain.NewDatabaseError("ListTasks", errors.New("connection failed")),
+    }
+    
+    model := New(mockSvc, ...)
+    model.selectedProjectID = "proj-1"
+    
+    // Trigger load
+    msg := LoadTasksMsg{ProjectID: "proj-1"}
+    result, _ := model.Update(msg)
+    
+    // Verify error state
+    if result.taskLoadError == nil {
+        t.Error("expected taskLoadError to be set")
+    }
+    
+    // Verify user message
+    rendered := result.RenderTasks()
+    if !strings.Contains(rendered, "Unable to load data") {
+        t.Error("expected user-friendly error message")
+    }
+}
+```
 
 ## Performance Considerations
 

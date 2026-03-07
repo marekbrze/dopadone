@@ -2,6 +2,7 @@ package tui
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/example/dopadone/internal/domain"
 )
 
 func (m *Model) NavigateUp(column FocusColumn) {
@@ -107,25 +108,192 @@ func (m *Model) navigateSubareasDown() {
 }
 
 func (m *Model) navigateTasksUp() {
-	if len(m.tasks) == 0 {
+	totalLines := m.getTotalTaskLines()
+	if totalLines == 0 {
 		return
 	}
 	if m.selectedTaskIndex == 0 {
-		m.selectedTaskIndex = len(m.tasks) - 1
+		m.selectedTaskIndex = totalLines - 1
 	} else {
 		m.selectedTaskIndex--
 	}
 }
 
 func (m *Model) navigateTasksDown() {
-	if len(m.tasks) == 0 {
+	totalLines := m.getTotalTaskLines()
+	if totalLines == 0 {
 		return
 	}
-	if m.selectedTaskIndex >= len(m.tasks)-1 {
+	if m.selectedTaskIndex >= totalLines-1 {
 		m.selectedTaskIndex = 0
 	} else {
 		m.selectedTaskIndex++
 	}
+}
+
+func (m *Model) getTotalTaskLines() int {
+	if m.groupedTasks == nil {
+		return len(m.tasks)
+	}
+
+	count := 0
+
+	count += len(m.groupedTasks.DirectTasks)
+
+	if len(m.groupedTasks.DirectTasks) > 0 && len(m.groupedTasks.Groups) > 0 {
+		count++
+	}
+
+	for _, group := range m.groupedTasks.Groups {
+		count++
+		if m.expandedTaskGroups != nil && m.expandedTaskGroups[group.ProjectID] {
+			count += len(group.Tasks)
+		}
+	}
+
+	return count
+}
+
+func (m *Model) isLineGroupHeader(lineIndex int) bool {
+	if m.groupedTasks == nil {
+		return false
+	}
+
+	currentLine := 0
+
+	currentLine += len(m.groupedTasks.DirectTasks)
+	if lineIndex < currentLine {
+		return false
+	}
+
+	if len(m.groupedTasks.DirectTasks) > 0 && len(m.groupedTasks.Groups) > 0 {
+		if lineIndex == currentLine {
+			return false
+		}
+		currentLine++
+	}
+
+	for _, group := range m.groupedTasks.Groups {
+		if lineIndex == currentLine {
+			return true
+		}
+		currentLine++
+
+		if m.expandedTaskGroups != nil && m.expandedTaskGroups[group.ProjectID] {
+			currentLine += len(group.Tasks)
+			if lineIndex < currentLine {
+				return false
+			}
+		}
+	}
+
+	return false
+}
+
+func (m *Model) getGroupAtLine(lineIndex int) *domain.TaskGroup {
+	if m.groupedTasks == nil {
+		return nil
+	}
+
+	currentLine := 0
+
+	currentLine += len(m.groupedTasks.DirectTasks)
+	if lineIndex < currentLine {
+		return nil
+	}
+
+	if len(m.groupedTasks.DirectTasks) > 0 && len(m.groupedTasks.Groups) > 0 {
+		if lineIndex == currentLine {
+			return nil
+		}
+		currentLine++
+	}
+
+	for i := range m.groupedTasks.Groups {
+		if lineIndex == currentLine {
+			return &m.groupedTasks.Groups[i]
+		}
+		currentLine++
+
+		if m.expandedTaskGroups != nil && m.expandedTaskGroups[m.groupedTasks.Groups[i].ProjectID] {
+			currentLine += len(m.groupedTasks.Groups[i].Tasks)
+			if lineIndex < currentLine {
+				return nil
+			}
+		}
+	}
+
+	return nil
+}
+
+func (m *Model) getTaskAtLine(lineIndex int) *domain.Task {
+	if m.groupedTasks == nil {
+		if lineIndex >= 0 && lineIndex < len(m.tasks) {
+			return &m.tasks[lineIndex]
+		}
+		return nil
+	}
+
+	currentLine := 0
+
+	for i := range m.groupedTasks.DirectTasks {
+		if lineIndex == currentLine {
+			return &m.groupedTasks.DirectTasks[i]
+		}
+		currentLine++
+	}
+
+	if len(m.groupedTasks.DirectTasks) > 0 && len(m.groupedTasks.Groups) > 0 {
+		if lineIndex == currentLine {
+			return nil
+		}
+		currentLine++
+	}
+
+	for gi := range m.groupedTasks.Groups {
+		if lineIndex == currentLine {
+			return nil
+		}
+		currentLine++
+
+		if m.expandedTaskGroups != nil && m.expandedTaskGroups[m.groupedTasks.Groups[gi].ProjectID] {
+			for ti := range m.groupedTasks.Groups[gi].Tasks {
+				if lineIndex == currentLine {
+					return &m.groupedTasks.Groups[gi].Tasks[ti]
+				}
+				currentLine++
+			}
+		}
+	}
+
+	return nil
+}
+
+func (m *Model) getGroupHeaderLineForGroup(groupID string) int {
+	if m.groupedTasks == nil {
+		return -1
+	}
+
+	currentLine := 0
+
+	currentLine += len(m.groupedTasks.DirectTasks)
+
+	if len(m.groupedTasks.DirectTasks) > 0 && len(m.groupedTasks.Groups) > 0 {
+		currentLine++
+	}
+
+	for _, group := range m.groupedTasks.Groups {
+		if group.ProjectID == groupID {
+			return currentLine
+		}
+		currentLine++
+
+		if m.expandedTaskGroups != nil && m.expandedTaskGroups[group.ProjectID] {
+			currentLine += len(group.Tasks)
+		}
+	}
+
+	return -1
 }
 
 func (m *Model) SwitchToPreviousArea() tea.Cmd {

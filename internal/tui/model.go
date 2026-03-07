@@ -52,6 +52,7 @@ type AreaState struct {
 	SelectedProjectIndex int
 	SelectedTaskIndex    int
 	ExpandedProjects     map[string]bool
+	ExpandedTaskGroups   map[string]bool
 }
 
 func NewAreaState() *AreaState {
@@ -60,5 +61,6 @@ func NewAreaState() *AreaState {
 		SelectedProjectIndex: 0,
 		SelectedTaskIndex:    0,
 		ExpandedProjects:     make(map[string]bool),
+		ExpandedTaskGroups:   make(map[string]bool),
 	}
 }

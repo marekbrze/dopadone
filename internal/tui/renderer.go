@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -8,11 +10,16 @@ import (
 	"github.com/example/dopadone/internal/domain"
 	"github.com/example/dopadone/internal/tui/tree"
 	"github.com/example/dopadone/internal/tui/views"
+	"github.com/mattn/go-runewidth"
 )
 
 func (m *Model) RenderSubareas() string {
 	if m.isLoadingSubareas {
 		return m.spinner.View() + " " + LoadingMessageSubareas
+	}
+
+	if m.subareaLoadError != nil {
+		return m.renderError(m.subareaLoadError)
 	}
 
 	if len(m.subareas) == 0 {
@@ -35,6 +42,10 @@ func (m *Model) RenderProjects() string {
 		return m.spinner.View() + " " + LoadingMessageProjects
 	}
 
+	if m.projectLoadError != nil {
+		return m.renderError(m.projectLoadError)
+	}
+
 	if m.projectTree == nil {
 		return EmptyStateNoProjects
 	}
@@ -53,29 +64,36 @@ func (m *Model) RenderTasks() string {
 		return m.spinner.View() + " " + LoadingMessageTasks
 	}
 
+	if m.taskLoadError != nil {
+		return m.renderError(m.taskLoadError)
+	}
+
 	if m.groupedTasks == nil || m.groupedTasks.TotalCount == 0 {
 		return EmptyStateNoTasks
 	}
 
 	var lines []string
-	taskIndex := 0
+	lineIndex := 0
 
 	for _, task := range m.groupedTasks.DirectTasks {
-		lines = append(lines, m.renderTaskLine(task, taskIndex, 0))
-		taskIndex++
+		lines = append(lines, m.renderTaskLine(task, lineIndex, 0))
+		lineIndex++
 	}
 
 	if len(m.groupedTasks.DirectTasks) > 0 && len(m.groupedTasks.Groups) > 0 {
 		lines = append(lines, "")
+		lineIndex++
 	}
 
-	for _, group := range m.groupedTasks.Groups {
-		lines = append(lines, m.renderGroupHeader(group))
+	for gi := range m.groupedTasks.Groups {
+		group := &m.groupedTasks.Groups[gi]
+		lines = append(lines, m.renderGroupHeaderWithSelection(*group, lineIndex))
+		lineIndex++
 
 		if group.IsExpanded {
-			for _, task := range group.Tasks {
-				lines = append(lines, m.renderTaskLine(task, taskIndex, 1))
-				taskIndex++
+			for ti := range group.Tasks {
+				lines = append(lines, m.renderTaskLine(group.Tasks[ti], lineIndex, 1))
+				lineIndex++
 			}
 		}
 	}
@@ -83,7 +101,7 @@ func (m *Model) RenderTasks() string {
 	return joinLines(lines)
 }
 
-func (m *Model) renderGroupHeader(group domain.TaskGroup) string {
+func (m *Model) renderGroupHeaderWithSelection(group domain.TaskGroup, lineIndex int) string {
 	icon := "▾"
 	if !group.IsExpanded {
 		icon = "▸"
@@ -100,6 +118,10 @@ func (m *Model) renderGroupHeader(group domain.TaskGroup) string {
 	style := lipgloss.NewStyle().
 		Foreground(m.theme.Secondary).
 		PaddingLeft(1)
+
+	if lineIndex == m.selectedTaskIndex {
+		style = style.Bold(true).Reverse(true)
+	}
 
 	return style.Render(header)
 }
@@ -128,9 +150,12 @@ func (m *Model) renderTaskLine(task domain.Task, index int, indentLevel int) str
 		style = style.Bold(true).Reverse(true)
 	}
 
-	maxTextWidth := m.taskColumnWidth() - len(indent) - len(prefix) - 4
-	if maxTextWidth > 0 && len(text) > maxTextWidth {
-		text = text[:maxTextWidth-1] + "…"
+	prefixDisplayWidth := runewidth.StringWidth(prefix)
+	textDisplayWidth := runewidth.StringWidth(text)
+	maxTextWidth := m.taskColumnWidth() - len(indent) - prefixDisplayWidth - 4
+	if maxTextWidth > 0 && textDisplayWidth > maxTextWidth {
+		truncated := runewidth.Truncate(text, maxTextWidth-1, "")
+		text = truncated + "…"
 	}
 
 	return indent + style.Render(prefix+text)
@@ -175,4 +200,39 @@ func joinLines(lines []string) string {
 
 func overlay(background, foreground string, width, height int) string {
 	return lipgloss.JoinVertical(lipgloss.Center, foreground)
+}
+
+func (m *Model) renderError(err error) string {
+	errorStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("9")).
+		PaddingLeft(2).
+		PaddingTop(1)
+
+	userMsg := m.formatUserError(err)
+	return errorStyle.Render("✗ " + userMsg)
+}
+
+func (m *Model) formatUserError(err error) string {
+	if err == nil {
+		return "Unknown error"
+	}
+
+	if errors.Is(err, context.Canceled) {
+		return ErrMsgCancelled
+	}
+	if errors.Is(err, context.DeadlineExceeded) {
+		return ErrMsgTimeout
+	}
+	if errors.Is(err, domain.ErrDatabaseError) {
+		return ErrMsgDatabase
+	}
+	if errors.Is(err, domain.ErrNotFound) {
+		return ErrMsgNotFound
+	}
+
+	if strings.Contains(err.Error(), "database") || strings.Contains(err.Error(), "sql") {
+		return ErrMsgDatabase
+	}
+
+	return fmt.Sprintf("Error: %v", err)
 }

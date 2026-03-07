@@ -3,11 +3,16 @@ package service
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"time"
 
 	"github.com/example/dopadone/internal/converter"
 	"github.com/example/dopadone/internal/db"
 	"github.com/example/dopadone/internal/domain"
+)
+
+var (
+	ErrAreaNotFound = domain.NewNotFoundError("area", "")
 )
 
 // AreaStats contains statistics about an area's children
@@ -46,6 +51,9 @@ func (s *AreaService) List(ctx context.Context) ([]domain.Area, error) {
 func (s *AreaService) GetByID(ctx context.Context, id string) (*domain.Area, error) {
 	row, err := s.repo.GetAreaByID(ctx, id)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrAreaNotFound
+		}
 		return nil, err
 	}
 	area := converter.DbGetAreaByIDRowToDomain(row)

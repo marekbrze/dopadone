@@ -972,4 +972,195 @@ if err != nil {
 
 ---
 
+## Error Handling Patterns
+
+The domain layer provides centralized error types for consistent error handling across all application layers.
+
+### Sentinel Errors
+
+Sentinel errors are predefined error values used for comparison with `errors.Is()`:
+
+```go
+// internal/domain/errors.go
+
+var (
+    ErrNotFound      = errors.New("resource not found")
+    ErrInvalidInput  = errors.New("invalid input provided")
+    ErrDatabaseError = errors.New("database operation failed")
+    ErrEmptyID       = errors.New("id cannot be empty")
+)
+```
+
+**Usage**:
+```go
+import "errors"
+
+func (s *Service) GetByID(ctx context.Context, id string) (*Entity, error) {
+    entity, err := s.repo.GetByID(ctx, id)
+    if err != nil {
+        if errors.Is(err, domain.ErrNotFound) {
+            // Handle not found
+            return nil, err
+        }
+        return nil, fmt.Errorf("get by id: %w", err)
+    }
+    return entity, nil
+}
+```
+
+### Custom Error Types
+
+Custom error types provide additional context while maintaining error chain compatibility:
+
+```go
+// ValidationError for field-level validation failures
+type ValidationError struct {
+    Field   string
+    Message string
+}
+
+func (e *ValidationError) Error() string {
+    return fmt.Sprintf("validation failed on %s: %s", e.Field, e.Message)
+}
+
+func (e *ValidationError) Unwrap() error {
+    return ErrInvalidInput
+}
+
+// DatabaseError wraps database errors with operation context
+type DatabaseError struct {
+    Operation string
+    Err       error
+}
+
+func (e *DatabaseError) Error() string {
+    return fmt.Sprintf("database error during %s: %v", e.Operation, e.Err)
+}
+
+func (e *DatabaseError) Unwrap() error {
+    return e.Err
+}
+
+// NotFoundError provides resource-specific not found messages
+type NotFoundError struct {
+    Resource string
+    ID       string
+}
+
+func (e *NotFoundError) Error() string {
+    if e.ID != "" {
+        return fmt.Sprintf("%s not found: %s", e.Resource, e.ID)
+    }
+    return fmt.Sprintf("%s not found", e.Resource)
+}
+
+func (e *NotFoundError) Unwrap() error {
+    return ErrNotFound
+}
+```
+
+### Factory Functions
+
+Use factory functions to create errors with consistent formatting:
+
+```go
+func NewValidationError(field, message string) *ValidationError {
+    return &ValidationError{Field: field, Message: message}
+}
+
+func NewDatabaseError(operation string, err error) *DatabaseError {
+    return &DatabaseError{Operation: operation, Err: err}
+}
+
+func NewNotFoundError(resource, id string) *NotFoundError {
+    return &NotFoundError{Resource: resource, ID: id}
+}
+```
+
+### Helper Functions
+
+Type checking helpers simplify error handling:
+
+```go
+func IsNotFound(err error) bool {
+    return errors.Is(err, ErrNotFound)
+}
+
+func IsDatabaseError(err error) bool {
+    return errors.Is(err, ErrDatabaseError)
+}
+
+func IsValidationError(err error) bool {
+    return errors.Is(err, ErrInvalidInput)
+}
+```
+
+### Error Checking Patterns
+
+**Pattern 1: Using errors.Is() with sentinel errors**
+```go
+task, err := service.GetByID(ctx, id)
+if err != nil {
+    if errors.Is(err, domain.ErrNotFound) {
+        // Handle not found
+        return nil
+    }
+    return err
+}
+```
+
+**Pattern 2: Using errors.As() with custom types**
+```go
+err := service.Create(ctx, params)
+if err != nil {
+    var validationErr *domain.ValidationError
+    if errors.As(err, &validationErr) {
+        // Access field-specific validation error
+        fmt.Printf("Field %s: %s\n", validationErr.Field, validationErr.Message)
+        return
+    }
+    return err
+}
+```
+
+**Pattern 3: Wrapping errors with context**
+```go
+func (s *Service) GetByID(ctx context.Context, id string) (*Entity, error) {
+    entity, err := s.repo.GetByID(ctx, id)
+    if err != nil {
+        if errors.Is(err, sql.ErrNoRows) {
+            return nil, domain.NewNotFoundError("entity", id)
+        }
+        return nil, domain.NewDatabaseError("GetByID", err)
+    }
+    return entity, nil
+}
+```
+
+### Benefits of Centralized Error Handling
+
+1. **Consistency**: All layers use the same error types
+2. **Type safety**: Custom types provide structured error information
+3. **Error chaining**: `Unwrap()` enables `errors.Is()` and `errors.As()`
+4. **User-friendly**: Service/TUI layers can map errors to user messages
+5. **Testability**: Easy to check for specific error types in tests
+
+### Integration with Other Layers
+
+**Service Layer**:
+- Wraps repository errors with domain errors
+- Maps sql.ErrNoRows to domain.ErrNotFound
+- Provides operation context with DatabaseError
+
+**TUI Layer**:
+- Checks error types to show user-friendly messages
+- Uses helper functions (IsNotFound, IsDatabaseError)
+- Never exposes technical error details to users
+
+**See Also**:
+- Service Layer error wrapping: [03-service-layer.md](03-service-layer.md#error-wrapping-best-practices)
+- TUI error handling: [../TUI.md#error-state-management]
+
+---
+
 **Navigation**: [← Overview](01-overview.md) | [Next: Service Layer →](03-service-layer.md)

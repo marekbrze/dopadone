@@ -53,6 +53,11 @@ type Model struct {
 	isLoadingProjects bool
 	isLoadingTasks    bool
 
+	areaLoadError    error
+	subareaLoadError error
+	projectLoadError error
+	taskLoadError    error
+
 	spinner     spinner.Model
 	modal       *modal.Modal
 	isModalOpen bool
@@ -121,6 +126,11 @@ func InitialModel(
 		isAreaModalOpen: false,
 
 		toasts: []toast.Toast{},
+
+		areaLoadError:    nil,
+		subareaLoadError: nil,
+		projectLoadError: nil,
+		taskLoadError:    nil,
 	}
 }
 
@@ -150,9 +160,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case AreasLoadedMsg:
 		m.isLoadingAreas = false
 		if msg.Err != nil {
+			m.areaLoadError = msg.Err
 			m.addToast(toast.NewError("Failed to load areas: " + msg.Err.Error()))
 			return m, nil
 		}
+		m.areaLoadError = nil
 		m.areas = msg.Areas
 		m.tabs = updateTabsFromAreas(m.areas, m.selectedAreaIndex)
 		m.selectedTab = m.selectedAreaIndex
@@ -166,9 +178,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case SubareasLoadedMsg:
 		m.isLoadingSubareas = false
 		if msg.Err != nil {
+			m.subareaLoadError = msg.Err
 			m.addToast(toast.NewError("Failed to load subareas: " + msg.Err.Error()))
 			return m, nil
 		}
+		m.subareaLoadError = nil
 		m.subareas = msg.Subareas
 		if len(m.subareas) > 0 && m.selectedSubareaIndex == 0 {
 			m.selectedSubareaIndex = 0
@@ -180,9 +194,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case ProjectsLoadedMsg:
 		m.isLoadingProjects = false
 		if msg.Err != nil {
+			m.projectLoadError = msg.Err
 			m.addToast(toast.NewError("Failed to load projects: " + msg.Err.Error()))
 			return m, nil
 		}
+		m.projectLoadError = nil
 		m.projects = msg.Projects
 
 		builder := tree.NewBuilder()
@@ -204,11 +220,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case TasksLoadedMsg:
 		m.isLoadingTasks = false
 		if msg.Err != nil {
+			m.taskLoadError = msg.Err
 			m.addToast(toast.NewError("Failed to load tasks: " + msg.Err.Error()))
 			return m, nil
 		}
+		m.taskLoadError = nil
 		m.tasks = msg.Tasks
-
 		m.groupedTasks = msg.GroupedTasks
 
 		if m.expandedTaskGroups == nil {
@@ -218,7 +235,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.groupedTasks != nil {
 			for i := range m.groupedTasks.Groups {
 				groupID := m.groupedTasks.Groups[i].ProjectID
-
 				if _, exists := m.expandedTaskGroups[groupID]; !exists {
 					m.expandedTaskGroups[groupID] = true
 					m.groupedTasks.Groups[i].IsExpanded = true
@@ -384,7 +400,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "enter":
 			m.handleEnterOrSpace()
 		case "x":
-			if m.focus == FocusTasks && len(m.tasks) > 0 {
+			if m.focus == FocusTasks && (len(m.tasks) > 0 || (m.groupedTasks != nil && m.groupedTasks.TotalCount > 0)) {
 				return m, m.toggleTaskCompletion()
 			}
 		case "a":
@@ -414,11 +430,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) toggleTaskCompletion() tea.Cmd {
-	if len(m.tasks) == 0 || m.selectedTaskIndex >= len(m.tasks) {
+	task := m.getTaskAtLine(m.selectedTaskIndex)
+	if task == nil {
 		return nil
 	}
-
-	task := &m.tasks[m.selectedTaskIndex]
 
 	var newStatus domain.TaskStatus
 	if task.IsCompleted() {

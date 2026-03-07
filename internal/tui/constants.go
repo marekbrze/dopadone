@@ -17,3 +17,10 @@ const (
 	LoadingMessageProjects = "Loading projects..."
 	LoadingMessageTasks    = "Loading tasks..."
 )
+
+const (
+	ErrMsgDatabase  = "Unable to load data. Please restart the application."
+	ErrMsgTimeout   = "Loading took too long. Please try again."
+	ErrMsgCancelled = "Operation cancelled"
+	ErrMsgNotFound  = "Resource not found"
+)
