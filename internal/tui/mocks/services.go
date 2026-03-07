@@ -265,6 +265,13 @@ func (m *MockProjectService) ValidateParentHierarchy(ctx context.Context, parent
 	return nil
 }
 
+func (m *MockProjectService) ListByIDs(ctx context.Context, ids []string) ([]domain.Project, error) {
+	if m.ListByIDsFunc != nil {
+		return m.ListByIDsFunc(ctx, ids)
+	}
+	return []domain.Project{}, nil
+}
+
 type MockTaskService struct {
 	CreateFunc                 func(ctx context.Context, params service.CreateTaskParams) (*domain.Task, error)
 	GetByIDFunc                func(ctx context.Context, id string) (*domain.Task, error)

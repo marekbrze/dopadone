@@ -71,7 +71,8 @@ func IsNotFound(err error) bool {
 }
 
 func IsDatabaseError(err error) bool {
-	return errors.Is(err, ErrDatabaseError)
+	var dbErr *DatabaseError
+	return errors.As(err, &dbErr)
 }
 
 func IsValidationError(err error) bool {

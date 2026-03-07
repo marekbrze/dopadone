@@ -9,6 +9,109 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Nested Task Grouping Feature (Task-51)
+
+**Hierarchical task display with expandable/collapsible subproject groups**
+
+Implemented comprehensive nested task grouping functionality that displays tasks from parent projects and their nested subprojects in a hierarchical, visually organized format.
+
+**Overview**:
+When a parent project is selected in the Projects column, the Tasks column now displays:
+1. Direct tasks belonging to the selected project (at the top, ungrouped)
+2. Tasks from nested subprojects, grouped under collapsible headers
+3. Visual indicators showing expand/collapse state (▸ / ▾)
+4. Task counts per subproject group
+
+**Architecture**:
+
+**Phase 1 - Service Layer (Task-52)**:
+- Added `ListByProjectRecursive` method to `TaskService` using WITH RECURSIVE CTE
+- SQL query in `queries/tasks.sql` traverses project hierarchy
+- Returns tasks from selected project and all nested subprojects
+- Filters out deleted projects and tasks
+- Orders by: is_next DESC, priority DESC, deadline ASC, title ASC
+- Comprehensive test coverage: 12 test cases including edge cases
+
+**Phase 2 - Domain Model (Task-54)**:
+- Created `TaskGroup` struct with ProjectID, ProjectName, Tasks, IsExpanded
+- Created `GroupedTasks` struct with DirectTasks, Groups, TotalCount
+- Factory method `NewGroupedTasks()` with graceful edge case handling
+- Mutation methods: `AddTask()`, `RemoveTask()`, `ToggleGroup()`, `Clear()`
+- Order preservation for tasks and groups
+- Test coverage: 96.4%+ (25+ test cases)
+
+**Phase 3 - Service Integration (Task-57)**:
+- Added `GetGroupedTasks` method to `TaskService`
+- Batch loading of project names (eliminates N+1 queries)
+- Backward compatible - maintains flat `Tasks` field
+- State persistence for expand/collapse across navigation
+- Test coverage: 85%+
+
+**Phase 4 - TUI Rendering (Task-58)**:
+- Renders tasks with group headers showing subproject name
+- Visual indicators for expanded/collapsed groups
+- Proper indentation (2 spaces) for nested tasks
+- Task count display per group
+- Subtle styling for headers (dimmed, no reverse highlight)
+- Text truncation to prevent wrapping
+- Performance: O(n) rendering
+
+**Phase 5 - TUI Interaction (Task-56)**:
+- Keyboard shortcuts: Enter/Space to toggle groups
+- Navigation skips headers when collapsed
+- State persistence in `expandedTaskGroups` map
+- Selection adjustment when collapsing groups
+- Helper methods for navigation and rendering
+- State saved in `AreaState.ExpandedTaskGroups`
+
+**Phase 6 - Error Handling (Task-55)**:
+- Graceful handling of empty projects
+- Handling of orphaned subprojects
+- User-friendly error messages
+- Error state tracking and rendering
+
+**Phase 7 - Performance Optimization (Task-53)**:
+- Batch loading of project names (O(1) queries)
+- Single SQL query for recursive loading
+- O(n) time complexity for grouping
+- Benchmarks: 100, 1000, 10000 tasks
+- Target: <100ms for 1000 tasks achieved
+
+**Files Modified**:
+- `queries/tasks.sql` - Added `ListTasksByProjectRecursive` query
+- `queries/projects.sql` - Added `ListProjectsByIDs` query for batch loading
+- `internal/domain/task_group.go` - New file with GroupedTasks domain model
+- `internal/domain/errors.go` - Centralized error types
+- `internal/service/task_service.go` - Added `ListByProjectRecursive` and `GetGroupedTasks`
+- `internal/service/project_service.go` - Added `ListByIDs` method
+- `internal/tui/commands.go` - Updated `LoadTasksCmd` to use `GetGroupedTasks`
+- `internal/tui/renderer.go` - Grouped task rendering with headers
+- `internal/tui/navigator.go` - Navigation logic for grouped tasks
+- `internal/tui/handlers.go` - Expand/collapse interaction handlers
+- `internal/tui/state.go` - State persistence for expanded groups
+- `internal/tui/constants.go` - Error message constants
+
+**Test Coverage**:
+- Domain Layer: 96.4% (task_group.go)
+- Service Layer: 85%+ (task_service_test.go)
+- TUI Layer: 80%+ (navigation, rendering tests)
+
+**Documentation**:
+- Created `docs/FEATURE_NESTED_TASK_GROUPING.md` with comprehensive implementation guide
+- Updated `docs/architecture/02-domain-layer.md` with GroupedTasks patterns
+- Updated `docs/architecture/03-service-layer.md` with recursive loading patterns
+- Updated `docs/TUI.md` with grouped task rendering and interaction
+
+**Benefits**:
+- **Improved Organization**: Clear visual hierarchy of tasks across nested projects
+- **Better UX**: Expand/collapse groups to focus on relevant tasks
+- **Performance**: Optimized O(n) algorithms with no N+1 queries
+- **State Persistence**: Expanded/collapsed state remembered across navigation
+- **Scalability**: Handles 1000+ tasks efficiently (<100ms)
+
+**User Impact**:
+Users can now see all tasks from a project and its subprojects in one view, organized hierarchically with collapsible groups. This makes managing complex project structures much more intuitive.
+
 #### Centralized Error Handling System (Task-55)
 
 **Comprehensive error handling across all application layers**

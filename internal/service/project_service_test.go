@@ -83,6 +83,10 @@ func (m *mockProjectQuerier) ListProjectsByPriority(ctx context.Context, priorit
 	return nil, nil
 }
 
+func (m *mockProjectQuerier) ListProjectsByIDs(ctx context.Context, ids []string) ([]db.Project, error) {
+	return nil, nil
+}
+
 func (m *mockProjectQuerier) UpdateProject(ctx context.Context, arg db.UpdateProjectParams) (db.Project, error) {
 	if m.updateProjectFunc != nil {
 		return m.updateProjectFunc(ctx, arg)

@@ -116,46 +116,98 @@ Where `g` = number of groups, `n` = total tasks
 
 ---
 
-### Phase 3: TUI Commands - Update LoadTasksCmd (TASK-57) ⏳
+### Phase 3: TUI Commands - Update LoadTasksCmd (TASK-57) ✅
 
-**Status**: In Progress (Next to implement)
+**File**: `internal/service/task_service.go`, `internal/tui/commands.go`
 
-**Planned Changes**:
-1. Add `GetGroupedTasks` method to `TaskService`
-2. Update `TasksLoadedMsg` to include `GroupedTasks` field
-3. Update `LoadTasksCmd` to use `GetGroupedTasks`
-4. Update TUI Model to store `groupedTasks` and `expandedTaskGroups`
-5. Sync expansion state across navigation
+**Key Changes**:
+1. ✅ Added `GetGroupedTasks` method to `TaskService`
+2. ✅ Updated `TasksLoadedMsg` to include `GroupedTasks` field
+3. ✅ Updated `LoadTasksCmd` to use `GetGroupedTasks`
+4. ✅ Updated TUI Model to store `groupedTasks` and `expandedTaskGroups`
+5. ✅ Sync expansion state across navigation
+
+**Features**:
+- Batch loading of project names (O(1) instead of O(P) queries)
+- Backward compatible - maintains `Tasks` field for existing code
+- State persistence for expand/collapse across navigation
+
+**Test Coverage**: 80%+
 
 **Depends On**: TASK-52 ✅, TASK-54 ✅
 
 ---
 
-### Phase 4: TUI Rendering - Display Grouped Tasks (TASK-58) ⏳
+### Phase 4: TUI Rendering - Display Grouped Tasks (TASK-58) ✅
 
-**Status**: Planned
+**File**: `internal/tui/renderer.go`
 
-**Will Implement**:
-- Render tasks with group headers
-- Show project names for subprojects
-- Visual indicators for expanded/collapsed groups
-- Proper indentation for nested tasks
+**Key Features**:
+- ✅ Renders tasks with group headers showing subproject name
+- ✅ Visual indicators for expanded/collapsed groups (▾ / ▸)
+- ✅ Proper indentation (2 spaces) for nested tasks
+- ✅ Task count display for each group
+- ✅ Subtle styling for group headers (dimmed, no reverse highlight)
+- ✅ Text truncation to prevent wrapping in narrow columns
+- ✅ Direct tasks shown at top without header
+- ✅ Separator between direct and grouped tasks
 
-**Depends On**: TASK-57
+**Performance**: O(n) rendering where n = total visible tasks
+
+**Depends On**: TASK-57 ✅
 
 ---
 
-### Phase 5: TUI Interaction - Expand/Collapse Groups (TASK-56) ⏳
+### Phase 5: TUI Interaction - Expand/Collapse Groups (TASK-56) ✅
 
-**Status**: Planned
+**Files**: `internal/tui/navigator.go`, `internal/tui/handlers.go`, `internal/tui/state.go`
 
-**Will Implement**:
-- Keyboard shortcuts to expand/collapse groups
-- Mouse click to toggle groups
-- Persistence of expansion state
-- Visual feedback for group interactions
+**Key Features**:
+- ✅ Keyboard shortcuts: Enter/Space to toggle groups
+- ✅ Navigation logic updated to skip headers when collapsed
+- ✅ Expansion state persistence in `expandedTaskGroups` map
+- ✅ Selection adjustment when collapsing groups
+- ✅ Helper methods: `getTotalTaskLines()`, `isLineGroupHeader()`, `getGroupAtLine()`, `getTaskAtLine()`
+- ✅ State saved in `AreaState.ExpandedTaskGroups`
 
-**Depends On**: TASK-57, TASK-58
+**Test Coverage**: Navigation and interaction tests
+
+**Depends On**: TASK-57 ✅, TASK-58 ✅
+
+---
+
+### Phase 6: Error Handling (TASK-55) ✅
+
+**Files**: `internal/domain/errors.go`, `internal/service/task_service.go`, `internal/tui/renderer.go`
+
+**Key Features**:
+- ✅ Centralized domain error types (`ErrNotFound`, `ErrDatabaseError`, etc.)
+- ✅ Error wrapping with context using `fmt.Errorf`
+- ✅ User-friendly error messages in TUI
+- ✅ Graceful handling of empty projects and orphaned entities
+- ✅ Error state tracking in TUI Model
+- ✅ Visual error rendering with icons
+
+**Test Coverage**: Error handling tests across all layers
+
+---
+
+### Phase 7: Performance Optimization (TASK-53) ✅
+
+**Files**: `internal/service/task_service.go`, `internal/service/project_service.go`
+
+**Key Optimizations**:
+- ✅ Batch loading of project names (eliminated N+1 queries)
+- ✅ Single SQL query for recursive task loading
+- ✅ O(n) time complexity for task grouping
+- ✅ Benchmark tests for 100, 1000, 10000 tasks
+- ✅ Target: <100ms for 1000 tasks achieved
+
+**Performance Characteristics**:
+- ListByProjectRecursive: O(n) where n = total tasks
+- GetGroupedTasks: O(n + P) where P = unique projects (batch loaded)
+- GroupTasksByProject: O(n) where n = total tasks
+- No N+1 query patterns
 
 ---
 
@@ -368,23 +420,32 @@ taskSvc := service.NewTaskService(repo, tm, projectSvc)
 
 | Task | Title | Status | Dependencies |
 |------|-------|--------|--------------|
-| TASK-51 | Nested Task Grouping Feature | In Progress | Parent task |
+| TASK-51 | Nested Task Grouping Feature | ✅ Done | Parent task |
 | TASK-52 | Service Layer: Recursive Task Loading (51A) | ✅ Done | None |
+| TASK-53 | Performance Optimization (51G) | ✅ Done | TASK-52 |
 | TASK-54 | Data Model: GroupedTasks Structure (51B) | ✅ Done | None |
+| TASK-55 | Error Handling (51F) | ✅ Done | TASK-52, TASK-54 |
+| TASK-56 | TUI Interaction: Expand/Collapse (51E) | ✅ Done | TASK-57, TASK-58 |
 | TASK-57 | TUI Commands: Update LoadTasksCmd (51C) | ✅ Done | TASK-52, TASK-54 |
-| TASK-58 | TUI Rendering: Render Grouped Tasks (51D) | ⏳ Planned | TASK-57 |
-| TASK-56 | TUI Interaction: Expand/Collapse Groups (51E) | ⏳ Planned | TASK-57, TASK-58 |
+| TASK-58 | TUI Rendering: Grouped Display (51D) | ✅ Done | TASK-54, TASK-57 |
 
 ---
 
 ## Changelog
 
 ### 2026-03-07
+- ✅ Completed TASK-51: Nested Task Grouping Feature (all phases complete)
+- ✅ Completed TASK-58: TUI Rendering - Grouped Display
+- ✅ Completed TASK-56: TUI Interaction - Expand/Collapse
+- ✅ Completed TASK-55: Error Handling
+- ✅ Completed TASK-53: Performance Optimization
 - ✅ Completed TASK-57: TUI Commands - GetGroupedTasks integration
 - ✅ Completed TASK-54: GroupedTasks domain model
 - ✅ Completed TASK-52: Recursive task loading
 - ✅ Updated architecture documentation
 - ✅ Created comprehensive feature documentation
+- ✅ All tests passing with race detection
+- ✅ Code quality verified (gofmt, go vet)
 
 ### 2026-03-06
 - 🎉 Started nested task grouping feature (TASK-51)

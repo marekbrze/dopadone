@@ -229,6 +229,10 @@ func (m *mockSubareaQuerier) ListProjectsByPriority(ctx context.Context, priorit
 	return nil, nil
 }
 
+func (m *mockSubareaQuerier) ListProjectsByIDs(ctx context.Context, ids []string) ([]db.Project, error) {
+	return nil, nil
+}
+
 func (m *mockSubareaQuerier) DeleteProjectsByParentID(ctx context.Context, parentID sql.NullString) error {
 	return nil
 }
