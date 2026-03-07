@@ -481,7 +481,81 @@ Completed tasks display with three visual indicators:
 - Works with both light and dark terminal themes
 - No reliance on color alone for status indication
 
-### 8. Footer with Quick Reference
+### 8. Grouped Task Display
+
+Hierarchical task organization showing tasks grouped by subproject with expandable/collapsible groups.
+
+**Implementation**: `internal/tui/renderer.go`
+
+**Overview**:
+When a parent project with subprojects is selected, tasks are displayed in a grouped format rather than a flat list. Each subproject becomes a collapsible group header showing its tasks indented underneath.
+
+**Visual Design**:
+```
+  Direct task 1
+  Direct task 2
+
+▸ Backend API (3 tasks)
+  Database work (2 tasks)
+▾ Frontend (1 task)
+    ✓ Implement login form
+```
+
+**Key Features**:
+
+1. **Direct Tasks**: Tasks belonging directly to the selected project appear at the top without grouping
+2. **Group Headers**: Each subproject displays as a header with:
+   - Expand/collapse icon: `▸` (collapsed) or `▾` (expanded)
+   - Subproject name
+   - Task count with proper pluralization
+   - Dimmed styling using theme's secondary color
+3. **Indentation**: Tasks under groups are indented 2 spaces deeper than direct tasks
+4. **Text Truncation**: Long task titles are truncated with `…` to prevent wrapping
+5. **Selection State**: Works with existing task navigation and completion toggle
+
+**Implementation Details**:
+
+The rendering logic uses the `GroupedTasks` domain model:
+
+```go
+type GroupedTasks struct {
+    DirectTasks []Task        // Tasks from the selected project
+    Groups      []TaskGroup   // Subproject groups
+    TotalCount  int           // Total tasks across all groups
+}
+
+type TaskGroup struct {
+    ProjectID   string
+    ProjectName string
+    Tasks       []Task
+    IsExpanded  bool
+}
+```
+
+**Rendering Algorithm**:
+1. Render direct tasks (no header, minimal indentation)
+2. Add blank line separator if both direct and grouped tasks exist
+3. For each subproject group:
+   - Render group header with icon and task count
+   - If expanded: render indented tasks with proper styling
+
+**Text Truncation**:
+- Calculates available width based on column size
+- Accounts for indentation, prefix (✓ or spaces), and borders
+- Truncates with `…` character to prevent horizontal scrolling
+- Preserves maximum content visibility
+
+**Theme Integration**:
+- Group headers use `theme.Secondary` color (dimmed appearance)
+- No reverse highlighting on headers (subtle visual distinction)
+- Task styling follows existing theme rules (completed, selected, etc.)
+
+**Performance**:
+- O(n) rendering where n = total visible tasks
+- No nested loops or complex calculations
+- String builder pattern for efficiency
+
+### 9. Footer with Quick Reference
 
 Persistent footer showing common keyboard shortcuts.
 
