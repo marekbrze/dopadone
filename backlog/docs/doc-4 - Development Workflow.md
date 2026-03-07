@@ -8,17 +8,17 @@ This guide covers the complete development workflow for Dopadone, including data
 
 ### Development Script
 
-The `dev.sh` script provides shortcuts for common development tasks:
+The `scripts/dev.sh` script provides shortcuts for common development tasks:
 
 ```bash
 # Seed database with unique contextual tasks
-./dev.sh seed
+./scripts/dev.sh seed
 
 # Start TUI with seeded data
-./dev.sh tui
+./scripts/dev.sh tui
 
 # Run tests
-./dev.sh test
+./scripts/dev.sh test
 ```
 
 ## Database Seeding
@@ -58,8 +58,8 @@ The seed script creates:
 ### Running the Seed Script
 
 ```bash
-# Method 1: Using dev.sh (recommended)
-./dev.sh seed
+# Method 1: Using scripts/dev.sh (recommended)
+./scripts/dev.sh seed
 
 # Method 2: Using Makefile
 make seed
@@ -90,8 +90,8 @@ esac
 # All tests
 make test
 
-# Or using dev.sh
-./dev.sh test
+# Or using scripts/dev.sh
+./scripts/dev.sh test
 
 # Specific package
 go test ./internal/db/... -v
@@ -111,8 +111,8 @@ Tests use isolated databases:
 ### Starting the TUI
 
 ```bash
-# Method 1: Using dev.sh
-./dev.sh tui
+# Method 1: Using scripts/dev.sh
+./scripts/dev.sh tui
 
 # Method 2: Using go run
 go run ./cmd/dopa tui
@@ -123,7 +123,7 @@ make run
 
 ### TUI Development Tips
 
-1. **Seed before testing**: Always run `./dev.sh seed` before testing the TUI to ensure realistic data
+1. **Seed before testing**: Always run `./scripts/dev.sh seed` before testing the TUI to ensure realistic data
 2. **Navigate the hierarchy**: Use arrow keys to explore parent/child projects
 3. **Check task display**: Verify that different projects show different contextual tasks
 4. **Test area switching**: Press `[` and `]` to switch between areas and verify data loads correctly
@@ -208,7 +208,7 @@ make build
 make migrate-up
 
 # Seed database
-./dev.sh seed
+./scripts/dev.sh seed
 
 # Run tests
 make test
@@ -245,9 +245,11 @@ dopa/
 │       └── views/         # UI components
 ├── migrations/            # Database migrations
 ├── scripts/               # Development scripts
-│   └── seed-test-data.sh  # Database seeding
+│   ├── dev.sh                # Development helper
+│   ├── seed-test-data.sh     # Database seeding
+│   ├── generate-changelog.sh # Changelog generator
+│   └── install.sh            # Installation script
 ├── Makefile              # Build automation
-├── dev.sh                # Development helper
 └── README.md             # User documentation
 ```
 
@@ -293,7 +295,7 @@ dopa/
 ```bash
 # Reseed database
 rm dopa.db
-./dev.sh seed
+./scripts/dev.sh seed
 
 # Verify tasks exist
 sqlite3 dopa.db "SELECT COUNT(*) FROM tasks;"
@@ -335,5 +337,5 @@ When contributing changes:
 1. **Update documentation** if adding/modifying features
 2. **Add tests** for new functionality
 3. **Run full test suite**: `make test`
-4. **Seed and test TUI**: `./dev.sh seed && ./dev.sh tui`
+4. **Seed and test TUI**: `./scripts/dev.sh seed && ./scripts/dev.sh tui`
 5. **Update README** if user-facing changes

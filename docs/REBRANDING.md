@@ -139,7 +139,7 @@ DB_PATH=dopadone.db
 - `go.sum`: Dependency checksums updated
 
 **Development Tools**:
-- `dev.sh`: Development script updated
+- `scripts/dev.sh`: Development script updated (moved to scripts directory)
 - `sqlc.yaml`: SQLC configuration updated
 
 ## Installation Changes

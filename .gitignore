@@ -1,0 +1,48 @@
+# Binaries and executables
+*.test
+dopa
+projectdb
+tui.test
+
+# Database files
+*.db
+
+# Coverage reports
+coverage.out
+*.cover
+
+# Temporary and backup files
+*.tmp
+*.bak
+*.backup
+echo
+test-theme.sh
+sqlc.yaml.backup
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# AI Agent directories (only keep .agents, .claude, .opencode)
+.agent/
+.factory/
+.junie/
+.kilocode/
+.kiro/
+.kode/
+.openhands/
+.pi/
+.pochi/
+.qoder/
+.qwen/
+.roo/
+.trae/
+.windsurf/
+.zencoder/

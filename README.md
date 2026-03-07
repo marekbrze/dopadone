@@ -357,17 +357,17 @@ make seed           # Seed database with test data
 
 #### Quick Development Script
 
-Use the `dev.sh` script for common development tasks:
+Use the `scripts/dev.sh` script for common development tasks:
 
 ```bash
 # Seed database with unique contextual tasks
-./dev.sh seed
+./scripts/dev.sh seed
 
 # Start TUI with seeded data
-./dev.sh tui
+./scripts/dev.sh tui
 
 # Run tests
-./dev.sh test
+./scripts/dev.sh test
 ```
 
 The seed script creates **unique, contextual tasks** for each project type:
