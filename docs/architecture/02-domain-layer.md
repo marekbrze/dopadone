@@ -592,6 +592,316 @@ func TestNewTask_InvalidDateRange(t *testing.T) {
 
 ---
 
+## Composite Structures
+
+### GroupedTasks Structure
+
+The `GroupedTasks` structure organizes tasks by subproject with group metadata, supporting nested task grouping in the TUI.
+
+**Purpose**:
+- Groups tasks from a project and its nested subprojects
+- Separates direct tasks (selected project) from nested tasks (subprojects)
+- Tracks expansion state for TUI rendering
+- Preserves task order within groups
+
+**Structure**:
+```go
+// internal/domain/task_group.go
+
+type TaskGroup struct {
+    ProjectID   string  // Unique identifier of the subproject
+    ProjectName string  // Display name of the subproject
+    Tasks       []Task  // Tasks belonging to this subproject
+    IsExpanded  bool    // Expansion state for TUI (default: true)
+}
+
+type GroupedTasks struct {
+    DirectTasks []Task      // Tasks belonging to the selected project
+    Groups      []TaskGroup // Tasks from nested subprojects
+    TotalCount  int         // Total tasks across all groups
+    
+    parentProjectID string // Private: used by AddTask to determine grouping
+}
+```
+
+### Constructor Pattern
+
+**Factory Method**:
+```go
+func NewGroupedTasks(tasks []Task, parentProjectID string, projectNames map[string]string) *GroupedTasks
+```
+
+**Usage**:
+```go
+tasks := []domain.Task{
+    {ID: "t1", ProjectID: "proj-1", Title: "Direct Task"},
+    {ID: "t2", ProjectID: "sub-1", Title: "Nested Task"},
+}
+
+projectNames := map[string]string{
+    "proj-1": "Main Project",
+    "sub-1":  "Subproject",
+}
+
+grouped := domain.NewGroupedTasks(tasks, "proj-1", projectNames)
+
+// Result:
+// grouped.DirectTasks = [{ID: "t1", ...}]
+// grouped.Groups = [{ProjectID: "sub-1", ProjectName: "Subproject", Tasks: [{ID: "t2", ...}], IsExpanded: true}]
+// grouped.TotalCount = 2
+```
+
+### Key Features
+
+**1. Graceful Edge Case Handling**:
+- `nil` or empty tasks → returns empty GroupedTasks
+- `nil` projectNames → creates empty map
+- Missing project name → defaults to "Unknown Project"
+- No errors returned, always succeeds
+
+**2. Order Preservation**:
+```go
+// Tasks maintain append order within groups
+tasks := []Task{
+    {ID: "t1", ProjectID: "sub-1", Title: "First"},
+    {ID: "t2", ProjectID: "sub-1", Title: "Second"},
+    {ID: "t3", ProjectID: "sub-1", Title: "Third"},
+}
+
+// Groups maintain discovery order
+tasks := []Task{
+    {ID: "t1", ProjectID: "sub-A", ...},
+    {ID: "t2", ProjectID: "sub-B", ...},
+    {ID: "t3", ProjectID: "sub-C", ...},
+}
+```
+
+**3. Default Expansion State**:
+- All groups default to `IsExpanded = true`
+- Provides better UX by showing all tasks initially
+- Users can collapse groups they don't need
+
+### Mutation Methods
+
+**AddTask** - Adds task to appropriate group:
+```go
+func (g *GroupedTasks) AddTask(task Task)
+```
+
+Behavior:
+- Task.ProjectID matches parent → DirectTasks
+- Group exists for ProjectID → existing group
+- Otherwise → creates new group with IsExpanded=true
+
+**RemoveTask** - Removes task by ID:
+```go
+func (g *GroupedTasks) RemoveTask(taskID string) bool
+```
+
+Returns:
+- `true` if found and removed
+- `false` if not found
+
+**ToggleGroup** - Toggles group expansion:
+```go
+func (g *GroupedTasks) ToggleGroup(projectID string) bool
+```
+
+Returns:
+- `true` if group found and toggled
+- `false` if group not found
+
+**Clear** - Resets to empty state:
+```go
+func (g *GroupedTasks) Clear()
+```
+
+### Performance Characteristics
+
+**Time Complexity**:
+| Operation | Complexity | Notes |
+|-----------|------------|-------|
+| NewGroupedTasks | O(n) | Single pass through tasks |
+| AddTask | O(g) | g = number of groups |
+| RemoveTask | O(n) | Linear search through all tasks |
+| ToggleGroup | O(g) | g = number of groups |
+| Clear | O(1) | Simple reset |
+
+**Performance Targets**:
+- NewGroupedTasks: <10ms for 1000 tasks
+- All mutation operations: <10ms for typical datasets
+
+### Integration with Service Layer
+
+The `GroupedTasks` structure is created by the service layer:
+
+```go
+// internal/service/task_service.go
+
+func (s *TaskService) GetGroupedTasks(ctx context.Context, projectID string) (*domain.GroupedTasks, error) {
+    // 1. Load tasks recursively using ListByProjectRecursive
+    tasks, err := s.ListByProjectRecursive(ctx, projectID)
+    if err != nil {
+        return nil, fmt.Errorf("get grouped tasks: %w", err)
+    }
+    
+    // 2. Build project names map by fetching from project service
+    projectNames := make(map[string]string)
+    for _, task := range tasks {
+        if task.ProjectID != "" {
+            project, err := s.projectService.GetByID(ctx, task.ProjectID)
+            if err == nil && project != nil {
+                projectNames[task.ProjectID] = project.Name
+            }
+        }
+    }
+    
+    // 3. Create grouped structure using domain constructor
+    return domain.NewGroupedTasks(tasks, projectID, projectNames), nil
+}
+```
+
+### Usage in TUI Layer
+
+**Loading Tasks**:
+```go
+// internal/tui/commands.go
+
+func LoadTasksCmd(taskSvc service.TaskServiceInterface, projectID string) tea.Cmd {
+    return func() tea.Msg {
+        groupedTasks, err := taskSvc.GetGroupedTasks(context.Background(), projectID)
+        if err != nil {
+            return TasksLoadedMsg{Err: err}
+        }
+        
+        return TasksLoadedMsg{
+            Tasks:        groupedTasks.Flattened(), // Backward compatibility
+            GroupedTasks: groupedTasks,             // New grouped structure
+        }
+    }
+}
+```
+
+**State Management**:
+```go
+// internal/tui/app.go
+
+type Model struct {
+    tasks              []domain.Task
+    groupedTasks       *domain.GroupedTasks  // NEW: grouped structure
+    expandedTaskGroups map[string]bool       // NEW: expansion state persistence
+}
+
+func (m *Model) handleTasksLoaded(msg TasksLoadedMsg) {
+    m.tasks = msg.Tasks
+    m.groupedTasks = msg.GroupedTasks
+    
+    // Initialize expansion state tracking
+    if m.expandedTaskGroups == nil {
+        m.expandedTaskGroups = make(map[string]bool)
+    }
+    
+    // Sync expansion state from saved preferences
+    for i := range m.groupedTasks.Groups {
+        groupID := m.groupedTasks.Groups[i].ProjectID
+        if _, exists := m.expandedTaskGroups[groupID]; !exists {
+            m.expandedTaskGroups[groupID] = true  // Default: expanded
+        }
+        m.groupedTasks.Groups[i].IsExpanded = m.expandedTaskGroups[groupID]
+    }
+}
+```
+
+### Testing Pattern
+
+Use table-driven tests with validateFunc for complex assertions:
+
+```go
+func TestNewGroupedTasks(t *testing.T) {
+    tests := []struct {
+        name            string
+        tasks           []Task
+        parentProjectID string
+        projectNames    map[string]string
+        wantDirectCount int
+        wantGroupCount  int
+        wantTotalCount  int
+        validateFunc    func(t *testing.T, g *GroupedTasks)
+    }{
+        {
+            name: "mixed direct and nested tasks",
+            tasks: []Task{
+                {ID: "t1", ProjectID: "proj-1", Title: "Direct"},
+                {ID: "t2", ProjectID: "sub-1", Title: "Nested"},
+            },
+            parentProjectID: "proj-1",
+            projectNames:    map[string]string{"proj-1": "Main", "sub-1": "Sub"},
+            wantDirectCount: 1,
+            wantGroupCount:  1,
+            wantTotalCount:  2,
+            validateFunc: func(t *testing.T, g *GroupedTasks) {
+                if g.Groups[0].ProjectName != "Sub" {
+                    t.Error("expected Sub project name")
+                }
+            },
+        },
+        // More test cases...
+    }
+    
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            result := NewGroupedTasks(tt.tasks, tt.parentProjectID, tt.projectNames)
+            
+            if len(result.DirectTasks) != tt.wantDirectCount {
+                t.Errorf("direct tasks: got %d, want %d", len(result.DirectTasks), tt.wantDirectCount)
+            }
+            
+            if tt.validateFunc != nil {
+                tt.validateFunc(t, result)
+            }
+        })
+    }
+}
+```
+
+### Design Decisions
+
+**1. Mutable vs Immutable**:
+- ✅ Mutable structure for CRUD operations after construction
+- ✅ Allows dynamic task addition/removal without reconstruction
+- ✅ Expansion state can be toggled by UI interactions
+
+**2. No Error Returns**:
+- ✅ Constructor never returns errors
+- ✅ Graceful handling of edge cases (nil, empty, missing data)
+- ✅ "Unknown Project" fallback for missing names
+- ✅ Simplifies calling code (no error checking needed)
+
+**3. Private State**:
+- ✅ `parentProjectID` is private to encapsulate grouping logic
+- ✅ External code doesn't need to know about parent/child relationship
+- ✅ AddTask method uses private field to determine grouping
+
+**4. Order Preservation**:
+- ✅ Tasks maintain discovery order (as they appear in input)
+- ✅ Groups maintain discovery order (first occurrence of each ProjectID)
+- ✅ Predictable ordering for UI consistency
+
+### When to Use GroupedTasks
+
+**Use GroupedTasks when**:
+- Displaying tasks from a project with nested subprojects
+- Implementing hierarchical task views in TUI
+- Supporting expand/collapse functionality for task groups
+- Preserving user's expansion state across navigation
+
+**Don't use GroupedTasks when**:
+- Working with flat task lists (use `[]Task` directly)
+- Tasks belong to a single project only
+- You need database query results (use repository methods)
+
+---
+ 
 ## Best Practices
 
 ### 1. Always Use Factory Methods
