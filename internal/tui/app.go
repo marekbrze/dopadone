@@ -36,6 +36,9 @@ type Model struct {
 	projects []domain.Project
 	tasks    []domain.Task
 
+	groupedTasks       *domain.GroupedTasks
+	expandedTaskGroups map[string]bool
+
 	selectedAreaIndex    int
 	selectedSubareaIndex int
 	selectedProjectIndex int
@@ -205,6 +208,26 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		m.tasks = msg.Tasks
+
+		m.groupedTasks = msg.GroupedTasks
+
+		if m.expandedTaskGroups == nil {
+			m.expandedTaskGroups = make(map[string]bool)
+		}
+
+		if m.groupedTasks != nil {
+			for i := range m.groupedTasks.Groups {
+				groupID := m.groupedTasks.Groups[i].ProjectID
+
+				if _, exists := m.expandedTaskGroups[groupID]; !exists {
+					m.expandedTaskGroups[groupID] = true
+					m.groupedTasks.Groups[i].IsExpanded = true
+				} else {
+					m.groupedTasks.Groups[i].IsExpanded = m.expandedTaskGroups[groupID]
+				}
+			}
+		}
+
 		if m.selectedTaskIndex >= len(m.tasks) {
 			m.selectedTaskIndex = 0
 		}

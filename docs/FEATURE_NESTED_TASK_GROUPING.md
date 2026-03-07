@@ -371,7 +371,7 @@ taskSvc := service.NewTaskService(repo, tm, projectSvc)
 | TASK-51 | Nested Task Grouping Feature | In Progress | Parent task |
 | TASK-52 | Service Layer: Recursive Task Loading (51A) | ✅ Done | None |
 | TASK-54 | Data Model: GroupedTasks Structure (51B) | ✅ Done | None |
-| TASK-57 | TUI Commands: Update LoadTasksCmd (51C) | ⏳ In Progress | TASK-52, TASK-54 |
+| TASK-57 | TUI Commands: Update LoadTasksCmd (51C) | ✅ Done | TASK-52, TASK-54 |
 | TASK-58 | TUI Rendering: Render Grouped Tasks (51D) | ⏳ Planned | TASK-57 |
 | TASK-56 | TUI Interaction: Expand/Collapse Groups (51E) | ⏳ Planned | TASK-57, TASK-58 |
 
@@ -380,6 +380,7 @@ taskSvc := service.NewTaskService(repo, tm, projectSvc)
 ## Changelog
 
 ### 2026-03-07
+- ✅ Completed TASK-57: TUI Commands - GetGroupedTasks integration
 - ✅ Completed TASK-54: GroupedTasks domain model
 - ✅ Completed TASK-52: Recursive task loading
 - ✅ Updated architecture documentation

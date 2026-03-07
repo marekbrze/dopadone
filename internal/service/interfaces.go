@@ -167,6 +167,11 @@ type TaskServiceInterface interface {
 	// ListByProjectRecursive retrieves all non-deleted tasks from a project and all its nested subprojects.
 	ListByProjectRecursive(ctx context.Context, projectID string) ([]domain.Task, error)
 
+	// GetGroupedTasks retrieves all tasks from a project and its nested subprojects,
+	// grouped by subproject with group metadata.
+	// Returns a GroupedTasks structure ready for TUI rendering.
+	GetGroupedTasks(ctx context.Context, projectID string) (*domain.GroupedTasks, error)
+
 	// ListByStatus retrieves all non-deleted tasks with the specified status.
 	ListByStatus(ctx context.Context, status domain.TaskStatus) ([]domain.Task, error)
 

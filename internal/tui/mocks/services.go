@@ -265,20 +265,22 @@ func (m *MockProjectService) ValidateParentHierarchy(ctx context.Context, parent
 }
 
 type MockTaskService struct {
-	CreateFunc         func(ctx context.Context, params service.CreateTaskParams) (*domain.Task, error)
-	GetByIDFunc        func(ctx context.Context, id string) (*domain.Task, error)
-	ListByProjectFunc  func(ctx context.Context, projectID string) ([]domain.Task, error)
-	ListByStatusFunc   func(ctx context.Context, status domain.TaskStatus) ([]domain.Task, error)
-	ListByPriorityFunc func(ctx context.Context, priority domain.TaskPriority) ([]domain.Task, error)
-	ListNextFunc       func(ctx context.Context) ([]domain.Task, error)
-	ListAllFunc        func(ctx context.Context) ([]domain.Task, error)
-	UpdateFunc         func(ctx context.Context, params service.UpdateTaskParams) (*domain.Task, error)
-	SoftDeleteFunc     func(ctx context.Context, id string) error
-	HardDeleteFunc     func(ctx context.Context, id string) error
-	SetStatusFunc      func(ctx context.Context, id string, status domain.TaskStatus) (*domain.Task, error)
-	MarkCompletedFunc  func(ctx context.Context, id string) (*domain.Task, error)
-	SetPriorityFunc    func(ctx context.Context, id string, priority domain.TaskPriority) (*domain.Task, error)
-	ToggleIsNextFunc   func(ctx context.Context, id string) (*domain.Task, error)
+	CreateFunc                 func(ctx context.Context, params service.CreateTaskParams) (*domain.Task, error)
+	GetByIDFunc                func(ctx context.Context, id string) (*domain.Task, error)
+	ListByProjectFunc          func(ctx context.Context, projectID string) ([]domain.Task, error)
+	ListByProjectRecursiveFunc func(ctx context.Context, projectID string) ([]domain.Task, error)
+	GetGroupedTasksFunc        func(ctx context.Context, projectID string) (*domain.GroupedTasks, error)
+	ListByStatusFunc           func(ctx context.Context, status domain.TaskStatus) ([]domain.Task, error)
+	ListByPriorityFunc         func(ctx context.Context, priority domain.TaskPriority) ([]domain.Task, error)
+	ListNextFunc               func(ctx context.Context) ([]domain.Task, error)
+	ListAllFunc                func(ctx context.Context) ([]domain.Task, error)
+	UpdateFunc                 func(ctx context.Context, params service.UpdateTaskParams) (*domain.Task, error)
+	SoftDeleteFunc             func(ctx context.Context, id string) error
+	HardDeleteFunc             func(ctx context.Context, id string) error
+	SetStatusFunc              func(ctx context.Context, id string, status domain.TaskStatus) (*domain.Task, error)
+	MarkCompletedFunc          func(ctx context.Context, id string) (*domain.Task, error)
+	SetPriorityFunc            func(ctx context.Context, id string, priority domain.TaskPriority) (*domain.Task, error)
+	ToggleIsNextFunc           func(ctx context.Context, id string) (*domain.Task, error)
 }
 
 func (m *MockTaskService) Create(ctx context.Context, params service.CreateTaskParams) (*domain.Task, error) {
@@ -300,6 +302,20 @@ func (m *MockTaskService) ListByProject(ctx context.Context, projectID string) (
 		return m.ListByProjectFunc(ctx, projectID)
 	}
 	return []domain.Task{}, nil
+}
+
+func (m *MockTaskService) ListByProjectRecursive(ctx context.Context, projectID string) ([]domain.Task, error) {
+	if m.ListByProjectRecursiveFunc != nil {
+		return m.ListByProjectRecursiveFunc(ctx, projectID)
+	}
+	return []domain.Task{}, nil
+}
+
+func (m *MockTaskService) GetGroupedTasks(ctx context.Context, projectID string) (*domain.GroupedTasks, error) {
+	if m.GetGroupedTasksFunc != nil {
+		return m.GetGroupedTasksFunc(ctx, projectID)
+	}
+	return &domain.GroupedTasks{}, nil
 }
 
 func (m *MockTaskService) ListByStatus(ctx context.Context, status domain.TaskStatus) ([]domain.Task, error) {

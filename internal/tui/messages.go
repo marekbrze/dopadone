@@ -34,8 +34,9 @@ type LoadTasksMsg struct {
 }
 
 type TasksLoadedMsg struct {
-	Tasks []domain.Task
-	Err   error
+	Tasks        []domain.Task
+	GroupedTasks *domain.GroupedTasks
+	Err          error
 }
 
 type SubareaCreatedMsg struct {

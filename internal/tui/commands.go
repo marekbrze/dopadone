@@ -52,11 +52,18 @@ func LoadProjectsCmd(projectSvc service.ProjectServiceInterface, subareaID *stri
 
 func LoadTasksCmd(taskSvc service.TaskServiceInterface, projectID string) tea.Cmd {
 	return func() tea.Msg {
-		tasks, err := taskSvc.ListByProject(context.Background(), projectID)
+		groupedTasks, err := taskSvc.GetGroupedTasks(context.Background(), projectID)
 		if err != nil {
 			return TasksLoadedMsg{Err: err}
 		}
-		return TasksLoadedMsg{Tasks: tasks}
+
+		tasks := groupedTasks.Flattened()
+
+		return TasksLoadedMsg{
+			Tasks:        tasks,
+			GroupedTasks: groupedTasks,
+			Err:          nil,
+		}
 	}
 }
 

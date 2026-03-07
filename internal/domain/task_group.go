@@ -173,3 +173,13 @@ func (g *GroupedTasks) Clear() {
 func (g *GroupedTasks) isParentProject(projectID string) bool {
 	return projectID == g.parentProjectID
 }
+
+// Flattened returns all tasks as a flat slice (for backward compatibility).
+func (g *GroupedTasks) Flattened() []Task {
+	tasks := make([]Task, 0, g.TotalCount)
+	tasks = append(tasks, g.DirectTasks...)
+	for _, group := range g.Groups {
+		tasks = append(tasks, group.Tasks...)
+	}
+	return tasks
+}

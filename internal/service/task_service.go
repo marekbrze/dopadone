@@ -136,6 +136,35 @@ func (s *TaskService) ListByProjectRecursive(ctx context.Context, projectID stri
 	return tasks, nil
 }
 
+func (s *TaskService) GetGroupedTasks(ctx context.Context, projectID string) (*domain.GroupedTasks, error) {
+	tasks, err := s.ListByProjectRecursive(ctx, projectID)
+	if err != nil {
+		return nil, fmt.Errorf("get grouped tasks: %w", err)
+	}
+
+	projectNames := make(map[string]string)
+
+	projectIDs := make(map[string]bool)
+	for _, task := range tasks {
+		if task.ProjectID != "" {
+			projectIDs[task.ProjectID] = true
+		}
+	}
+
+	if s.projectService != nil {
+		for pid := range projectIDs {
+			project, err := s.projectService.GetByID(ctx, pid)
+			if err == nil && project != nil {
+				projectNames[pid] = project.Name
+			}
+		}
+	}
+
+	groupedTasks := domain.NewGroupedTasks(tasks, projectID, projectNames)
+
+	return groupedTasks, nil
+}
+
 func (s *TaskService) ListByStatus(ctx context.Context, status domain.TaskStatus) ([]domain.Task, error) {
 	rows, err := s.repo.ListTasksByStatus(ctx, status.String())
 	if err != nil {

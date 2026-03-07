@@ -194,25 +194,118 @@ func TestLoadProjectsCmd(t *testing.T) {
 }
 
 func TestLoadTasksCmd(t *testing.T) {
-	t.Run("successful load", func(t *testing.T) {
+	t.Run("successful load with grouping", func(t *testing.T) {
 		_, _, _, mockTaskSvc := mocks.NewMockServices()
-		expectedTasks := []domain.Task{
-			{ID: "1", Title: "Task 1", ProjectID: "project-1"},
-		}
-		mocks.SetupMockTaskSuccess(mockTaskSvc, expectedTasks)
 
-		cmd := LoadTasksCmd(mockTaskSvc, "project-1")
+		tasks := []domain.Task{
+			{ID: "t1", ProjectID: "proj-1", Title: "Direct Task"},
+			{ID: "t2", ProjectID: "sub-1", Title: "Subproject Task"},
+		}
+
+		groupedTasks := domain.NewGroupedTasks(tasks, "proj-1", map[string]string{
+			"proj-1": "Main Project",
+			"sub-1":  "Subproject",
+		})
+
+		mockTaskSvc.GetGroupedTasksFunc = func(ctx context.Context, projectID string) (*domain.GroupedTasks, error) {
+			if projectID == "proj-1" {
+				return groupedTasks, nil
+			}
+			return nil, errors.New("unexpected project ID")
+		}
+
+		cmd := LoadTasksCmd(mockTaskSvc, "proj-1")
 		msg := cmd()
 
 		loaded, ok := msg.(TasksLoadedMsg)
 		if !ok {
 			t.Fatal("Expected TasksLoadedMsg")
 		}
+
 		if loaded.Err != nil {
-			t.Errorf("Unexpected error: %v", loaded.Err)
+			t.Fatalf("Unexpected error: %v", loaded.Err)
 		}
-		if len(loaded.Tasks) != 1 {
-			t.Errorf("Expected 1 task, got %d", len(loaded.Tasks))
+
+		if len(loaded.Tasks) != 2 {
+			t.Errorf("Expected 2 tasks in Tasks field, got %d", len(loaded.Tasks))
+		}
+
+		if loaded.GroupedTasks == nil {
+			t.Fatal("GroupedTasks should not be nil")
+		}
+
+		if loaded.GroupedTasks.TotalCount != 2 {
+			t.Errorf("Expected TotalCount 2, got %d", loaded.GroupedTasks.TotalCount)
+		}
+
+		if len(loaded.GroupedTasks.DirectTasks) != 1 {
+			t.Errorf("Expected 1 direct task, got %d", len(loaded.GroupedTasks.DirectTasks))
+		}
+
+		if len(loaded.GroupedTasks.Groups) != 1 {
+			t.Errorf("Expected 1 group, got %d", len(loaded.GroupedTasks.Groups))
+		}
+
+		if loaded.GroupedTasks.Groups[0].ProjectName != "Subproject" {
+			t.Errorf("Expected group name 'Subproject', got %s", loaded.GroupedTasks.Groups[0].ProjectName)
+		}
+	})
+
+	t.Run("empty project", func(t *testing.T) {
+		_, _, _, mockTaskSvc := mocks.NewMockServices()
+
+		groupedTasks := domain.NewGroupedTasks([]domain.Task{}, "proj-1", nil)
+
+		mockTaskSvc.GetGroupedTasksFunc = func(ctx context.Context, projectID string) (*domain.GroupedTasks, error) {
+			return groupedTasks, nil
+		}
+
+		cmd := LoadTasksCmd(mockTaskSvc, "proj-1")
+		msg := cmd()
+
+		loaded, ok := msg.(TasksLoadedMsg)
+		if !ok {
+			t.Fatal("Expected TasksLoadedMsg")
+		}
+
+		if loaded.Err != nil {
+			t.Fatalf("Unexpected error: %v", loaded.Err)
+		}
+
+		if len(loaded.Tasks) != 0 {
+			t.Errorf("Expected 0 tasks, got %d", len(loaded.Tasks))
+		}
+
+		if loaded.GroupedTasks == nil {
+			t.Fatal("GroupedTasks should not be nil")
+		}
+
+		if loaded.GroupedTasks.TotalCount != 0 {
+			t.Errorf("Expected TotalCount 0, got %d", loaded.GroupedTasks.TotalCount)
+		}
+	})
+
+	t.Run("service error", func(t *testing.T) {
+		_, _, _, mockTaskSvc := mocks.NewMockServices()
+
+		mockTaskSvc.GetGroupedTasksFunc = func(ctx context.Context, projectID string) (*domain.GroupedTasks, error) {
+			return nil, errors.New("database error")
+		}
+
+		cmd := LoadTasksCmd(mockTaskSvc, "proj-1")
+		msg := cmd()
+
+		loaded, ok := msg.(TasksLoadedMsg)
+		if !ok {
+			t.Fatal("Expected TasksLoadedMsg")
+		}
+
+		if loaded.Err == nil {
+			t.Fatal("Expected error, got nil")
+		}
+
+		if loaded.Err.Error() != "database error" {
+			t.Errorf("Expected 'database error', got %v", loaded.Err)
 		}
 	})
 }
