@@ -8,6 +8,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"strings"
 	"time"
 )
 
@@ -212,6 +213,64 @@ ORDER BY position ASC, name ASC
 
 func (q *Queries) ListAllProjects(ctx context.Context) ([]Project, error) {
 	rows, err := q.db.QueryContext(ctx, listAllProjects)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Project{}
+	for rows.Next() {
+		var i Project
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.Goal,
+			&i.Status,
+			&i.Priority,
+			&i.Progress,
+			&i.Deadline,
+			&i.Color,
+			&i.ParentID,
+			&i.SubareaID,
+			&i.Position,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.CompletedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listProjectsByIDs = `-- name: ListProjectsByIDs :many
+SELECT id, name, description, goal, status, priority, progress, deadline, color, parent_id, subarea_id, position, created_at, updated_at, completed_at, deleted_at
+FROM projects
+WHERE id IN (/*SLICE:ids*/?)
+AND deleted_at IS NULL
+ORDER BY position ASC, name ASC
+`
+
+func (q *Queries) ListProjectsByIDs(ctx context.Context, ids []string) ([]Project, error) {
+	query := listProjectsByIDs
+	var queryParams []interface{}
+	if len(ids) > 0 {
+		for _, v := range ids {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:ids*/?", strings.Repeat(",?", len(ids))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
 		return nil, err
 	}

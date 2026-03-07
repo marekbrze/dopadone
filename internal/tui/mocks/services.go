@@ -165,6 +165,7 @@ type MockProjectService struct {
 	ListAllFunc                 func(ctx context.Context) ([]domain.Project, error)
 	ListByStatusFunc            func(ctx context.Context, status domain.ProjectStatus) ([]domain.Project, error)
 	ListByPriorityFunc          func(ctx context.Context, priority domain.Priority) ([]domain.Project, error)
+	ListByIDsFunc               func(ctx context.Context, ids []string) ([]domain.Project, error)
 	ListBySubareaRecursiveFunc  func(ctx context.Context, subareaID string) ([]domain.Project, error)
 	UpdateFunc                  func(ctx context.Context, params service.UpdateProjectParams) (*domain.Project, error)
 	SoftDeleteFunc              func(ctx context.Context, id string) error

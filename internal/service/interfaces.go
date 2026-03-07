@@ -129,6 +129,10 @@ type ProjectServiceInterface interface {
 	// ListByPriority retrieves all non-deleted projects with the specified priority.
 	ListByPriority(ctx context.Context, priority domain.Priority) ([]domain.Project, error)
 
+	// ListByIDs retrieves multiple projects by their IDs in a single query (batch loading).
+	// Returns projects in no particular order.
+	ListByIDs(ctx context.Context, ids []string) ([]domain.Project, error)
+
 	// ListBySubareaRecursive retrieves all projects within a subarea, including nested projects.
 	// This method will be implemented in Task-29B.
 	ListBySubareaRecursive(ctx context.Context, subareaID string) ([]domain.Project, error)

@@ -178,6 +178,23 @@ func (s *ProjectService) ListByPriority(ctx context.Context, priority domain.Pri
 	return projects, nil
 }
 
+func (s *ProjectService) ListByIDs(ctx context.Context, ids []string) ([]domain.Project, error) {
+	if len(ids) == 0 {
+		return []domain.Project{}, nil
+	}
+
+	rows, err := s.repo.ListProjectsByIDs(ctx, ids)
+	if err != nil {
+		return nil, err
+	}
+
+	projects := make([]domain.Project, len(rows))
+	for i, row := range rows {
+		projects[i] = converter.DbProjectToDomain(row)
+	}
+	return projects, nil
+}
+
 func (s *ProjectService) ListBySubareaRecursive(ctx context.Context, subareaID string) ([]domain.Project, error) {
 	if subareaID == "" {
 		return []domain.Project{}, nil

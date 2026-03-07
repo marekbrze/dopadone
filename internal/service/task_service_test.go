@@ -672,14 +672,20 @@ func TestTaskService_ListAll(t *testing.T) {
 			want:    3,
 			wantErr: false,
 		},
-		{
-			name: "returns empty list",
-			mock: func() *mockTaskQuerier {
-				return &mockTaskQuerier{
-					listAllTasksFunc: func(ctx context.Context) ([]db.Task, error) {
-						return []db.Task{}, nil
-					},
-				}
+package service
+
+import (
+	"context"
+	"database/sql"
+	"fmt"
+	"testing"
+	"time"
+
+	"github.com/example/dopadone/internal/db"
+	"github.com/example/dopadone/internal/domain"
+)
+
+func TestTaskService_GetGroupedTasks_B *testing.B) {
 			},
 			want:    0,
 			wantErr: false,
@@ -698,7 +704,63 @@ func TestTaskService_ListAll(t *testing.T) {
 				t.Errorf("TaskService.ListAll() returned %d tasks, want %d", len(got), tt.want)
 			}
 		})
-	}
+		})
+	})
+})
+
+func TestTaskService_GetGroupedTasks_BatchLoading(t *testing.T) {
+    now := time.Now()
+    tests := []struct {
+        name    string
+        tasks   []db.Task
+        projectID string
+        want    int
+    }{
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            mockRepo := &mockTaskQuerier{
+                listTasksByProjectRecursiveFunc: func(ctx context.Context, projectID sql.NullString) ([]db.Task, error) {
+                    return tt.tasks, nil
+                },
+            }
+
+            mockProjectService := &mockProjectService{}
+            mockProjectService.On("ListByIDs", func(ctx context.Context, ids []string) ([]domain.Project, error) {
+                projects := make([]domain.Project, len(ids))
+                for i, id := range ids {
+                    projects[i] = domain.Project{
+                        ID:   id,
+                        Name: "Project " + id,
+                    }
+                }
+                return projects, nil
+            })
+
+            svc := NewTaskService(mockRepo, nil, mockProjectService)
+            got, err := svc.GetGroupedTasks(context.Background(), tt.projectID)
+
+            if err != nil {
+                t.Fatalf("GetGroupedTasks() error = %v", err)
+            }
+
+            projectIDs := make(map[string]bool)
+            for _, task := range tt.tasks {
+                if task.ProjectID != "" {
+                    projectIDs[task.ProjectID] = true
+                }
+            }
+
+            expectedCallCount := 1
+            if len(projectIDs) == 0 {
+                expectedCallCount = 0
+            }
+
+            if mockProjectService.Calls["ListByIDs"] != expectedCallCount {
+                t.Errorf("Expected %d call to ListByIDs, got %d", expectedCallCount, mockProjectService.Calls["ListByIDs"])
+            }
+        })
+    }
 }
 
 func TestTaskService_ListByProjectRecursive(t *testing.T) {

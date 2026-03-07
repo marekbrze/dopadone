@@ -41,6 +41,7 @@ type Querier interface {
 	ListAllTasks(ctx context.Context) ([]Task, error)
 	ListAreas(ctx context.Context) ([]ListAreasRow, error)
 	ListNextTasks(ctx context.Context) ([]Task, error)
+	ListProjectsByIDs(ctx context.Context, ids []string) ([]Project, error)
 	ListProjectsByParent(ctx context.Context, parentID sql.NullString) ([]Project, error)
 	ListProjectsByPriority(ctx context.Context, priority string) ([]Project, error)
 	ListProjectsBySubarea(ctx context.Context, subareaID sql.NullString) ([]Project, error)

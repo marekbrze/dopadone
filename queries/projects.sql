@@ -87,3 +87,10 @@ WITH RECURSIVE project_hierarchy AS (
 SELECT id, name, description, goal, status, priority, progress, deadline, color, parent_id, subarea_id, position, created_at, updated_at, completed_at, deleted_at
 FROM project_hierarchy
 ORDER BY position ASC, name ASC;
+
+-- name: ListProjectsByIDs :many
+SELECT id, name, description, goal, status, priority, progress, deadline, color, parent_id, subarea_id, position, created_at, updated_at, completed_at, deleted_at
+FROM projects
+WHERE id IN (sqlc.slice('ids'))
+AND deleted_at IS NULL
+ORDER BY position ASC, name ASC;

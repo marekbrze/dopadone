@@ -151,11 +151,17 @@ func (s *TaskService) GetGroupedTasks(ctx context.Context, projectID string) (*d
 		}
 	}
 
-	if s.projectService != nil {
+	if s.projectService != nil && len(projectIDs) > 0 {
+		// Batch load all project names in a single query (O(1) instead of O(N))
+		idList := make([]string, 0, len(projectIDs))
 		for pid := range projectIDs {
-			project, err := s.projectService.GetByID(ctx, pid)
-			if err == nil && project != nil {
-				projectNames[pid] = project.Name
+			idList = append(idList, pid)
+		}
+
+		projects, err := s.projectService.ListByIDs(ctx, idList)
+		if err == nil {
+			for _, project := range projects {
+				projectNames[project.ID] = project.Name
 			}
 		}
 	}
