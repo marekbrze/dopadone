@@ -7,6 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+#### Repository Reference Migration (Task-62)
+
+**Updated all repository references from placeholder URLs to production repository**
+
+Completed comprehensive migration from development placeholder URLs to the production GitHub repository `github.com/marekbrze/dopadone`. This prepares the codebase for the v1.0.0 release with all references pointing to the actual repository.
+
+**Changes**:
+
+**Go Module and Imports**:
+- Updated `go.mod` module path: `github.com/example/dopadone` → `github.com/marekbrze/dopadone`
+- Updated all import statements across 52+ Go files
+- Ran `go mod tidy` to update dependencies
+
+**Build System**:
+- Updated Makefile LDFLAGS to use correct module path for version injection
+- Updated `scripts/install.sh` REPO variable and installation URLs
+
+**Documentation**:
+- Updated README.md repository URLs (3 occurrences)
+- Updated docs/TUI.md import examples
+- Updated docs/RELEASE.md GitHub URLs (5 occurrences)
+- Updated docs/REBRANDING.md module path references
+- Updated decision documents (cmd/projectdb → cmd/dopa)
+
+**Branding Fixes**:
+- Fixed `internal/version/version.go` to use "dopa" instead of "projectdb" (8 references)
+- Includes: BuildInfo output, GitHub API URLs, asset names, binary names, temp directories, error messages
+
+**Verification**:
+- ✅ All 120+ tests pass (`make test`)
+- ✅ Build succeeds for all platforms (`make build`)
+- ✅ Binary shows correct project name (`./bin/dopa version --all`)
+- ✅ No placeholder references remain in production code
+
+**Documentation Created**:
+- `docs/REPOSITORY_MIGRATION.md` - Comprehensive migration documentation
+- Updated `docs/START_HERE.md` to reference migration docs
+
+**Impact**: Breaking change for Go importers, but this is the first public release so no external users are affected.
+
+**Related**: See [REPOSITORY_MIGRATION.md](docs/REPOSITORY_MIGRATION.md) for detailed migration information.
+
 ### Added
 
 #### Nested Task Grouping Feature (Task-51)

@@ -104,6 +104,8 @@ The architecture follows **layered design principles** with clear separation of 
 | [Transaction Handling](TRANSACTIONS.md) | Database transactions, atomicity, best practices |
 | [Release Process](RELEASE.md) | Versioning, tagging, deployment workflow |
 | [CI/CD Pipeline](CI-CD.md) | GitHub Actions workflows, build process, automation |
+| [Rebranding Documentation](REBRANDING.md) | Project rename from ProjectDB to Dopadone |
+| [Repository Migration](REPOSITORY_MIGRATION.md) | Migration from placeholder to production repository |
 
 ## Key Concepts
 
