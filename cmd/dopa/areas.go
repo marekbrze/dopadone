@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/example/dopadone/internal/cli"
-	"github.com/example/dopadone/internal/cli/filter"
-	"github.com/example/dopadone/internal/cli/output"
-	"github.com/example/dopadone/internal/domain"
+	"github.com/marekbrze/dopadone/internal/cli"
+	"github.com/marekbrze/dopadone/internal/cli/filter"
+	"github.com/marekbrze/dopadone/internal/cli/output"
+	"github.com/marekbrze/dopadone/internal/domain"
 	"github.com/spf13/cobra"
 )
 

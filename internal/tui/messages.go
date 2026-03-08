@@ -1,7 +1,7 @@
 package tui
 
 import (
-	"github.com/example/dopadone/internal/domain"
+	"github.com/marekbrze/dopadone/internal/domain"
 )
 
 type LoadAreasMsg struct{}

@@ -6,9 +6,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/example/dopadone/internal/converter"
-	"github.com/example/dopadone/internal/db"
-	"github.com/example/dopadone/internal/domain"
+	"github.com/marekbrze/dopadone/internal/converter"
+	"github.com/marekbrze/dopadone/internal/db"
+	"github.com/marekbrze/dopadone/internal/domain"
 )
 
 var (

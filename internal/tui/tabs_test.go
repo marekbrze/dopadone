@@ -3,8 +3,8 @@ package tui
 import (
 	"testing"
 
-	"github.com/example/dopadone/internal/domain"
-	"github.com/example/dopadone/internal/tui/mocks"
+	"github.com/marekbrze/dopadone/internal/domain"
+	"github.com/marekbrze/dopadone/internal/tui/mocks"
 )
 
 func TestUpdateTabsFromAreasEmpty(t *testing.T) {

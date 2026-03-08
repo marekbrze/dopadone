@@ -2,11 +2,11 @@ package tui
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/example/dopadone/internal/tui/areamodal"
-	"github.com/example/dopadone/internal/tui/help"
-	"github.com/example/dopadone/internal/tui/modal"
-	"github.com/example/dopadone/internal/tui/toast"
-	"github.com/example/dopadone/internal/tui/tree"
+	"github.com/marekbrze/dopadone/internal/tui/areamodal"
+	"github.com/marekbrze/dopadone/internal/tui/help"
+	"github.com/marekbrze/dopadone/internal/tui/modal"
+	"github.com/marekbrze/dopadone/internal/tui/toast"
+	"github.com/marekbrze/dopadone/internal/tui/tree"
 )
 
 func (m *Model) handleEnterOrSpace() {

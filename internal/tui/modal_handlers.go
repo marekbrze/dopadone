@@ -2,7 +2,7 @@ package tui
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/example/dopadone/internal/tui/toast"
+	"github.com/marekbrze/dopadone/internal/tui/toast"
 )
 
 func (m *Model) handleSubareaCreated(msg SubareaCreatedMsg) (tea.Model, tea.Cmd) {

@@ -3,7 +3,7 @@ package tui
 import (
 	"testing"
 
-	"github.com/example/dopadone/internal/domain"
+	"github.com/marekbrze/dopadone/internal/domain"
 )
 
 func TestGetTotalTaskLinesEmpty(t *testing.T) {

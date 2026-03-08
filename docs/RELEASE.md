@@ -47,28 +47,63 @@ git push origin v1.0.1
 
 ### 4. Automated Release Process
 
-Once the tag is pushed, GitHub Actions will:
+Once the tag is pushed, GitHub Actions will automatically:
 
-1. Build binaries for all platforms:
+1. **Build binaries** for all platforms:
    - Linux (amd64)
    - macOS (amd64, arm64)
    - Windows (amd64)
 
-2. Generate release notes from commits
+2. **Inject version information** into each binary:
+   - Version number from the git tag
+   - Git commit SHA
+   - Build timestamp
 
-3. Create a GitHub Release with:
+3. **Create distribution archives**:
+   - `.tar.gz` for Linux and macOS
+   - `.zip` for Windows
+
+4. **Generate SHA256 checksums** for all archives
+
+5. **Create a GitHub Release** with:
    - All binary archives
-   - Auto-generated changelog
-   - Installation instructions
+   - SHA256 checksum files
+   - Auto-generated release notes from commits
+   - Pre-release marker (if tag contains a hyphen)
+
+The entire process is defined in `.github/workflows/release.yml` and typically completes in 5-10 minutes.
 
 ### 5. Verify the Release
 
-1. Check the [Releases page](https://github.com/example/dopa/releases)
+1. Check the [Releases page](https://github.com/marekbrze/dopadone/releases)
 2. Download and test the binaries
 3. Verify the version command shows correct info:
 
 ```bash
 ./dopa version --all
+```
+
+## Testing the Release Workflow
+
+You can test the release workflow without creating an actual release:
+
+### Option 1: Manual Workflow Dispatch
+
+1. Go to GitHub Actions → Release workflow
+2. Click "Run workflow"
+3. Enter a test tag (e.g., `v0.0.1-test`)
+4. The workflow will run but won't create a release unless the tag exists
+
+### Option 2: Create a Test Tag
+
+```bash
+# Create a test pre-release tag
+git tag -a v0.0.1-test -m "Test release workflow"
+git push origin v0.0.1-test
+
+# After testing, delete the tag
+git tag -d v0.0.1-test
+git push origin :refs/tags/v0.0.1-test
 ```
 
 ## Pre-release Versions
@@ -86,7 +121,7 @@ git tag -a v1.1.0-beta.1 -m "Beta release v1.1.0-beta.1"
 git tag -a v1.1.0-rc.1 -m "Release candidate v1.1.0-rc.1"
 ```
 
-Pre-release versions will be marked as "pre-release" on GitHub.
+Pre-release versions will be automatically marked as "pre-release" on GitHub (the workflow detects the hyphen in the tag name).
 
 ## Manual Build (for testing)
 
@@ -105,7 +140,7 @@ VERSION=v1.0.0 make build-versioned
 
 If a release has critical issues:
 
-1. Go to [Releases](https://github.com/example/dopa/releases)
+1. Go to [Releases](https://github.com/marekbrze/dopadone/releases)
 2. Find the problematic release
 3. Click "Delete" to remove it
 4. Delete the tag locally and remotely:
@@ -170,7 +205,7 @@ curl -sSL https://raw.githubusercontent.com/example/dopa/main/scripts/install.sh
 
 ### Option 2: Manual Download
 
-1. Go to [Releases](https://github.com/example/dopa/releases/latest)
+1. Go to [Releases](https://github.com/marekbrze/dopadone/releases/latest)
 2. Download the archive for your platform:
    - Linux: `dopa-linux-amd64.tar.gz`
    - macOS (Intel): `dopa-darwin-amd64.tar.gz`
@@ -207,7 +242,7 @@ To install a specific version:
 
 ```bash
 VERSION=v1.0.0
-curl -sSL https://github.com/example/dopa/releases/download/${VERSION}/dopa-linux-amd64.tar.gz | tar xz
+curl -sSL https://github.com/marekbrze/dopadone/releases/download/${VERSION}/dopa-linux-amd64.tar.gz | tar xz
 sudo mv dopa /usr/local/bin/
 dopa migrate up
 ```

@@ -2,7 +2,7 @@ package tui
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/example/dopadone/internal/domain"
+	"github.com/marekbrze/dopadone/internal/domain"
 )
 
 func (m *Model) NavigateUp(column FocusColumn) {

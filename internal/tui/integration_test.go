@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/example/dopadone/internal/db"
-	"github.com/example/dopadone/internal/service"
+	"github.com/marekbrze/dopadone/internal/db"
+	"github.com/marekbrze/dopadone/internal/service"
 	_ "modernc.org/sqlite"
 )
 

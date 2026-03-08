@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/example/dopadone/internal/db"
+	"github.com/marekbrze/dopadone/internal/db"
 )
 
 func BenchmarkListBySubareaRecursive(b *testing.B) {

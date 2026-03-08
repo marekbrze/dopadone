@@ -3,8 +3,8 @@ package tui
 import (
 	"testing"
 
-	"github.com/example/dopadone/internal/domain"
-	"github.com/example/dopadone/internal/tui/tree"
+	"github.com/marekbrze/dopadone/internal/domain"
+	"github.com/marekbrze/dopadone/internal/tui/tree"
 )
 
 func TestNavigateSubareasUpWrap(t *testing.T) {

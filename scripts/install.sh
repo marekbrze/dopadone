@@ -1,10 +1,10 @@
 #!/bin/bash
 # Install script for dopa
-# Usage: curl -sSL https://raw.githubusercontent.com/example/dopa/main/scripts/install.sh | sh
+# Usage: curl -sSL https://raw.githubusercontent.com/marekbrze/dopadone/main/scripts/install.sh | sh
 
 set -e
 
-REPO="example/dopa"
+REPO="marekbrze/dopadone"
 BINARY_NAME="dopa"
 INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
 

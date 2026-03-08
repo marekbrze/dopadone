@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/example/dopadone/internal/db"
-	"github.com/example/dopadone/internal/domain"
+	"github.com/marekbrze/dopadone/internal/db"
+	"github.com/marekbrze/dopadone/internal/domain"
 )
 
 type mockTaskQuerier struct {

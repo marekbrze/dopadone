@@ -3,8 +3,8 @@ package mocks
 import (
 	"context"
 
-	"github.com/example/dopadone/internal/domain"
-	"github.com/example/dopadone/internal/service"
+	"github.com/marekbrze/dopadone/internal/domain"
+	"github.com/marekbrze/dopadone/internal/service"
 )
 
 type MockAreaService struct {

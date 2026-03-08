@@ -15,9 +15,9 @@ VERSION?=dev
 GIT_COMMIT?=$(shell git rev-parse HEAD 2>/dev/null || echo "unknown")
 BUILD_DATE?=$(shell date -u +%Y-%m-%dT%H:%M:%SZ)
 LDFLAGS=-s -w \
-	-X github.com/example/dopadone/internal/version.Version=$(VERSION) \
-	-X github.com/example/dopadone/internal/version.GitCommit=$(GIT_COMMIT) \
-	-X github.com/example/dopadone/internal/version.BuildDate=$(BUILD_DATE)
+	-X github.com/marekbrze/dopadone/internal/version.Version=$(VERSION) \
+	-X github.com/marekbrze/dopadone/internal/version.GitCommit=$(GIT_COMMIT) \
+	-X github.com/marekbrze/dopadone/internal/version.BuildDate=$(BUILD_DATE)
 
 # Default target
 .DEFAULT_GOAL := help

@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/example/dopadone/internal/domain"
-	"github.com/example/dopadone/internal/tui/tree"
-	"github.com/example/dopadone/internal/tui/views"
+	"github.com/marekbrze/dopadone/internal/domain"
+	"github.com/marekbrze/dopadone/internal/tui/tree"
+	"github.com/marekbrze/dopadone/internal/tui/views"
 	"github.com/mattn/go-runewidth"
 )
 

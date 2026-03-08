@@ -2,7 +2,7 @@ package views
 
 import (
 	"github.com/charmbracelet/lipgloss"
-	"github.com/example/dopadone/internal/tui/theme"
+	"github.com/marekbrze/dopadone/internal/tui/theme"
 )
 
 var (

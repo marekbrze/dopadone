@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/example/dopadone/internal/tui/areamodal"
-	"github.com/example/dopadone/internal/tui/toast"
+	"github.com/marekbrze/dopadone/internal/tui/areamodal"
+	"github.com/marekbrze/dopadone/internal/tui/toast"
 )
 
 func (m *Model) handleAreaModalSubmit(msg areamodal.SubmitMsg) (tea.Model, tea.Cmd) {

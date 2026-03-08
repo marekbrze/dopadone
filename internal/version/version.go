@@ -32,13 +32,13 @@ type GitHubRelease struct {
 }
 
 func BuildInfo() string {
-	return fmt.Sprintf("projectdb %s\n  Git commit: %s\n  Build date: %s", Version, GitCommit, BuildDate)
+	return fmt.Sprintf("dopa %s\n  Git commit: %s\n  Build date: %s", Version, GitCommit, BuildDate)
 }
 
 func CheckLatestRelease() (*GitHubRelease, error) {
 	client := &http.Client{Timeout: 10 * time.Second}
 
-	resp, err := client.Get("https://api.github.com/repos/example/projectdb/releases/latest")
+	resp, err := client.Get("https://api.github.com/repos/marekbrze/dopadone/releases/latest")
 	if err != nil {
 		return nil, fmt.Errorf("failed to check for updates: %w", err)
 	}
@@ -89,9 +89,9 @@ func getPlatformString() string {
 func getAssetName() string {
 	platform := getPlatformString()
 	if runtime.GOOS == "windows" {
-		return fmt.Sprintf("projectdb-%s.zip", platform)
+		return fmt.Sprintf("dopa-%s.zip", platform)
 	}
-	return fmt.Sprintf("projectdb-%s.tar.gz", platform)
+	return fmt.Sprintf("dopa-%s.tar.gz", platform)
 }
 
 func findAssetURL(release *GitHubRelease, assetName string) (string, error) {
@@ -127,9 +127,9 @@ func downloadFile(url, dest string) error {
 }
 
 func extractBinary(archivePath, destDir string) (string, error) {
-	binaryName := "projectdb"
+	binaryName := "dopa"
 	if runtime.GOOS == "windows" {
-		binaryName = "projectdb.exe"
+		binaryName = "dopa.exe"
 	}
 
 	if strings.HasSuffix(archivePath, ".zip") {
@@ -140,7 +140,7 @@ func extractBinary(archivePath, destDir string) (string, error) {
 		defer r.Close()
 
 		for _, f := range r.File {
-			if strings.HasSuffix(f.Name, ".exe") || (strings.HasSuffix(f.Name, "projectdb") && !strings.Contains(f.Name, "/")) {
+			if strings.HasSuffix(f.Name, ".exe") || (strings.HasSuffix(f.Name, "dopa") && !strings.Contains(f.Name, "/")) {
 				destPath := filepath.Join(destDir, binaryName)
 				outFile, err := os.OpenFile(destPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
 				if err != nil {
@@ -183,7 +183,7 @@ func extractBinary(archivePath, destDir string) (string, error) {
 			return "", err
 		}
 
-		if strings.HasSuffix(hdr.Name, "projectdb") && hdr.Typeflag == tar.TypeReg {
+		if strings.HasSuffix(hdr.Name, "dopa") && hdr.Typeflag == tar.TypeReg {
 			destPath := filepath.Join(destDir, binaryName)
 			outFile, err := os.OpenFile(destPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
 			if err != nil {
@@ -283,7 +283,7 @@ func PerformUpgrade(opts UpgradeOptions) error {
 		return fmt.Errorf("failed to find download for your platform (%s): %w", getPlatformString(), err)
 	}
 
-	tempDir, err := os.MkdirTemp("", "projectdb-upgrade-*")
+	tempDir, err := os.MkdirTemp("", "dopa-upgrade-*")
 	if err != nil {
 		return fmt.Errorf("failed to create temp directory: %w", err)
 	}
@@ -318,7 +318,7 @@ func PerformUpgrade(opts UpgradeOptions) error {
 		fmt.Println("\nRunning database migrations...")
 		if err := runMigrations(currentBinary, opts.DBPath); err != nil {
 			fmt.Printf("Warning: migrations failed: %v\n", err)
-			fmt.Println("You may need to run migrations manually: projectdb migrate up")
+			fmt.Println("You may need to run migrations manually: dopa migrate up")
 		} else {
 			fmt.Println("Migrations completed successfully.")
 		}

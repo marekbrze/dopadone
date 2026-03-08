@@ -2,8 +2,8 @@ package tui
 
 import (
 	"github.com/charmbracelet/lipgloss"
-	"github.com/example/dopadone/internal/tui/theme"
-	"github.com/example/dopadone/internal/tui/toast"
+	"github.com/marekbrze/dopadone/internal/tui/theme"
+	"github.com/marekbrze/dopadone/internal/tui/toast"
 )
 
 func (m *Model) RenderToasts() string {

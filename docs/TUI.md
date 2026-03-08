@@ -737,7 +737,7 @@ Comprehensive test suite covering:
 All tests use mock services instead of database connections:
 
 ```go
-import "github.com/example/dopa/internal/tui/mocks"
+import "github.com/marekbrze/dopadone/internal/tui/mocks"
 
 func TestLoadAreas(t *testing.T) {
     // Create mock services

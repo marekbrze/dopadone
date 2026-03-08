@@ -14,7 +14,7 @@ Get started in 30 seconds with a complete workflow using **Areas** (top-level co
 
 ```bash
 # Install (one of these methods)
-go install github.com/example/dopa/cmd/dopa@latest
+go install github.com/marekbrze/dopadone/cmd/dopa@latest
 # OR: download binary from releases
 # OR: make build
 
@@ -59,13 +59,13 @@ sudo mv dopa-* /usr/local/bin/dopa
 ### Option 2: Install with Go
 
 ```bash
-go install github.com/example/dopa/cmd/dopa@latest
+go install github.com/marekbrze/dopadone/cmd/dopa@latest
 ```
 
 ### Option 3: Build from Source
 
 ```bash
-git clone https://github.com/example/dopa.git
+git clone https://github.com/marekbrze/dopadone.git
 cd dopa
 make build
 # Binary will be at bin/dopa

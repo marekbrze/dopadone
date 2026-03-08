@@ -103,6 +103,7 @@ The architecture follows **layered design principles** with clear separation of 
 | [TUI Documentation](TUI.md) | Terminal UI architecture, components, Elm pattern |
 | [Transaction Handling](TRANSACTIONS.md) | Database transactions, atomicity, best practices |
 | [Release Process](RELEASE.md) | Versioning, tagging, deployment workflow |
+| [CI/CD Pipeline](CI-CD.md) | GitHub Actions workflows, build process, automation |
 
 ## Key Concepts
 

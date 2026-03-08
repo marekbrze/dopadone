@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/example/dopadone/internal/cli"
-	"github.com/example/dopadone/internal/cli/output"
-	"github.com/example/dopadone/internal/db"
-	"github.com/example/dopadone/internal/migrate"
-	"github.com/example/dopadone/internal/service"
-	"github.com/example/dopadone/internal/version"
+	"github.com/marekbrze/dopadone/internal/cli"
+	"github.com/marekbrze/dopadone/internal/cli/output"
+	"github.com/marekbrze/dopadone/internal/db"
+	"github.com/marekbrze/dopadone/internal/migrate"
+	"github.com/marekbrze/dopadone/internal/service"
+	"github.com/marekbrze/dopadone/internal/version"
 	"github.com/spf13/cobra"
 )
 

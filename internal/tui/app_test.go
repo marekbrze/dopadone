@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/example/dopadone/internal/domain"
-	"github.com/example/dopadone/internal/tui/mocks"
-	"github.com/example/dopadone/internal/tui/modal"
-	"github.com/example/dopadone/internal/tui/tree"
+	"github.com/marekbrze/dopadone/internal/domain"
+	"github.com/marekbrze/dopadone/internal/tui/mocks"
+	"github.com/marekbrze/dopadone/internal/tui/modal"
+	"github.com/marekbrze/dopadone/internal/tui/tree"
 )
 
 func TestInitialModel(t *testing.T) {

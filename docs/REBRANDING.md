@@ -14,7 +14,7 @@ This document details the comprehensive rebranding of the project management CLI
 
 - **Product Name**: Dopadone
 - **CLI Command**: `dopa`
-- **Module Path**: `github.com/example/dopadone`
+- **Module Path**: `github.com/marekbrze/dopadone`
 - **Database**: `dopadone.db`
 - **Binary**: `dopa`
 
@@ -30,7 +30,7 @@ This document details the comprehensive rebranding of the project management CLI
 
 #### Module Path
 - **Before**: `github.com/example/projectdb`
-- **After**: `github.com/example/dopadone`
+- **After**: `github.com/marekbrze/dopadone`
 
 #### Command Directory
 - **Before**: `cmd/projectdb/`
@@ -55,9 +55,9 @@ import "github.com/example/projectdb/internal/service"
 import "github.com/example/projectdb/internal/tui"
 
 // After
-import "github.com/example/dopadone/internal/domain"
-import "github.com/example/dopadone/internal/service"
-import "github.com/example/dopadone/internal/tui"
+import "github.com/marekbrze/dopadone/internal/domain"
+import "github.com/marekbrze/dopadone/internal/service"
+import "github.com/marekbrze/dopadone/internal/tui"
 ```
 
 **Files Updated**:
@@ -159,7 +159,7 @@ projectdb task create --title "Example"
 
 ```bash
 # Install
-go install github.com/example/dopadone/cmd/dopa@latest
+go install github.com/marekbrze/dopadone/cmd/dopa@latest
 
 # Run
 dopa area list
@@ -176,8 +176,8 @@ https://github.com/example/projectdb/releases/download/v1.0.0/projectdb-darwin-a
 
 **New URLs**:
 ```
-https://github.com/example/dopadone/releases/download/v1.0.0/dopa-linux-amd64
-https://github.com/example/dopadone/releases/download/v1.0.0/dopa-darwin-amd64
+https://github.com/marekbrze/dopadone/releases/download/v1.0.0/dopa-linux-amd64
+https://github.com/marekbrze/dopadone/releases/download/v1.0.0/dopa-darwin-amd64
 ```
 
 ## Database Migration

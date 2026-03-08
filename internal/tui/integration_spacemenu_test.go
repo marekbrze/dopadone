@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/example/dopadone/internal/tui/help"
-	"github.com/example/dopadone/internal/tui/mocks"
-	"github.com/example/dopadone/internal/tui/spacemenu"
+	"github.com/marekbrze/dopadone/internal/tui/help"
+	"github.com/marekbrze/dopadone/internal/tui/mocks"
+	"github.com/marekbrze/dopadone/internal/tui/spacemenu"
 )
 
 func TestSpaceMenuIntegration(t *testing.T) {
