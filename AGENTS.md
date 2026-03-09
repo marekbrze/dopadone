@@ -12,6 +12,7 @@ remains fully synchronized and up-to-date.
 ### Core Capabilities
 
 - ✅ **Task Management**: Create, edit, assign, prioritize, and track tasks with full metadata
+- ✅ **Milestones**: Group related tasks into milestones for tracking major features or releases
 - ✅ **Search**: Fuzzy search across tasks, documents, and decisions with `backlog search`
 - ✅ **Acceptance Criteria**: Granular control with add/remove/check/uncheck by index
 - ✅ **Definition of Done checklists**: Per-task DoD items with add/remove/check/uncheck
@@ -33,6 +34,7 @@ remains fully synchronized and up-to-date.
 ### Key Understanding
 
 - **Tasks** live in `backlog/tasks/` as `task-<id> - <title>.md` files
+- **Milestones** live in `backlog/milestones/` as `m-<id> - <title>.md` files
 - **You interact via CLI only**: `backlog task create`, `backlog task edit`, etc.
 - **Use `--plain` flag** for AI-friendly output when viewing/listing
 - **Never bypass the CLI** - It handles Git, metadata, file naming, and relationships
@@ -68,6 +70,67 @@ remains fully synchronized and up-to-date.
 - **All task operations MUST use the Backlog.md CLI tool**
 - This ensures metadata is correctly updated and the project stays in sync
 - **Always use `--plain` flag** when listing or viewing tasks for AI-friendly text output
+
+---
+
+## 1.5. Milestones: Grouping Related Tasks
+
+### What are Milestones?
+
+Milestones are containers for grouping related tasks that together deliver a major feature, release, or project phase.
+
+### Creating Milestones
+
+Milestones are created manually as markdown files in `backlog/milestones/` with the format `m-<id> - <title>.md`:
+
+```markdown
+---
+id: m-1
+title: "Feature Name"
+---
+
+## Description
+
+Brief description of the milestone goal.
+
+## Tasks
+
+- [ ] TASK-42
+- [ ] TASK-43
+- [ ] TASK-44
+```
+
+### File Naming Convention
+
+- **Format**: `m-<id> - <title>.md` (e.g., `m-1 - user-authentication.md`)
+- **ID**: Sequential number (m-1, m-2, m-3, etc.)
+- **Location**: `backlog/milestones/` directory
+
+### Listing Milestones
+
+```bash
+# List all milestones
+backlog milestone list --plain
+
+# Output example:
+# Active milestones (2):
+#   m-1: User Authentication (0/0 done)
+#   m-2: API Integration (0/0 done)
+```
+
+### Best Practices
+
+1. **Group related tasks**: Use milestones to organize tasks that together deliver a feature
+2. **Clear naming**: Use descriptive titles that indicate the milestone's purpose
+3. **Keep it focused**: Each milestone should represent a deliverable unit of work
+4. **Reference by ID**: List task IDs in the milestone's Tasks section
+
+### Important Notes
+
+- Milestones are **informational only** - they don't affect task dependencies or workflow
+- The "0/0 done" status indicates milestone tracking is manual (not auto-synced with task completion)
+- You can view milestone details via the browser UI (`backlog browser`)
+- Milestones can be archived when complete: `backlog milestone archive <id-or-title>`
 
 ---
 

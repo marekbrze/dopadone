@@ -1,9 +1,11 @@
 ---
 id: TASK-67
 title: Execute v1.0.0 Release
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@{myself}'
 created_date: '2026-03-07 21:50'
+updated_date: '2026-03-09 21:05'
 labels:
   - release
   - deployment
@@ -43,6 +45,12 @@ This task MUST be executed sequentially after tasks 62, 63, 64, and 65 are compl
 - [ ] #9 Test installation script: curl -sSL https://raw.githubusercontent.com/marekbrze/dopadone/main/scripts/install.sh | sh
 - [ ] #10 Test downloaded binary shows correct version: dopa version --all
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+1. Fix test build issues (mock queriers)\n2. Verify build and lint pass\n3. Update CHANGELOG with actual release date\n4. Commit all pending changes\n5. Create v1.0.0 git tag\n6. Push tag to trigger release\n7. Monitor GitHub Actions workflow\n8. Verify release on GitHub\n9. Test installation script
+<!-- SECTION:PLAN:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->

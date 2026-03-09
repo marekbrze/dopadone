@@ -24,6 +24,10 @@ make test
 
 # Run linting
 make lint
+
+# Test installation script locally
+./scripts/install.sh --dry-run
+./scripts/test-install.sh
 ```
 
 ### 2. Create a Version Tag
@@ -199,8 +203,54 @@ dopa migrate reset
 
 ### Option 1: Quick Install (Linux/macOS)
 
+The automated installation script handles everything:
+
 ```bash
-curl -sSL https://raw.githubusercontent.com/example/dopa/main/scripts/install.sh | sh
+# Install latest version
+curl -sSL https://raw.githubusercontent.com/marekbrze/dopadone/main/scripts/install.sh | sh
+```
+
+**Script Features**:
+- Automatic platform detection (Linux, macOS Intel, macOS ARM)
+- Dependency checking (curl, tar, unzip)
+- Installation verification (`dopa version`)
+- Upgrade support (detects and replaces existing installation)
+- Dry-run mode for testing
+
+**Advanced Usage**:
+
+```bash
+# Download and inspect before running
+curl -sSL https://raw.githubusercontent.com/marekbrze/dopadone/main/scripts/install.sh -o install.sh
+chmod +x install.sh
+
+# Test what would be installed (dry-run)
+./install.sh --dry-run
+
+# Install with custom directory
+INSTALL_DIR=$HOME/bin ./install.sh
+
+# Upgrade without prompts (CI/automation)
+./install.sh --yes
+
+# Skip installation verification
+./install.sh --no-verify
+
+# Show help
+./install.sh --help
+```
+
+**Testing the Script**:
+
+The repository includes a comprehensive test suite for the installation script:
+
+```bash
+# Run all tests
+./scripts/test-install.sh
+
+# Test specific functionality
+./scripts/test-install.sh dry_run
+./scripts/test-install.sh platform_detection
 ```
 
 ### Option 2: Manual Download

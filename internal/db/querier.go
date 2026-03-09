@@ -55,6 +55,9 @@ type Querier interface {
 	SoftDeleteProject(ctx context.Context, arg SoftDeleteProjectParams) (Project, error)
 	SoftDeleteSubarea(ctx context.Context, arg SoftDeleteSubareaParams) (Subarea, error)
 	SoftDeleteTask(ctx context.Context, arg SoftDeleteTaskParams) (Task, error)
+	// Soft deletes all tasks within a project
+	// Used during cascade soft delete to remove tasks in bulk
+	SoftDeleteTasksByProject(ctx context.Context, arg SoftDeleteTasksByProjectParams) error
 	ToggleIsNext(ctx context.Context, arg ToggleIsNextParams) (Task, error)
 	UpdateArea(ctx context.Context, arg UpdateAreaParams) (UpdateAreaRow, error)
 	UpdateAreaSortOrder(ctx context.Context, arg UpdateAreaSortOrderParams) error

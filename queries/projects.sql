@@ -94,3 +94,10 @@ FROM projects
 WHERE id IN (sqlc.slice('ids'))
 AND deleted_at IS NULL
 ORDER BY position ASC, name ASC;
+
+-- name: SoftDeleteTasksByProject :exec
+-- Soft deletes all tasks within a project
+-- Used during cascade soft delete to remove tasks in bulk
+UPDATE tasks
+SET deleted_at = ?
+WHERE project_id = ? AND deleted_at IS NULL;

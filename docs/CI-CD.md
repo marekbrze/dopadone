@@ -100,6 +100,107 @@ After all builds complete, the release job:
    - All checksum files (`.sha256`)
    - Pre-release flag (if applicable)
 
+### CI Workflow (`.github/workflows/ci.yml`)
+
+The CI workflow runs automated quality checks on every push and pull request to ensure code quality before releases.
+
+#### Triggers
+
+The workflow runs on:
+
+1. **Push to main branch** - Every commit to main triggers CI
+2. **Pull requests to main** - All PRs must pass CI before merging
+
+#### Jobs
+
+The CI workflow runs three jobs in parallel:
+
+##### 1. Test & Coverage Job
+
+**Purpose**: Run the test suite with race detection and generate coverage reports
+
+**Steps**:
+1. Check out code with full git history
+2. Set up Go 1.21 with module caching
+3. Download dependencies (`go mod download`)
+4. Run tests with race detector and coverage:
+   ```bash
+   go test ./... -v -race -coverprofile=coverage.out -covermode=atomic
+   ```
+5. Upload coverage report as artifact (30-day retention)
+6. Check coverage threshold (currently 20%, target: 70%)
+
+**Coverage Threshold**:
+- Current minimum: 20% (avoids breaking builds initially)
+- Current coverage: ~28.4%
+- Target: Gradually increase to 70% as test coverage improves
+
+##### 2. Lint Job
+
+**Purpose**: Ensure code quality and consistency
+
+**Steps**:
+1. Check out code with full git history
+2. Set up Go 1.21 with module caching
+3. Download dependencies
+4. Run `go vet ./...` for basic static analysis
+5. Run golangci-lint with comprehensive checks
+
+**Enabled Linters** (configured in `.golangci.yml`):
+- `gofmt` - Code formatting
+- `goimports` - Import statement organization
+- `govet` - Go vet checks
+- `errcheck` - Error handling verification
+- `staticcheck` - Advanced static analysis
+- `ineffassign` - Detect ineffective assignments
+- `typecheck` - Type checking
+- `gosimple` - Code simplification suggestions
+- `goconst` - Detect repeated strings that could be constants
+- `gocyclo` - Cyclomatic complexity (threshold: 20)
+- `dupl` - Code clone detection (threshold: 150)
+
+##### 3. Build Job
+
+**Purpose**: Verify code compiles successfully
+
+**Dependencies**: Runs only after Test & Lint jobs pass
+
+**Steps**:
+1. Check out code with full git history
+2. Set up Go 1.21 with module caching
+3. Download dependencies
+4. Build all packages: `go build -v ./...`
+5. Verify dependencies: `go mod verify`
+
+#### Workflow Benefits
+
+- **Quality Gate**: Catches issues early in development
+- **Race Detection**: Identifies concurrency bugs
+- **Coverage Tracking**: Monitors test coverage over time
+- **Code Consistency**: Enforces coding standards
+- **Build Verification**: Ensures code always compiles
+
+#### Local Testing
+
+Run the same checks locally:
+
+```bash
+# Run tests with race detector and coverage
+go test ./... -v -race -coverprofile=coverage.out -covermode=atomic
+
+# View coverage
+go tool cover -func=coverage.out
+
+# Run go vet
+go vet ./...
+
+# Run golangci-lint (install first: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest)
+golangci-lint run
+
+# Verify build
+go build -v ./...
+```
+
 ## Version Injection
 
 Version information is injected at compile time using Go's `-ldflags -X` flag. This allows the binary to report its version without external files.
@@ -285,13 +386,16 @@ Build artifacts are retained for only 1 day to reduce storage costs. The GitHub 
 
 Potential enhancements to the CI/CD pipeline:
 
-- [ ] Add automated testing before release
+- [x] Add automated testing before release (implemented in CI workflow)
 - [ ] Sign binaries with GPG/code signing certificates
 - [ ] Generate SBOM (Software Bill of Materials)
 - [ ] Add Docker image builds
 - [ ] Implement automated rollback on critical issues
 - [ ] Add performance benchmarking in CI
 - [ ] Generate and publish API documentation
+- [ ] Increase coverage threshold to 70%
+- [ ] Add code coverage visualization (e.g., codecov integration)
+- [ ] Add security vulnerability scanning
 
 ## References
 

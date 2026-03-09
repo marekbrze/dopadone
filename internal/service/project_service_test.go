@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -22,6 +24,7 @@ type mockProjectQuerier struct {
 	listProjectsByPriorityFunc         func(ctx context.Context, priority string) ([]db.Project, error)
 	updateProjectFunc                  func(ctx context.Context, arg db.UpdateProjectParams) (db.Project, error)
 	softDeleteProjectFunc              func(ctx context.Context, arg db.SoftDeleteProjectParams) (db.Project, error)
+	softDeleteTasksByProjectFunc       func(ctx context.Context, arg db.SoftDeleteTasksByProjectParams) error
 	hardDeleteProjectFunc              func(ctx context.Context, id string) error
 	countTasksByProjectFunc            func(ctx context.Context, projectID string) (int64, error)
 	countProjectsByParentFunc          func(ctx context.Context, parentID sql.NullString) (int64, error)
@@ -99,6 +102,13 @@ func (m *mockProjectQuerier) SoftDeleteProject(ctx context.Context, arg db.SoftD
 		return m.softDeleteProjectFunc(ctx, arg)
 	}
 	return db.Project{}, nil
+}
+
+func (m *mockProjectQuerier) SoftDeleteTasksByProject(ctx context.Context, arg db.SoftDeleteTasksByProjectParams) error {
+	if m.softDeleteTasksByProjectFunc != nil {
+		return m.softDeleteTasksByProjectFunc(ctx, arg)
+	}
+	return nil
 }
 
 func (m *mockProjectQuerier) HardDeleteProject(ctx context.Context, id string) error {
@@ -1003,4 +1013,334 @@ func projectsToRows(projects []db.Project) []db.ListProjectsBySubareaRecursiveRo
 		rows[i] = projectToRow(p)
 	}
 	return rows
+}
+
+func TestProjectService_SoftDeleteWithCascade(t *testing.T) {
+	ctx := context.Background()
+	now := time.Now()
+
+	tests := []struct {
+		name        string
+		projectID   string
+		setupMock   func(*mockProjectQuerier)
+		wantErr     error
+		verifyCalls func(t *testing.T, mock *mockProjectQuerier)
+	}{
+		{
+			name:      "single project with no children",
+			projectID: "proj-1",
+			setupMock: func(m *mockProjectQuerier) {
+				m.getProjectByIDFunc = func(ctx context.Context, id string) (db.Project, error) {
+					return db.Project{
+						ID:        "proj-1",
+						Name:      "Test Project",
+						CreatedAt: now,
+						UpdatedAt: now,
+					}, nil
+				}
+				m.listProjectsByParentFunc = func(ctx context.Context, parentID sql.NullString) ([]db.Project, error) {
+					return []db.Project{}, nil
+				}
+				m.softDeleteTasksByProjectFunc = func(ctx context.Context, arg db.SoftDeleteTasksByProjectParams) error {
+					return nil
+				}
+				m.softDeleteProjectFunc = func(ctx context.Context, arg db.SoftDeleteProjectParams) (db.Project, error) {
+					return db.Project{ID: "proj-1", DeletedAt: arg.DeletedAt}, nil
+				}
+			},
+			wantErr: nil,
+		},
+		{
+			name:      "project with direct children",
+			projectID: "parent-1",
+			setupMock: func(m *mockProjectQuerier) {
+				m.getProjectByIDFunc = func(ctx context.Context, id string) (db.Project, error) {
+					return db.Project{
+						ID:        "parent-1",
+						Name:      "Parent",
+						CreatedAt: now,
+						UpdatedAt: now,
+					}, nil
+				}
+				callCount := 0
+				m.listProjectsByParentFunc = func(ctx context.Context, parentID sql.NullString) ([]db.Project, error) {
+					callCount++
+					if parentID.String == "parent-1" && callCount == 1 {
+						return []db.Project{
+							{ID: "child-1", Name: "Child 1"},
+							{ID: "child-2", Name: "Child 2"},
+						}, nil
+					}
+					return []db.Project{}, nil
+				}
+				m.softDeleteTasksByProjectFunc = func(ctx context.Context, arg db.SoftDeleteTasksByProjectParams) error {
+					return nil
+				}
+				m.softDeleteProjectFunc = func(ctx context.Context, arg db.SoftDeleteProjectParams) (db.Project, error) {
+					return db.Project{ID: arg.ID, DeletedAt: arg.DeletedAt}, nil
+				}
+			},
+			wantErr: nil,
+		},
+		{
+			name:      "deeply nested hierarchy",
+			projectID: "level-0",
+			setupMock: func(m *mockProjectQuerier) {
+				m.getProjectByIDFunc = func(ctx context.Context, id string) (db.Project, error) {
+					return db.Project{
+						ID:        "level-0",
+						Name:      "Level 0",
+						CreatedAt: now,
+						UpdatedAt: now,
+					}, nil
+				}
+				m.listProjectsByParentFunc = func(ctx context.Context, parentID sql.NullString) ([]db.Project, error) {
+					switch parentID.String {
+					case "level-0":
+						return []db.Project{{ID: "level-1", Name: "Level 1"}}, nil
+					case "level-1":
+						return []db.Project{{ID: "level-2", Name: "Level 2"}}, nil
+					default:
+						return []db.Project{}, nil
+					}
+				}
+				m.softDeleteTasksByProjectFunc = func(ctx context.Context, arg db.SoftDeleteTasksByProjectParams) error {
+					return nil
+				}
+				m.softDeleteProjectFunc = func(ctx context.Context, arg db.SoftDeleteProjectParams) (db.Project, error) {
+					return db.Project{ID: arg.ID, DeletedAt: arg.DeletedAt}, nil
+				}
+			},
+			wantErr: nil,
+		},
+		{
+			name:      "already deleted project",
+			projectID: "proj-deleted",
+			setupMock: func(m *mockProjectQuerier) {
+				m.getProjectByIDFunc = func(ctx context.Context, id string) (db.Project, error) {
+					return db.Project{
+						ID:        "proj-deleted",
+						Name:      "Deleted Project",
+						DeletedAt: &now,
+					}, nil
+				}
+			},
+			wantErr: nil,
+		},
+		{
+			name:      "non-existent project",
+			projectID: "nonexistent",
+			setupMock: func(m *mockProjectQuerier) {
+				m.getProjectByIDFunc = func(ctx context.Context, id string) (db.Project, error) {
+					return db.Project{}, sql.ErrNoRows
+				}
+			},
+			wantErr: ErrProjectNotFound,
+		},
+		{
+			name:      "database error on get project",
+			projectID: "proj-1",
+			setupMock: func(m *mockProjectQuerier) {
+				m.getProjectByIDFunc = func(ctx context.Context, id string) (db.Project, error) {
+					return db.Project{}, errors.New("database connection failed")
+				}
+			},
+			wantErr: errors.New("get project proj-1"),
+		},
+		{
+			name:      "database error on list children",
+			projectID: "proj-1",
+			setupMock: func(m *mockProjectQuerier) {
+				m.getProjectByIDFunc = func(ctx context.Context, id string) (db.Project, error) {
+					return db.Project{ID: "proj-1", Name: "Test"}, nil
+				}
+				m.listProjectsByParentFunc = func(ctx context.Context, parentID sql.NullString) ([]db.Project, error) {
+					return nil, errors.New("database error")
+				}
+			},
+			wantErr: errors.New("list child projects"),
+		},
+		{
+			name:      "database error on delete tasks",
+			projectID: "proj-1",
+			setupMock: func(m *mockProjectQuerier) {
+				m.getProjectByIDFunc = func(ctx context.Context, id string) (db.Project, error) {
+					return db.Project{ID: "proj-1", Name: "Test"}, nil
+				}
+				m.listProjectsByParentFunc = func(ctx context.Context, parentID sql.NullString) ([]db.Project, error) {
+					return []db.Project{}, nil
+				}
+				m.softDeleteTasksByProjectFunc = func(ctx context.Context, arg db.SoftDeleteTasksByProjectParams) error {
+					return errors.New("delete tasks failed")
+				}
+			},
+			wantErr: errors.New("soft delete tasks"),
+		},
+		{
+			name:      "database error on delete project",
+			projectID: "proj-1",
+			setupMock: func(m *mockProjectQuerier) {
+				m.getProjectByIDFunc = func(ctx context.Context, id string) (db.Project, error) {
+					return db.Project{ID: "proj-1", Name: "Test"}, nil
+				}
+				m.listProjectsByParentFunc = func(ctx context.Context, parentID sql.NullString) ([]db.Project, error) {
+					return []db.Project{}, nil
+				}
+				m.softDeleteTasksByProjectFunc = func(ctx context.Context, arg db.SoftDeleteTasksByProjectParams) error {
+					return nil
+				}
+				m.softDeleteProjectFunc = func(ctx context.Context, arg db.SoftDeleteProjectParams) (db.Project, error) {
+					return db.Project{}, errors.New("delete project failed")
+				}
+			},
+			wantErr: errors.New("soft delete project"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock := &mockProjectQuerier{}
+			tt.setupMock(mock)
+
+			service := NewProjectService(mock, nil)
+
+			err := service.SoftDeleteWithCascade(ctx, tt.projectID)
+
+			if tt.wantErr != nil {
+				if err == nil {
+					t.Errorf("expected error containing %q, got nil", tt.wantErr.Error())
+					return
+				}
+				if !strings.Contains(err.Error(), tt.wantErr.Error()) {
+					t.Errorf("error = %v, want error containing %v", err, tt.wantErr)
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+
+			if tt.verifyCalls != nil {
+				tt.verifyCalls(t, mock)
+			}
+		})
+	}
+}
+
+func TestProjectService_SoftDeleteWithCascade_WithTransaction(t *testing.T) {
+	ctx := context.Background()
+	now := time.Now()
+
+	t.Run("with transaction manager", func(t *testing.T) {
+		mock := &mockProjectQuerier{
+			getProjectByIDFunc: func(ctx context.Context, id string) (db.Project, error) {
+				return db.Project{
+					ID:        "proj-1",
+					Name:      "Test Project",
+					CreatedAt: now,
+					UpdatedAt: now,
+				}, nil
+			},
+			listProjectsByParentFunc: func(ctx context.Context, parentID sql.NullString) ([]db.Project, error) {
+				return []db.Project{}, nil
+			},
+			softDeleteTasksByProjectFunc: func(ctx context.Context, arg db.SoftDeleteTasksByProjectParams) error {
+				return nil
+			},
+			softDeleteProjectFunc: func(ctx context.Context, arg db.SoftDeleteProjectParams) (db.Project, error) {
+				return db.Project{ID: arg.ID, DeletedAt: arg.DeletedAt}, nil
+			},
+		}
+
+		service := NewProjectService(mock, nil)
+
+		err := service.SoftDeleteWithCascade(ctx, "proj-1")
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	})
+
+	t.Run("without transaction manager", func(t *testing.T) {
+		mock := &mockProjectQuerier{
+			getProjectByIDFunc: func(ctx context.Context, id string) (db.Project, error) {
+				return db.Project{
+					ID:        "proj-1",
+					Name:      "Test Project",
+					CreatedAt: now,
+					UpdatedAt: now,
+				}, nil
+			},
+			listProjectsByParentFunc: func(ctx context.Context, parentID sql.NullString) ([]db.Project, error) {
+				return []db.Project{}, nil
+			},
+			softDeleteTasksByProjectFunc: func(ctx context.Context, arg db.SoftDeleteTasksByProjectParams) error {
+				return nil
+			},
+			softDeleteProjectFunc: func(ctx context.Context, arg db.SoftDeleteProjectParams) (db.Project, error) {
+				return db.Project{ID: arg.ID, DeletedAt: arg.DeletedAt}, nil
+			},
+		}
+
+		service := NewProjectService(mock, nil)
+
+		err := service.SoftDeleteWithCascade(ctx, "proj-1")
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	})
+}
+
+func TestProjectService_SoftDeleteWithCascade_VerifyOrder(t *testing.T) {
+	ctx := context.Background()
+	now := time.Now()
+
+	var deleteOrder []string
+	mock := &mockProjectQuerier{
+		getProjectByIDFunc: func(ctx context.Context, id string) (db.Project, error) {
+			return db.Project{
+				ID:        "parent",
+				Name:      "Parent",
+				CreatedAt: now,
+				UpdatedAt: now,
+			}, nil
+		},
+		listProjectsByParentFunc: func(ctx context.Context, parentID sql.NullString) ([]db.Project, error) {
+			if parentID.String == "parent" {
+				return []db.Project{
+					{ID: "child-1", Name: "Child 1"},
+					{ID: "child-2", Name: "Child 2"},
+				}, nil
+			}
+			return []db.Project{}, nil
+		},
+		softDeleteTasksByProjectFunc: func(ctx context.Context, arg db.SoftDeleteTasksByProjectParams) error {
+			deleteOrder = append(deleteOrder, "tasks-"+arg.ProjectID)
+			return nil
+		},
+		softDeleteProjectFunc: func(ctx context.Context, arg db.SoftDeleteProjectParams) (db.Project, error) {
+			deleteOrder = append(deleteOrder, "project-"+arg.ID)
+			return db.Project{ID: arg.ID, DeletedAt: arg.DeletedAt}, nil
+		},
+	}
+
+	service := NewProjectService(mock, nil)
+
+	err := service.SoftDeleteWithCascade(ctx, "parent")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	expectedOrder := []string{
+		"tasks-child-1",
+		"project-child-1",
+		"tasks-child-2",
+		"project-child-2",
+		"tasks-parent",
+		"project-parent",
+	}
+
+	if !reflect.DeepEqual(deleteOrder, expectedOrder) {
+		t.Errorf("delete order = %v, want %v", deleteOrder, expectedOrder)
+	}
 }

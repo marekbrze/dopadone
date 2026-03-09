@@ -1,5 +1,8 @@
 # Dopadone - CLI Project Management for Developers
 
+[![CI](https://github.com/marekbrze/dopadone/workflows/CI/badge.svg)](https://github.com/marekbrze/dopadone/actions/workflows/ci.yml)
+[![Release](https://github.com/marekbrze/dopadone/workflows/Release/badge.svg)](https://github.com/marekbrze/dopadone/actions/workflows/release.yml)
+
 **Organize your projects, tasks, and workflows from the command line.**
 
 Dopadone is a lightweight, SQLite-based project management tool designed for developers who prefer staying in the terminal. It provides a clean hierarchical structure for organizing work without the overhead of bloated project management software.
@@ -38,7 +41,40 @@ Once you understand areas, the same CRUD pattern applies to subareas, projects, 
 
 ## Installation
 
-### Option 1: Download Pre-built Binaries
+### Option 1: Quick Install (Recommended)
+
+The fastest way to install Dopadone on Linux or macOS:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/marekbrze/dopadone/main/scripts/install.sh | sh
+```
+
+This script will:
+- Detect your operating system and architecture
+- Download the latest release from GitHub
+- Install the binary to `/usr/local/bin/dopa` (requires sudo)
+- Verify the installation
+
+#### Advanced Options
+
+```bash
+# Dry-run mode (test without installing)
+./install.sh --dry-run
+
+# Skip installation verification
+./install.sh --no-verify
+
+# Auto-confirm upgrade (no prompts)
+./install.sh --yes
+
+# Custom installation directory
+INSTALL_DIR=$HOME/bin ./install.sh
+
+# Show help and all options
+./install.sh --help
+```
+
+### Option 2: Download Pre-built Binaries
 
 Download the latest release for your platform:
 

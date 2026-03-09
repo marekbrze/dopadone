@@ -1,6 +1,21 @@
 #!/bin/bash
+#
 # Install script for dopa
 # Usage: curl -sSL https://raw.githubusercontent.com/marekbrze/dopadone/main/scripts/install.sh | sh
+#
+# Flags:
+#   --dry-run    Simulate platform detection and download URL without installing
+#   --yes        Skip confirmation prompts (auto-confirm upgrades)
+#   --no-verify  Skip installation verification
+#   --help       Show this help message
+#
+# Environment variables:
+#   INSTALL_DIR  Installation directory (default: /usr/local/bin)
+#
+# Exit codes:
+#   0 - Success
+#   1 - Error (missing dependencies, download failure, etc.)
+#   2 - User cancelled (declined upgrade confirmation)
 
 set -e
 
@@ -8,95 +23,407 @@ REPO="marekbrze/dopadone"
 BINARY_NAME="dopa"
 INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
 
-detect_platform() {
-    OS=$(uname -s | tr '[:upper:]' '[:lower:]')
-    ARCH=$(uname -m)
+DRY_RUN=false
+AUTO_YES=false
+VERIFY=true
+
+usage() {
+    cat <<EOF
+Usage: $(basename "$0") [OPTIONS]
+
+Install dopa CLI tool.
+
+Options:
+    --dry-run     Simulate installation without actually downloading or installing
+    --yes         Skip confirmation prompts (useful for automation)
+    --no-verify   Skip installation verification (dopa version check)
+    --help        Show this help message
+
+Environment Variables:
+    INSTALL_DIR   Installation directory (default: /usr/local/bin)
+
+Examples:
+    # Standard installation
+    curl -sSL https://raw.githubusercontent.com/marekbrze/dopadone/main/scripts/install.sh | sh
+
+    # Dry run to see what would be installed
+    curl -sSL https://raw.githubusercontent.com/marekbrze/dopadone/main/scripts/install.sh | sh -s -- --dry-run
+
+    # Install to custom directory
+    INSTALL_DIR=~/.local/bin curl -sSL https://raw.githubusercontent.com/marekbrze/dopadone/main/scripts/install.sh | sh
+
+    # Unattended installation (skip prompts)
+    curl -sSL https://raw.githubusercontent.com/marekbrze/dopadone/main/scripts/install.sh | sh -s -- --yes
+EOF
+}
+
+check_dependencies() {
+    local missing=()
     
-    case "$ARCH" in
+    if ! command -v curl &> /dev/null; then
+        missing+=("curl")
+    fi
+    
+    if ! command -v tar &> /dev/null; then
+        missing+=("tar")
+    fi
+    
+    if ! command -v unzip &> /dev/null; then
+        missing+=("unzip")
+    fi
+    
+    if [ ${#missing[@]} -ne 0 ]; then
+        echo "Error: Missing required dependencies: ${missing[*]}" >&2
+        echo "" >&2
+        echo "Please install the missing tools:" >&2
+        
+        for dep in "${missing[@]}"; do
+            case "$dep" in
+                curl)
+                    echo "  - curl: Usually available via package manager (apt, brew, etc.)" >&2
+                    ;;
+                tar)
+                    echo "  - tar: Usually pre-installed on most systems" >&2
+                    ;;
+                unzip)
+                    echo "  - unzip: Required for Windows archives" >&2
+                    echo "           Ubuntu/Debian: sudo apt install unzip" >&2
+                    echo "           macOS: brew install unzip" >&2
+                    ;;
+            esac
+        done
+        
+        exit 1
+    fi
+}
+
+detect_platform() {
+    local os
+    local arch
+    
+    os=$(uname -s | tr '[:upper:]' '[:lower:]')
+    arch=$(uname -m)
+    
+    case "$arch" in
         x86_64|amd64)
-            ARCH="amd64"
+            arch="amd64"
             ;;
         aarch64|arm64)
-            ARCH="arm64"
+            arch="arm64"
             ;;
         *)
-            echo "Unsupported architecture: $ARCH" >&2
+            echo "Error: Unsupported architecture: $arch" >&2
             exit 1
             ;;
     esac
     
-    if [ "$OS" = "darwin" ]; then
-        OS="darwin"
-    elif [ "$OS" = "linux" ]; then
-        OS="linux"
-    else
-        echo "Unsupported OS: $OS" >&2
-        exit 1
-    fi
+    case "$os" in
+        darwin)
+            os="darwin"
+            ;;
+        linux)
+            os="linux"
+            ;;
+        *)
+            echo "Error: Unsupported OS: $os" >&2
+            exit 1
+            ;;
+    esac
     
-    echo "${OS}-${ARCH}"
+    echo "${os}-${arch}"
 }
 
 get_latest_version() {
-    curl -sSL "https://api.github.com/repos/${REPO}/releases/latest" | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/'
+    local version
+    version=$(curl -sSL "https://api.github.com/repos/${REPO}/releases/latest" | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/')
+    
+    if [ -z "$version" ]; then
+        echo "Error: Could not determine latest version" >&2
+        exit 1
+    fi
+    
+    echo "$version"
 }
 
-download_binary() {
-    local VERSION="$1"
-    local PLATFORM="$2"
-    local EXT="tar.gz"
+get_download_url() {
+    local version="$1"
+    local platform="$2"
+    local ext="tar.gz"
     
-    if [ "$(echo "$PLATFORM" | cut -d'-' -f1)" = "windows" ]; then
-        EXT="zip"
+    if [ "$(echo "$platform" | cut -d'-' -f1)" = "windows" ]; then
+        ext="zip"
     fi
     
-    local URL="https://github.com/${REPO}/releases/download/${VERSION}/${BINARY_NAME}-${PLATFORM}.${EXT}"
-    local TMP_DIR=$(mktemp -d)
+    echo "https://github.com/${REPO}/releases/download/${version}/${BINARY_NAME}-${platform}.${ext}"
+}
+
+download_and_extract() {
+    local version="$1"
+    local platform="$2"
+    local ext="tar.gz"
+    local tmp_dir
+    local archive_name
+    local binary_in_archive
+    local extracted_binary
     
-    echo "Downloading ${BINARY_NAME} ${VERSION} for ${PLATFORM}..."
-    curl -sSL -o "${TMP_DIR}/${BINARY_NAME}.${EXT}" "$URL"
+    if [ "$(echo "$platform" | cut -d'-' -f1)" = "windows" ]; then
+        ext="zip"
+    fi
     
-    cd "$TMP_DIR"
-    if [ "$EXT" = "zip" ]; then
-        unzip -o "${BINARY_NAME}.${EXT}"
+    local url
+    url=$(get_download_url "$version" "$platform")
+    archive_name="${BINARY_NAME}-${platform}.${ext}"
+    
+    tmp_dir=$(mktemp -d)
+    trap 'rm -rf "$tmp_dir"' EXIT
+    
+    echo "Downloading ${BINARY_NAME} ${version} for ${platform}..."
+    
+    if ! curl -sSL -f -o "${tmp_dir}/${archive_name}" "$url"; then
+        echo "Error: Failed to download from $url" >&2
+        exit 1
+    fi
+    
+    cd "$tmp_dir"
+    
+    if [ "$ext" = "zip" ]; then
+        if ! unzip -o "$archive_name"; then
+            echo "Error: Failed to extract archive" >&2
+            exit 1
+        fi
+        binary_in_archive="${BINARY_NAME}-${platform}.exe"
+        extracted_binary="${BINARY_NAME}.exe"
     else
-        tar xzf "${BINARY_NAME}.${EXT}"
+        if ! tar xzf "$archive_name"; then
+            echo "Error: Failed to extract archive" >&2
+            exit 1
+        fi
+        binary_in_archive="${BINARY_NAME}-${platform}"
+        extracted_binary="${BINARY_NAME}"
     fi
     
-    echo "${TMP_DIR}/${BINARY_NAME}"
+    if [ ! -f "$binary_in_archive" ]; then
+        echo "Error: Expected binary '$binary_in_archive' not found in archive" >&2
+        echo "Archive contents:" >&2
+        ls -la >&2
+        exit 1
+    fi
+    
+    mv "$binary_in_archive" "$extracted_binary"
+    
+    echo "$tmp_dir/$extracted_binary"
+}
+
+check_existing_installation() {
+    local install_path="${INSTALL_DIR}/${BINARY_NAME}"
+    
+    if [ -f "$install_path" ]; then
+        return 0
+    fi
+    return 1
+}
+
+get_current_version() {
+    local install_path="${INSTALL_DIR}/${BINARY_NAME}"
+    
+    if [ -f "$install_path" ] && [ -x "$install_path" ]; then
+        "$install_path" version 2>/dev/null | head -1 | awk '{print $NF}' || echo "unknown"
+    else
+        echo "unknown"
+    fi
+}
+
+prompt_upgrade() {
+    local current_version="$1"
+    local new_version="$2"
+    
+    echo ""
+    echo "Existing installation detected at ${INSTALL_DIR}/${BINARY_NAME}"
+    
+    if [ "$current_version" != "unknown" ]; then
+        echo "Current version: $current_version"
+    fi
+    echo "New version: $new_version"
+    echo ""
+    
+    if [ "$AUTO_YES" = true ]; then
+        echo "Auto-confirming upgrade (--yes flag provided)"
+        return 0
+    fi
+    
+    read -r -p "Replace existing installation? [y/N] " response
+    case "$response" in
+        [yY][eE][sS]|[yY])
+            return 0
+            ;;
+        *)
+            echo "Upgrade cancelled."
+            return 1
+            ;;
+    esac
+}
+
+backup_existing() {
+    local install_path="${INSTALL_DIR}/${BINARY_NAME}"
+    local backup_path
+    backup_path="${install_path}.backup.$(date +%Y%m%d%H%M%S)"
+    
+    if [ -f "$install_path" ]; then
+        echo "Backing up existing binary to ${backup_path}..."
+        cp "$install_path" "$backup_path"
+    fi
 }
 
 install_binary() {
-    local BINARY_PATH="$1"
+    local binary_path="$1"
+    local install_path="${INSTALL_DIR}/${BINARY_NAME}"
     
-    echo "Installing to ${INSTALL_DIR}..."
-    if [ -w "$INSTALL_DIR" ]; then
-        mv "$BINARY_PATH" "${INSTALL_DIR}/${BINARY_NAME}"
-        chmod +x "${INSTALL_DIR}/${BINARY_NAME}"
-    else
-        echo "sudo required for installation to ${INSTALL_DIR}"
-        sudo mv "$BINARY_PATH" "${INSTALL_DIR}/${BINARY_NAME}"
-        sudo chmod +x "${INSTALL_DIR}/${BINARY_NAME}"
+    if [ ! -d "$INSTALL_DIR" ]; then
+        echo "Creating installation directory: ${INSTALL_DIR}"
+        mkdir -p "$INSTALL_DIR"
     fi
     
-    echo "Installed ${BINARY_NAME} to ${INSTALL_DIR}/${BINARY_NAME}"
+    echo "Installing to ${install_path}..."
+    
+    if [ -w "$INSTALL_DIR" ] || [ ! -e "$install_path" ]; then
+        mv "$binary_path" "$install_path"
+        chmod +x "$install_path"
+    else
+        echo "sudo required for installation to ${INSTALL_DIR}"
+        sudo mv "$binary_path" "$install_path"
+        sudo chmod +x "$install_path"
+    fi
+    
+    echo "Installed ${BINARY_NAME} to ${install_path}"
+}
+
+verify_installation() {
+    local install_path="${INSTALL_DIR}/${BINARY_NAME}"
+    
+    echo ""
+    echo "Verifying installation..."
+    
+    if [ ! -f "$install_path" ]; then
+        echo "Error: Binary not found at ${install_path}" >&2
+        return 1
+    fi
+    
+    if [ ! -x "$install_path" ]; then
+        echo "Error: Binary is not executable" >&2
+        return 1
+    fi
+    
+    if ! "$install_path" version 2>&1; then
+        echo "Error: Failed to run 'dopa version'" >&2
+        return 1
+    fi
+    
+    echo ""
+    echo "Verification successful!"
+    return 0
+}
+
+print_dry_run_info() {
+    local version="$1"
+    local platform="$2"
+    local url
+    
+    url=$(get_download_url "$version" "$platform")
+    
+    echo "=== DRY RUN MODE ==="
+    echo ""
+    echo "Platform:      ${platform}"
+    echo "Version:       ${version}"
+    echo "Download URL:  ${url}"
+    echo "Install to:    ${INSTALL_DIR}/${BINARY_NAME}"
+    
+    if check_existing_installation; then
+        local current_version
+        current_version=$(get_current_version)
+        echo ""
+        echo "Note: Existing installation detected (version: ${current_version})"
+        echo "      This would be an upgrade operation."
+    fi
+    
+    echo ""
+    echo "No files were downloaded or modified."
 }
 
 main() {
+    local platform
+    local version
+    local binary_path
+    
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --dry-run)
+                DRY_RUN=true
+                shift
+                ;;
+            --yes)
+                AUTO_YES=true
+                shift
+                ;;
+            --no-verify)
+                VERIFY=false
+                shift
+                ;;
+            --help|-h)
+                usage
+                exit 0
+                ;;
+            *)
+                echo "Error: Unknown option: $1" >&2
+                echo "Use --help for usage information" >&2
+                exit 1
+                ;;
+        esac
+    done
+    
     echo "Installing ${BINARY_NAME}..."
+    echo ""
     
-    PLATFORM=$(detect_platform)
-    VERSION=$(get_latest_version)
+    check_dependencies
     
-    echo "Latest version: ${VERSION}"
-    echo "Platform: ${PLATFORM}"
+    platform=$(detect_platform)
+    version=$(get_latest_version)
     
-    BINARY_PATH=$(download_binary "$VERSION" "$PLATFORM")
-    install_binary "$BINARY_PATH"
+    echo "Latest version: ${version}"
+    echo "Platform: ${platform}"
+    
+    if [ "$DRY_RUN" = true ]; then
+        print_dry_run_info "$version" "$platform"
+        exit 0
+    fi
+    
+    if check_existing_installation; then
+        local current_version
+        current_version=$(get_current_version)
+        
+        if ! prompt_upgrade "$current_version" "$version"; then
+            exit 2
+        fi
+        
+        backup_existing
+    fi
+    
+    binary_path=$(download_and_extract "$version" "$platform")
+    
+    trap - EXIT
+    install_binary "$binary_path"
+    
+    if [ "$VERIFY" = true ]; then
+        if ! verify_installation; then
+            exit 1
+        fi
+    fi
     
     echo ""
     echo "Installation complete!"
-    echo "Run '${BINARY_NAME} version' to verify."
+    
+    if [ "$VERIFY" = false ]; then
+        echo "Run '${BINARY_NAME} version' to verify manually."
+    fi
 }
 
 main "$@"

@@ -898,3 +898,7 @@ func TestTaskService_ListByProjectRecursive(t *testing.T) {
 		})
 	}
 }
+
+func (m *mockTaskQuerier) SoftDeleteTasksByProject(ctx context.Context, arg db.SoftDeleteTasksByProjectParams) error {
+	return nil
+}

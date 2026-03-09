@@ -7,287 +7,185 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
 ### Changed
 
-#### Repository Reference Migration (Task-62)
+### Deprecated
 
-**Updated all repository references from placeholder URLs to production repository**
+### Removed
 
-Completed comprehensive migration from development placeholder URLs to the production GitHub repository `github.com/marekbrze/dopadone`. This prepares the codebase for the v1.0.0 release with all references pointing to the actual repository.
+### Fixed
 
-**Changes**:
+### Security
 
-**Go Module and Imports**:
-- Updated `go.mod` module path: `github.com/example/dopadone` → `github.com/marekbrze/dopadone`
-- Updated all import statements across 52+ Go files
-- Ran `go mod tidy` to update dependencies
+## [1.0.0] - 2026-03-09
 
-**Build System**:
-- Updated Makefile LDFLAGS to use correct module path for version injection
-- Updated `scripts/install.sh` REPO variable and installation URLs
-
-**Documentation**:
-- Updated README.md repository URLs (3 occurrences)
-- Updated docs/TUI.md import examples
-- Updated docs/RELEASE.md GitHub URLs (5 occurrences)
-- Updated docs/REBRANDING.md module path references
-- Updated decision documents (cmd/projectdb → cmd/dopa)
-
-**Branding Fixes**:
-- Fixed `internal/version/version.go` to use "dopa" instead of "projectdb" (8 references)
-- Includes: BuildInfo output, GitHub API URLs, asset names, binary names, temp directories, error messages
-
-**Verification**:
-- ✅ All 120+ tests pass (`make test`)
-- ✅ Build succeeds for all platforms (`make build`)
-- ✅ Binary shows correct project name (`./bin/dopa version --all`)
-- ✅ No placeholder references remain in production code
-
-**Documentation Created**:
-- `docs/REPOSITORY_MIGRATION.md` - Comprehensive migration documentation
-- Updated `docs/START_HERE.md` to reference migration docs
-
-**Impact**: Breaking change for Go importers, but this is the first public release so no external users are affected.
-
-**Related**: See [REPOSITORY_MIGRATION.md](docs/REPOSITORY_MIGRATION.md) for detailed migration information.
+**Initial Release** - Dopadone is a lightweight, SQLite-based CLI project management tool designed for developers who prefer staying in the terminal.
 
 ### Added
 
-#### Nested Task Grouping Feature (Task-51)
+#### Core Application
 
-**Hierarchical task display with expandable/collapsible subproject groups**
+- **Hierarchical Data Model**: Areas → Subareas → Projects → Tasks with full CRUD operations
+- **SQLite Storage**: Local-first database with embedded migrations
+- **CLI Interface**: Complete command-line interface using Cobra framework
+  - CRUD commands for areas, subareas, projects, and tasks
+  - Filtering and listing with `--filter` flag
+  - Multiple output formats: table, JSON, YAML
+- **Terminal User Interface (TUI)**: Interactive Bubble Tea-based TUI
+  - 3-column browser layout (Subareas | Projects | Tasks)
+  - Area tabs for quick navigation
+  - Quick-add modal for creating items
+  - Help modal with keyboard shortcuts
+  - Focus-aware borders and visual feedback
 
-Implemented comprehensive nested task grouping functionality that displays tasks from parent projects and their nested subprojects in a hierarchical, visually organized format.
+#### Service Layer Architecture
 
-**Overview**:
-When a parent project is selected in the Projects column, the Tasks column now displays:
-1. Direct tasks belonging to the selected project (at the top, ungrouped)
-2. Tasks from nested subprojects, grouped under collapsible headers
-3. Visual indicators showing expand/collapse state (▸ / ▾)
-4. Task counts per subproject group
+Comprehensive service layer with dependency injection for testability and maintainability:
 
-**Architecture**:
+- **Service Interfaces**: `AreaServiceInterface`, `SubareaServiceInterface`, `ProjectServiceInterface`, `TaskServiceInterface`
+- **Business Logic Layer**: All validation and business rules in services
+- **Dependency Injection**: Services injected into CLI and TUI layers
+- **Mock Support**: Service mocks for unit testing
 
-**Phase 1 - Service Layer (Task-52)**:
-- Added `ListByProjectRecursive` method to `TaskService` using WITH RECURSIVE CTE
-- SQL query in `queries/tasks.sql` traverses project hierarchy
-- Returns tasks from selected project and all nested subprojects
-- Filters out deleted projects and tasks
-- Orders by: is_next DESC, priority DESC, deadline ASC, title ASC
-- Comprehensive test coverage: 12 test cases including edge cases
+#### TUI Features
 
-**Phase 2 - Domain Model (Task-54)**:
-- Created `TaskGroup` struct with ProjectID, ProjectName, Tasks, IsExpanded
-- Created `GroupedTasks` struct with DirectTasks, Groups, TotalCount
-- Factory method `NewGroupedTasks()` with graceful edge case handling
-- Mutation methods: `AddTask()`, `RemoveTask()`, `ToggleGroup()`, `Clear()`
-- Order preservation for tasks and groups
-- Test coverage: 96.4%+ (25+ test cases)
+- **Space-Activated Command Menu (Task-50)**: LazyVim-style which-key command palette
+  - Press Space to reveal available commands
+  - Context-aware command suggestions
+  - Visual keyboard shortcut hints
+- **Task Completion Toggle (Task-49)**: Press `x` to mark tasks as done/todo
+- **Adaptive Theme System**: Color scheme adapts to terminal capabilities
+- **Responsive Layout**:
+  - Proportional column widths (Task-42): Columns scale based on terminal width
+  - Stacked layout for narrow terminals (Task-43): Vertical layout when width < 120 chars
+- **Project Tree Navigation**: 
+  - Arrow-based indicators (`▸`/`▾`) for expand/collapse
+  - 2-space indentation for hierarchy
+  - Modern minimalist design
+- **Quick-Add Modal**: Context-aware creation with `a` key
 
-**Phase 3 - Service Integration (Task-57)**:
-- Added `GetGroupedTasks` method to `TaskService`
-- Batch loading of project names (eliminates N+1 queries)
-- Backward compatible - maintains flat `Tasks` field
-- State persistence for expand/collapse across navigation
-- Test coverage: 85%+
+#### Nested Task Grouping (Task-51)
 
-**Phase 4 - TUI Rendering (Task-58)**:
-- Renders tasks with group headers showing subproject name
-- Visual indicators for expanded/collapsed groups
-- Proper indentation (2 spaces) for nested tasks
-- Task count display per group
-- Subtle styling for headers (dimmed, no reverse highlight)
-- Text truncation to prevent wrapping
-- Performance: O(n) rendering
+Comprehensive nested task grouping functionality for hierarchical task display:
 
-**Phase 5 - TUI Interaction (Task-56)**:
-- Keyboard shortcuts: Enter/Space to toggle groups
-- Navigation skips headers when collapsed
-- State persistence in `expandedTaskGroups` map
-- Selection adjustment when collapsing groups
-- Helper methods for navigation and rendering
-- State saved in `AreaState.ExpandedTaskGroups`
-
-**Phase 6 - Error Handling (Task-55)**:
-- Graceful handling of empty projects
-- Handling of orphaned subprojects
-- User-friendly error messages
-- Error state tracking and rendering
-
-**Phase 7 - Performance Optimization (Task-53)**:
-- Batch loading of project names (O(1) queries)
-- Single SQL query for recursive loading
-- O(n) time complexity for grouping
-- Benchmarks: 100, 1000, 10000 tasks
-- Target: <100ms for 1000 tasks achieved
-
-**Files Modified**:
-- `queries/tasks.sql` - Added `ListTasksByProjectRecursive` query
-- `queries/projects.sql` - Added `ListProjectsByIDs` query for batch loading
-- `internal/domain/task_group.go` - New file with GroupedTasks domain model
-- `internal/domain/errors.go` - Centralized error types
-- `internal/service/task_service.go` - Added `ListByProjectRecursive` and `GetGroupedTasks`
-- `internal/service/project_service.go` - Added `ListByIDs` method
-- `internal/tui/commands.go` - Updated `LoadTasksCmd` to use `GetGroupedTasks`
-- `internal/tui/renderer.go` - Grouped task rendering with headers
-- `internal/tui/navigator.go` - Navigation logic for grouped tasks
-- `internal/tui/handlers.go` - Expand/collapse interaction handlers
-- `internal/tui/state.go` - State persistence for expanded groups
-- `internal/tui/constants.go` - Error message constants
-
-**Test Coverage**:
-- Domain Layer: 96.4% (task_group.go)
-- Service Layer: 85%+ (task_service_test.go)
-- TUI Layer: 80%+ (navigation, rendering tests)
-
-**Documentation**:
-- Created `docs/FEATURE_NESTED_TASK_GROUPING.md` with comprehensive implementation guide
-- Updated `docs/architecture/02-domain-layer.md` with GroupedTasks patterns
-- Updated `docs/architecture/03-service-layer.md` with recursive loading patterns
-- Updated `docs/TUI.md` with grouped task rendering and interaction
-
-**Benefits**:
-- **Improved Organization**: Clear visual hierarchy of tasks across nested projects
-- **Better UX**: Expand/collapse groups to focus on relevant tasks
-- **Performance**: Optimized O(n) algorithms with no N+1 queries
+- **Recursive Task Loading**: `ListByProjectRecursive` using WITH RECURSIVE CTE
+- **GroupedTasks Domain Model**: `TaskGroup` and `GroupedTasks` structs with factory methods
+- **Expand/Collapse UI**: Visual indicators and keyboard navigation
+- **Performance Optimized**: Batch loading of project names (no N+1 queries)
 - **State Persistence**: Expanded/collapsed state remembered across navigation
-- **Scalability**: Handles 1000+ tasks efficiently (<100ms)
 
-**User Impact**:
-Users can now see all tasks from a project and its subprojects in one view, organized hierarchically with collapsible groups. This makes managing complex project structures much more intuitive.
+#### Error Handling System (Task-55)
 
-#### Centralized Error Handling System (Task-55)
+Centralized error handling across all application layers:
 
-**Comprehensive error handling across all application layers**
+- **Domain Error Types**: `ErrNotFound`, `ErrInvalidInput`, `ErrDatabaseError`
+- **Custom Error Types**: `ValidationError`, `DatabaseError`, `NotFoundError`
+- **Error Wrapping**: `Unwrap()` for `errors.Is()` and `errors.As()` compatibility
+- **User-Friendly Messages**: Technical errors mapped to clear user messages
+- **Graceful Degradation**: Application continues when some data fails to load
 
-Implemented a centralized error handling system with domain error types, service layer error wrapping, and TUI error state management.
+#### CLI Features
 
-**Changes**:
+- **JSON Output Support (Task-23)**: All create commands support `--format json`
+- **Filtering**: Advanced filter syntax with `--filter` flag
+- **Task Priority**: Mark tasks as "next" for priority focus
+- **Soft Delete**: Recoverable deletes by default
+- **Hard Delete**: Permanent deletion with `--permanent` flag
 
-**Domain Layer** (`internal/domain/errors.go`):
-- Added centralized sentinel errors: `ErrNotFound`, `ErrInvalidInput`, `ErrDatabaseError`, `ErrEmptyID`
-- Created custom error types: `ValidationError`, `DatabaseError`, `NotFoundError`
-- Implemented error factory functions: `NewValidationError()`, `NewDatabaseError()`, `NewNotFoundError()`
-- Added helper functions for type-safe error checking: `IsNotFound()`, `IsDatabaseError()`, `IsValidationError()`
-- Implemented error wrapping/unwrapping with `Unwrap()` methods for compatibility with `errors.Is()` and `errors.As()`
+#### Database Features
 
-**Service Layer**:
-- Updated all services to use domain error types instead of generic errors
-- Replaced generic "not found" errors with `domain.NewNotFoundError()`
-- Implemented graceful handling of empty results (e.g., missing parent projects return empty, not error)
-- Added context-aware error wrapping with operation details
-- Mapped `sql.ErrNoRows` to domain-specific not found errors
+- **Transaction Support (Task-31)**: ACID compliance for multi-entity operations
+  - Hard delete cascade operations wrapped in transactions
+  - Serializable isolation level
+  - Automatic rollback on error
+- **Server-Side Filtering (Task-32)**: Queries execute filters at database level
+- **Nullable Types (Task-30)**: Proper nullable timestamp handling
+- **Database Migrations**: Embedded migrations via goose
 
-**TUI Layer**:
-- Added error state tracking for each column: `areaLoadError`, `subareaLoadError`, `projectLoadError`, `taskLoadError`
-- Implemented user-friendly error message formatting with `formatUserError()`
-- Added error rendering with visual indicators (red error messages with ✗ icon)
-- Defined user-friendly error message constants: `ErrMsgDatabase`, `ErrMsgTimeout`, `ErrMsgCancelled`, `ErrMsgNotFound`
-- Enhanced error recovery with retry mechanisms and graceful degradation
-- Added comprehensive error handling tests (`internal/domain/errors_test.go`, `internal/tui/task_navigation_test.go`)
+#### GitHub Actions Release Workflow (Task-65)
 
-**Documentation**:
-- Updated `docs/architecture/02-domain-layer.md` with "Error Handling Patterns" section
-- Updated `docs/architecture/03-service-layer.md` with "Error Wrapping Best Practices" section
-- Updated `docs/TUI.md` with "Error State Management" section
-- Documented error checking patterns, error wrapping principles, and best practices
+Automated CI/CD pipeline for building and publishing releases:
 
-**Benefits**:
-- **Consistency**: All layers use the same error types and patterns
-- **Type Safety**: Custom error types provide structured error information
-- **Error Chaining**: `Unwrap()` enables `errors.Is()` and `errors.As()` compatibility
-- **User-Friendly**: Technical errors mapped to clear user messages
-- **Testability**: Easy to check for specific error types in tests
-- **Debugging**: Error context preserved for troubleshooting while showing clean messages to users
-- **Graceful Degradation**: Application continues functioning when some data fails to load
+- **Multi-Platform Builds**: Linux (amd64), macOS (amd64, arm64), Windows (amd64)
+- **Version Injection**: Compile-time version info via ldflags
+- **Distribution Archives**: `.tar.gz` (Unix) and `.zip` (Windows)
+- **SHA256 Checksums**: Verification checksums for all binaries
+- **Pre-release Support**: Tags with hyphens marked as pre-release
 
-**Files Modified**:
-- `internal/domain/errors.go` (NEW)
-- `internal/domain/errors_test.go` (NEW)
-- `internal/service/area_service.go`
-- `internal/service/project_service.go`
-- `internal/service/subarea_service.go`
-- `internal/service/task_service.go`
-- `internal/tui/app.go`
-- `internal/tui/constants.go`
-- `internal/tui/handlers.go`
-- `internal/tui/model.go`
-- `internal/tui/navigator.go`
-- `internal/tui/renderer.go`
-- `internal/tui/state.go`
-- `internal/tui/task_navigation_test.go` (NEW)
-- `docs/architecture/02-domain-layer.md`
-- `docs/architecture/03-service-layer.md`
-- `docs/TUI.md`
+#### Development Tools
 
-**Testing**:
-- All error handling tests passing
-- Domain error type tests verify error messages and wrapping behavior
-- TUI error navigation tests verify grouped task handling with expand/collapse functionality
-- Service layer tests updated to use new error types
+- **Makefile**: Build, test, lint, and distribution targets
+- **Cross-Compilation**: Build for all platforms from any OS
+- **Test Data Seeder**: Contextual seed data for development
+- **Development Script**: `scripts/dev.sh` for common tasks
 
-**Backward Compatibility**:
-- All existing functionality preserved
-- Error handling is now more robust and informative
-- No breaking changes to public APIs
+#### Documentation
+
+- **Architecture Documentation**: Comprehensive 7-part series covering all layers
+- **TUI Documentation**: Complete TUI architecture and components guide
+- **Transaction Documentation**: Database transaction patterns and best practices
+- **Release Process**: Versioning, tagging, and deployment workflow
+- **CI/CD Documentation**: GitHub Actions workflow details
 
 ### Changed
 
+#### Project Rebranding (Task-47)
+
+Comprehensive rebranding from **ProjectDB** to **Dopadone**:
+
+- **Product Name**: Dopadone (CLI: `dopa`)
+- **Module Path**: `github.com/marekbrze/dopadone`
+- **Binary**: `dopa` (was: `projectdb`)
+- **Database**: `dopadone.db` (was: `projectdb.db`)
+- **All imports, scripts, and documentation updated**
+
+#### Repository Reference Migration (Task-62)
+
+Updated all repository references from placeholder URLs to production:
+
+- **Go Module**: `github.com/example/dopadone` → `github.com/marekbrze/dopadone`
+- **All import statements** across 52+ Go files
+- **Build system**: Makefile, installation scripts
+- **Documentation**: All markdown files updated
+- **Version info**: Correct binary names and GitHub URLs
+
 #### Tree Visual Design (Task-45)
 
-**Modernized project tree rendering with arrow-based indicators**
+Modernized project tree rendering:
 
-The project tree component now uses a clean, minimalist design with arrow indicators instead of traditional box-drawing characters.
+- Replaced box-drawing characters with simple 2-space indentation
+- Arrow indicators (`▸`/`▾`) instead of `[-]`/`[+]`
+- Removed vertical connector lines for cleaner appearance
 
-**Changes**:
-- Replaced box-drawing characters (├─└│) with simple 2-space indentation
-- Replaced expand/collapse indicators `[-]`/`[+]` with arrows `▾`/`▸`
-- Removed vertical connector lines for cleaner visual appearance
-- Improved readability with consistent indentation at all depth levels
+#### Text Truncation (Task-44)
 
-**Files Modified**:
-- `internal/tui/tree/constants.go`: Updated tree character constants
-- `internal/tui/tree/renderer.go`: Simplified rendering logic
-- `internal/tui/tree/renderer_test.go`: Updated test expectations
-- `docs/TUI.md`: Added documentation for new tree styling
+Improved ellipsis handling in narrow columns:
 
-**Visual Comparison**:
+- Ellipsis replaces only overflow text, not entire value
+- Preserves as much content as possible in constrained space
 
-Before (box-drawing):
-```
-├─ Project A
-│  ├─ Subproject A1
-│  └─ Subproject A2
-└─ Project B
-```
+### Deprecated
 
-After (arrow indicators):
-```
-▾ Project A
-  Subproject A1
-  ▸ Subproject A2
-Project B
-```
+Nothing deprecated in this release.
 
-**Benefits**:
-- Reduced visual clutter with no vertical connector lines
-- Clearer expand/collapse state with intuitive arrow indicators
-- Modern, minimalist appearance
-- Better readability on high-DPI displays
-- Customizable through `TreeStyle` struct
+### Removed
 
-**Backward Compatibility**:
-- All existing tree navigation and functionality preserved
-- Only visual rendering changed, no API changes
-- Custom tree styles can still be applied via `TreeStyle` struct
+Nothing removed in this release.
 
-**Testing**:
-- All 45 tree renderer tests updated and passing
-- Visual verification in TUI confirms modern appearance
-- Expand/collapse functionality verified working
-- Navigation preserved across all tree operations
+### Fixed
 
-**Documentation**:
-- Added tree styling section to `docs/TUI.md`
-- Updated tree rendering examples
-- Documented customization options via `TreeStyle`
+- **CLI JSON Output (Task-23)**: Create commands now properly support JSON output format
+- **Test Failures (Task-48)**: Fixed `getParentContext` assignment mismatch in `app_test.go`
+- **Area Tabs Styling (Task-46)**: Fixed color scheme compatibility with area tabs
+
+### Security
+
+- **Reproducible Builds**: Fixed Go version, `-trimpath` flag, pure Go build
+- **Checksum Verification**: SHA256 checksums for all release binaries
+- **No External Dependencies**: Pure Go SQLite driver (modernc.org/sqlite)
+
+## Version History
+
+[1.0.0]: https://github.com/marekbrze/dopadone/releases/tag/v1.0.0

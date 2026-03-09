@@ -12,6 +12,7 @@ remains fully synchronized and up-to-date.
 ### Core Capabilities
 
 - ✅ **Task Management**: Create, edit, assign, prioritize, and track tasks with full metadata
+- ✅ **Milestones**: Group related tasks into milestones for tracking major features or releases
 - ✅ **Search**: Fuzzy search across tasks, documents, and decisions with `backlog search`
 - ✅ **Acceptance Criteria**: Granular control with add/remove/check/uncheck by index
 - ✅ **Definition of Done checklists**: Per-task DoD items with add/remove/check/uncheck
@@ -33,6 +34,7 @@ remains fully synchronized and up-to-date.
 ### Key Understanding
 
 - **Tasks** live in `backlog/tasks/` as `task-<id> - <title>.md` files
+- **Milestones** live in `backlog/milestones/` as `m-<id> - <title>.md` files
 - **You interact via CLI only**: `backlog task create`, `backlog task edit`, etc.
 - **Use `--plain` flag** for AI-friendly output when viewing/listing
 - **Never bypass the CLI** - It handles Git, metadata, file naming, and relationships
@@ -68,6 +70,67 @@ remains fully synchronized and up-to-date.
 - **All task operations MUST use the Backlog.md CLI tool**
 - This ensures metadata is correctly updated and the project stays in sync
 - **Always use `--plain` flag** when listing or viewing tasks for AI-friendly text output
+
+---
+
+## 1.5. Milestones: Grouping Related Tasks
+
+### What are Milestones?
+
+Milestones are containers for grouping related tasks that together deliver a major feature, release, or project phase.
+
+### Creating Milestones
+
+Milestones are created manually as markdown files in `backlog/milestones/` with the format `m-<id> - <title>.md`:
+
+```markdown
+---
+id: m-1
+title: "Feature Name"
+---
+
+## Description
+
+Brief description of the milestone goal.
+
+## Tasks
+
+- [ ] TASK-42
+- [ ] TASK-43
+- [ ] TASK-44
+```
+
+### File Naming Convention
+
+- **Format**: `m-<id> - <title>.md` (e.g., `m-1 - user-authentication.md`)
+- **ID**: Sequential number (m-1, m-2, m-3, etc.)
+- **Location**: `backlog/milestones/` directory
+
+### Listing Milestones
+
+```bash
+# List all milestones
+backlog milestone list --plain
+
+# Output example:
+# Active milestones (2):
+#   m-1: User Authentication (0/0 done)
+#   m-2: API Integration (0/0 done)
+```
+
+### Best Practices
+
+1. **Group related tasks**: Use milestones to organize tasks that together deliver a feature
+2. **Clear naming**: Use descriptive titles that indicate the milestone's purpose
+3. **Keep it focused**: Each milestone should represent a deliverable unit of work
+4. **Reference by ID**: List task IDs in the milestone's Tasks section
+
+### Important Notes
+
+- Milestones are **informational only** - they don't affect task dependencies or workflow
+- The "0/0 done" status indicates milestone tracking is manual (not auto-synced with task completion)
+- You can view milestone details via the browser UI (`backlog browser`)
+- Milestones can be archived when complete: `backlog milestone archive <id-or-title>`
 
 ---
 
@@ -625,3 +688,109 @@ Tests:
 Full help available: `backlog --help`
 
 <!-- BACKLOG.MD GUIDELINES END -->
+
+---
+
+# Release Workflow Guidelines
+
+## Overview
+
+This project uses automated releases via GitHub Actions. Releases are triggered by pushing version tags.
+
+## Version Bumping
+
+Follow [Semantic Versioning](https://semver.org/):
+
+- **PATCH** (x.y.Z): Bug fixes, minor improvements
+- **MINOR** (x.Y.0): New features, backward compatible
+- **MAJOR** (X.0.0): Breaking changes
+
+## Creating a Release
+
+### Step 1: Update Code and Merge
+
+```bash
+git checkout main
+git pull origin main
+```
+
+### Step 2: Run Tests
+
+```bash
+make test
+make lint
+```
+
+### Step 3: Create and Push Tag
+
+```bash
+# Create annotated tag
+git tag -a v1.0.0 -m "Release v1.0.0"
+
+# Push tag to trigger release workflow
+git push origin v1.0.0
+```
+
+### Step 4: Verify Release
+
+1. Check GitHub Actions workflow completes successfully
+2. Verify release appears at `https://github.com/example/projectdb/releases`
+3. Test downloaded binaries with `./projectdb version --all`
+
+## CI/CD Triggers
+
+| Event                | Trigger                      |
+|----------------------|------------------------------|
+| Push tag `v*`        | Build + Create Release       |
+| Push to `main`       | Run tests (no release)       |
+| Pull request         | Run tests (no release)       |
+
+## Version Injection
+
+Version info is injected at build time via ldflags:
+
+```bash
+go build -ldflags "-X github.com/example/projectdb/internal/version.Version=v1.0.0"
+```
+
+The Makefile handles this automatically:
+
+```bash
+VERSION=v1.0.0 make build-versioned
+```
+
+## Cross-Platform Builds
+
+GitHub Actions builds for:
+- Linux (amd64)
+- macOS (amd64, arm64)
+- Windows (amd64)
+
+Local cross-compilation:
+
+```bash
+make build-all    # Build all platforms
+make dist         # Build + create archives
+```
+
+## Pre-Releases
+
+Tags with hyphens are marked as pre-release:
+
+```bash
+git tag -a v1.0.0-beta.1 -m "Beta release"
+git push origin v1.0.0-beta.1
+```
+
+## Rollback
+
+```bash
+# Delete tag locally
+git tag -d v1.0.0
+
+# Delete tag remotely
+git push origin :refs/tags/v1.0.0
+
+# Delete release via GitHub UI or gh CLI
+gh release delete v1.0.0 --yes
+```

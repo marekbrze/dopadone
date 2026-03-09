@@ -320,6 +320,59 @@ func (s *ProjectService) hardDeleteRecursive(ctx context.Context, q db.Querier, 
 	return q.DeleteTasksByProjectID(ctx, projectID)
 }
 
+func (s *ProjectService) SoftDeleteWithCascade(ctx context.Context, id string) error {
+	project, err := s.repo.GetProjectByID(ctx, id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return ErrProjectNotFound
+		}
+		return fmt.Errorf("get project %s: %w", id, err)
+	}
+
+	if project.DeletedAt != nil {
+		return nil
+	}
+
+	if s.tm == nil {
+		return s.softDeleteRecursive(ctx, s.repo, id)
+	}
+
+	return s.tm.WithTransaction(ctx, func(ctx context.Context, tx db.Querier) error {
+		return s.softDeleteRecursive(ctx, tx, id)
+	})
+}
+
+func (s *ProjectService) softDeleteRecursive(ctx context.Context, q db.Querier, projectID string) error {
+	children, err := q.ListProjectsByParent(ctx, sql.NullString{String: projectID, Valid: true})
+	if err != nil {
+		return fmt.Errorf("list child projects of %s: %w", projectID, err)
+	}
+
+	for _, child := range children {
+		if err := s.softDeleteRecursive(ctx, q, child.ID); err != nil {
+			return fmt.Errorf("cascade delete child %s: %w", child.ID, err)
+		}
+	}
+
+	now := time.Now()
+	if err := q.SoftDeleteTasksByProject(ctx, db.SoftDeleteTasksByProjectParams{
+		DeletedAt: &now,
+		ProjectID: projectID,
+	}); err != nil {
+		return fmt.Errorf("soft delete tasks in project %s: %w", projectID, err)
+	}
+
+	_, err = q.SoftDeleteProject(ctx, db.SoftDeleteProjectParams{
+		DeletedAt: &now,
+		ID:        projectID,
+	})
+	if err != nil {
+		return fmt.Errorf("soft delete project %s: %w", projectID, err)
+	}
+
+	return nil
+}
+
 func (s *ProjectService) GetStats(ctx context.Context, id string) (*ProjectStats, error) {
 	taskCount, err := s.repo.CountTasksByProject(ctx, id)
 	if err != nil {

@@ -575,3 +575,7 @@ func TestSubareaService_ListAll(t *testing.T) {
 		})
 	}
 }
+
+func (m *mockSubareaQuerier) SoftDeleteTasksByProject(ctx context.Context, arg db.SoftDeleteTasksByProjectParams) error {
+	return nil
+}

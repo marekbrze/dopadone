@@ -569,6 +569,24 @@ func (q *Queries) SoftDeleteProject(ctx context.Context, arg SoftDeleteProjectPa
 	return i, err
 }
 
+const softDeleteTasksByProject = `-- name: SoftDeleteTasksByProject :exec
+UPDATE tasks
+SET deleted_at = ?
+WHERE project_id = ? AND deleted_at IS NULL
+`
+
+type SoftDeleteTasksByProjectParams struct {
+	DeletedAt *time.Time `json:"deleted_at"`
+	ProjectID string     `json:"project_id"`
+}
+
+// Soft deletes all tasks within a project
+// Used during cascade soft delete to remove tasks in bulk
+func (q *Queries) SoftDeleteTasksByProject(ctx context.Context, arg SoftDeleteTasksByProjectParams) error {
+	_, err := q.db.ExecContext(ctx, softDeleteTasksByProject, arg.DeletedAt, arg.ProjectID)
+	return err
+}
+
 const updateProject = `-- name: UpdateProject :one
 UPDATE projects
 SET name = ?, description = ?, goal = ?, status = ?, priority = ?, progress = ?, deadline = ?, color = ?, parent_id = ?, subarea_id = ?, position = ?, updated_at = ?, completed_at = ?
