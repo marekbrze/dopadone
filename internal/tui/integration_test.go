@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"context"
 	"database/sql"
 	"os"
 	"testing"
@@ -8,7 +9,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/marekbrze/dopadone/internal/db"
 	"github.com/marekbrze/dopadone/internal/service"
-	_ "modernc.org/sqlite"
 )
 
 func TestTUIIntegrationWithRealDB(t *testing.T) {
@@ -27,7 +27,7 @@ func TestTUIIntegrationWithRealDB(t *testing.T) {
 	repo := db.New(database)
 
 	t.Log("Testing repo directly...")
-	areas, err := repo.ListAreas(nil)
+	areas, err := repo.ListAreas(context.TODO())
 	if err != nil {
 		t.Fatalf("Failed to list areas directly: %v", err)
 	}

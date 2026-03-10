@@ -88,10 +88,17 @@ test: ## Run all tests
 	@echo "Running tests..."
 	$(GO) test ./... -v
 
-lint: ## Run linter
-	@echo "Running linter..."
-	$(GO) vet ./...
-	@echo "Lint complete"
+lint: ## Run golangci-lint
+	@echo "Running golangci-lint..."
+	golangci-lint run
+
+lint-fix: ## Run golangci-lint with auto-fix
+	@echo "Running golangci-lint with auto-fix..."
+	golangci-lint run --fix
+
+lint-install: ## Install golangci-lint
+	@echo "Installing golangci-lint..."
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin
 
 install-deps: ## Install project dependencies
 	@echo "Installing dependencies..."

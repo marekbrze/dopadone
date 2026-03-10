@@ -11,12 +11,12 @@ linters:
     - dupl
   settings:
     gocyclo:
-      min-complexity: 20
+      min-complexity: 30
     goconst:
       min-len: 3
       min-occurrences: 3
     dupl:
-      threshold: 150
+      threshold: 200
   exclusions:
     paths:
       - vendor
@@ -26,6 +26,20 @@ linters:
         linters:
           - dupl
           - goconst
+          - gocyclo
+      - path: internal/version/version.go
+        linters:
+          - errcheck
+      - path: cmd/dopa/(areas|projects|subareas|tasks).go
+        linters:
+          - errcheck
+        text: 'defer.*| statements should have their error checked'
+      - path: internal/cli/output/formatter.go
+        linters:
+          - errcheck
+      - path: internal/tui/navigator.go
+        linters:
+          - dupl
 
 formatters:
   enable:

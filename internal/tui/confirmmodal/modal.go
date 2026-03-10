@@ -75,7 +75,7 @@ func (m *Modal) Update(msg tea.Msg) (*Modal, tea.Cmd) {
 
 func (m *Modal) View() string {
 	title := TitleStyle.Render(fmt.Sprintf("Delete %s?", m.entityType))
-	message := MessageStyle.Render(fmt.Sprintf("%s", m.truncateItemName()))
+	message := MessageStyle.Render(m.truncateItemName())
 	hint := HintStyle.Render("y: confirm | n/esc: cancel")
 
 	content := lipgloss.JoinVertical(

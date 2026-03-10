@@ -394,7 +394,7 @@ func (m *Modal) viewList() string {
 			if area.Color != "" {
 				colorBlock = ColorPreviewStyle.Foreground(lipgloss.Color(string(area.Color))).Render("■")
 			}
-			content.WriteString(fmt.Sprintf("%s %s\n", line, colorBlock))
+			fmt.Fprintf(&content, "%s %s\n", line, colorBlock)
 		}
 	}
 
@@ -442,7 +442,7 @@ func (m *Modal) viewDeleteConfirm() string {
 	content.WriteString(TitleStyle.Render("Delete Area"))
 	content.WriteString("\n\n")
 
-	content.WriteString(fmt.Sprintf("Area: %s\n\n", SelectedItemStyle.Render(area.Name)))
+	fmt.Fprintf(&content, "Area: %s\n\n", SelectedItemStyle.Render(area.Name))
 
 	statsText := fmt.Sprintf("%d subareas, %d projects, %d tasks will be affected",
 		m.stats.Subareas, m.stats.Projects, m.stats.Tasks)
@@ -482,7 +482,7 @@ func (m *Modal) viewReorder() string {
 		if area.Color != "" {
 			colorBlock = ColorPreviewStyle.Foreground(lipgloss.Color(string(area.Color))).Render("■")
 		}
-		content.WriteString(fmt.Sprintf("%s %s\n", line, colorBlock))
+		fmt.Fprintf(&content, "%s %s\n", line, colorBlock)
 	}
 
 	content.WriteString("\n")

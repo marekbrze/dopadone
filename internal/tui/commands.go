@@ -3,7 +3,7 @@ package tui
 import (
 	"context"
 
-	"github.com/charmbracelet/bubbletea"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/marekbrze/dopadone/internal/domain"
 	"github.com/marekbrze/dopadone/internal/service"
 )
