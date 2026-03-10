@@ -278,6 +278,58 @@ go test ./internal/service -update
 
 ---
 
+## Test Cleanup
+
+### Cleanup Patterns
+
+Tests should clean up resources properly. Use these patterns for defer cleanup:
+
+**1. Explicit ignore for cleanup errors in tests**:
+```go
+// When cleanup error is acceptable to ignore (test cleanup)
+defer func() { _ = database.Close() }()
+defer func() { _ = rows.Close() }()
+defer func() { _ = os.RemoveAll(tempDir) }()
+```
+
+**2. Using t.Cleanup() for structured cleanup**:
+```go
+func TestDatabase(t *testing.T) {
+    db, err := sql.Open("sqlite", ":memory:")
+    if err != nil {
+        t.Fatal(err)
+    }
+    
+    t.Cleanup(func() {
+        _ = db.Close()
+    })
+    
+    // ... test logic
+}
+```
+
+**3. Error handling in cleanup paths**:
+```go
+// In error paths during setup, cleanup may fail but should not mask original error
+func setupDatabase() (*sql.DB, error) {
+    db, err := sql.Open("sqlite", "test.db")
+    if err != nil {
+        // Cleanup may fail, but we care about the original error
+        _ = os.Remove("test.db")
+        return nil, err
+    }
+    return db, nil
+}
+```
+
+**Why ignore cleanup errors?**:
+- Cleanup failures should not mask the actual test result
+- In defer, errors cannot be returned
+- Logging in tests adds noise for non-critical cleanup
+- The `_ =` pattern makes intent explicit to readers and linters
+
+---
+
 ## Benchmarks
 
 ### Benchmark Pattern
@@ -568,6 +620,7 @@ func TestTasksCreateCommand(t *testing.T) {
 | `internal/tui/*_test.go` | TUI component tests |
 | `testdata/*.golden` | Golden files for snapshot testing |
 | `internal/test/helpers.go` | Test helper functions |
+| `internal/cli/helpers.go` | CLI cleanup helpers (CloseWithLog) |
 
 ---
 

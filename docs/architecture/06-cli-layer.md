@@ -239,6 +239,52 @@ func WrapError(err error, message string) error {
 }
 ```
 
+### Cleanup Error Handling
+
+Cleanup operations (Close, Flush, RemoveAll) should not fail the main operation. Use these patterns:
+
+**1. CloseWithLog helper for defer cleanup**:
+```go
+// internal/cli/helpers.go
+func CloseWithLog(closer Closer, name string) {
+    if closer == nil {
+        return
+    }
+    if err := closer.Close(); err != nil {
+        slog.Warn("failed to close resource", "name", name, "error", err)
+    }
+}
+
+// Usage in commands
+func runTasksList(cmd *cobra.Command, args []string) error {
+    services, err := GetServices()
+    if err != nil {
+        return err
+    }
+    defer cli.CloseWithLog(services, "services")
+    
+    // ... command logic
+}
+```
+
+**2. Explicit ignore for cleanup errors**:
+```go
+// When cleanup error is acceptable to ignore
+defer func() { _ = rows.Close() }()
+defer func() { _ = db.Close() }()
+```
+
+**3. Panic for programming errors**:
+```go
+// MarkFlagRequired errors are programming errors
+func init() {
+    tasksCreateCmd.Flags().String("title", "", "Task title")
+    if err := tasksCreateCmd.MarkFlagRequired("title"); err != nil {
+        panic(fmt.Sprintf("failed to mark flag required: %v", err))
+    }
+}
+```
+
 ### Error Display
 ```go
 func runTasksGet(cmd *cobra.Command, args []string) error {
@@ -402,6 +448,7 @@ service := NewTaskService(db)
 | `internal/cli/output/formatter.go` | Output formatting (table/JSON/YAML) |
 | `internal/cli/filter/parser.go` | Filter parsing |
 | `internal/cli/errors.go` | CLI error handling |
+| `internal/cli/helpers.go` | Cleanup helpers (CloseWithLog) |
 
 ---
 
