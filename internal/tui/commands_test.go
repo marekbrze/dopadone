@@ -1066,3 +1066,252 @@ func TestLoadAreaStatsCmd(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteSubareaCmd(t *testing.T) {
+	tests := []struct {
+		name        string
+		subareaID   string
+		subareaName string
+		setupMock   func(*mocks.MockSubareaService)
+		wantErr     bool
+		errMsg      string
+	}{
+		{
+			name:        "successful delete",
+			subareaID:   "subarea-1",
+			subareaName: "Test Subarea",
+			setupMock: func(m *mocks.MockSubareaService) {
+				mocks.SetupMockSubareaDelete(m)
+			},
+		},
+		{
+			name:        "delete error - database failure",
+			subareaID:   "subarea-1",
+			subareaName: "Test Subarea",
+			setupMock: func(m *mocks.MockSubareaService) {
+				mocks.SetupMockSubareaDeleteError(m, errors.New("database error"))
+			},
+			wantErr: true,
+			errMsg:  "database error",
+		},
+		{
+			name:        "delete error - not found",
+			subareaID:   "nonexistent",
+			subareaName: "Nonexistent",
+			setupMock: func(m *mocks.MockSubareaService) {
+				mocks.SetupMockSubareaDeleteError(m, errors.New("subarea not found"))
+			},
+			wantErr: true,
+			errMsg:  "subarea not found",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, mockSubareaSvc, _, _ := mocks.NewMockServices()
+			if tt.setupMock != nil {
+				tt.setupMock(mockSubareaSvc)
+			}
+
+			cmd := DeleteSubareaCmd(mockSubareaSvc, tt.subareaID, tt.subareaName)
+			msg := cmd()
+
+			if tt.wantErr {
+				deleteErr, ok := msg.(DeleteErrorMsg)
+				if !ok {
+					t.Fatal("Expected DeleteErrorMsg")
+				}
+				if deleteErr.Err == nil {
+					t.Error("expected error, got nil")
+				} else if tt.errMsg != "" && deleteErr.Err.Error() != tt.errMsg {
+					t.Errorf("expected error message %q, got %q", tt.errMsg, deleteErr.Err.Error())
+				}
+				if deleteErr.EntityType != "Subarea" {
+					t.Errorf("expected entity type 'Subarea', got %q", deleteErr.EntityType)
+				}
+				if deleteErr.EntityName != tt.subareaName {
+					t.Errorf("expected entity name %q, got %q", tt.subareaName, deleteErr.EntityName)
+				}
+				return
+			}
+
+			deleteSuccess, ok := msg.(DeleteSuccessMsg)
+			if !ok {
+				t.Fatalf("Expected DeleteSuccessMsg, got %T", msg)
+			}
+
+			if deleteSuccess.EntityType != "Subarea" {
+				t.Errorf("expected entity type 'Subarea', got %q", deleteSuccess.EntityType)
+			}
+			if deleteSuccess.EntityName != tt.subareaName {
+				t.Errorf("expected entity name %q, got %q", tt.subareaName, deleteSuccess.EntityName)
+			}
+		})
+	}
+}
+
+func TestDeleteProjectCmd(t *testing.T) {
+	tests := []struct {
+		name        string
+		projectID   string
+		projectName string
+		setupMock   func(*mocks.MockProjectService)
+		wantErr     bool
+		errMsg      string
+	}{
+		{
+			name:        "successful delete with cascade",
+			projectID:   "project-1",
+			projectName: "Test Project",
+			setupMock: func(m *mocks.MockProjectService) {
+				mocks.SetupMockProjectDeleteWithCascade(m)
+			},
+		},
+		{
+			name:        "delete error - database failure",
+			projectID:   "project-1",
+			projectName: "Test Project",
+			setupMock: func(m *mocks.MockProjectService) {
+				mocks.SetupMockProjectDeleteWithCascadeError(m, errors.New("database error"))
+			},
+			wantErr: true,
+			errMsg:  "database error",
+		},
+		{
+			name:        "delete error - not found",
+			projectID:   "nonexistent",
+			projectName: "Nonexistent",
+			setupMock: func(m *mocks.MockProjectService) {
+				mocks.SetupMockProjectDeleteWithCascadeError(m, errors.New("project not found"))
+			},
+			wantErr: true,
+			errMsg:  "project not found",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, _, mockProjectSvc, _ := mocks.NewMockServices()
+			if tt.setupMock != nil {
+				tt.setupMock(mockProjectSvc)
+			}
+
+			cmd := DeleteProjectCmd(mockProjectSvc, tt.projectID, tt.projectName)
+			msg := cmd()
+
+			if tt.wantErr {
+				deleteErr, ok := msg.(DeleteErrorMsg)
+				if !ok {
+					t.Fatal("Expected DeleteErrorMsg")
+				}
+				if deleteErr.Err == nil {
+					t.Error("expected error, got nil")
+				} else if tt.errMsg != "" && deleteErr.Err.Error() != tt.errMsg {
+					t.Errorf("expected error message %q, got %q", tt.errMsg, deleteErr.Err.Error())
+				}
+				if deleteErr.EntityType != "Project" {
+					t.Errorf("expected entity type 'Project', got %q", deleteErr.EntityType)
+				}
+				if deleteErr.EntityName != tt.projectName {
+					t.Errorf("expected entity name %q, got %q", tt.projectName, deleteErr.EntityName)
+				}
+				return
+			}
+
+			deleteSuccess, ok := msg.(DeleteSuccessMsg)
+			if !ok {
+				t.Fatalf("Expected DeleteSuccessMsg, got %T", msg)
+			}
+
+			if deleteSuccess.EntityType != "Project" {
+				t.Errorf("expected entity type 'Project', got %q", deleteSuccess.EntityType)
+			}
+			if deleteSuccess.EntityName != tt.projectName {
+				t.Errorf("expected entity name %q, got %q", tt.projectName, deleteSuccess.EntityName)
+			}
+		})
+	}
+}
+
+func TestDeleteTaskCmd(t *testing.T) {
+	tests := []struct {
+		name      string
+		taskID    string
+		taskTitle string
+		setupMock func(*mocks.MockTaskService)
+		wantErr   bool
+		errMsg    string
+	}{
+		{
+			name:      "successful delete",
+			taskID:    "task-1",
+			taskTitle: "Test Task",
+			setupMock: func(m *mocks.MockTaskService) {
+				mocks.SetupMockTaskDelete(m)
+			},
+		},
+		{
+			name:      "delete error - database failure",
+			taskID:    "task-1",
+			taskTitle: "Test Task",
+			setupMock: func(m *mocks.MockTaskService) {
+				mocks.SetupMockTaskDeleteError(m, errors.New("database error"))
+			},
+			wantErr: true,
+			errMsg:  "database error",
+		},
+		{
+			name:      "delete error - not found",
+			taskID:    "nonexistent",
+			taskTitle: "Nonexistent",
+			setupMock: func(m *mocks.MockTaskService) {
+				mocks.SetupMockTaskDeleteError(m, errors.New("task not found"))
+			},
+			wantErr: true,
+			errMsg:  "task not found",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, _, _, mockTaskSvc := mocks.NewMockServices()
+			if tt.setupMock != nil {
+				tt.setupMock(mockTaskSvc)
+			}
+
+			cmd := DeleteTaskCmd(mockTaskSvc, tt.taskID, tt.taskTitle)
+			msg := cmd()
+
+			if tt.wantErr {
+				deleteErr, ok := msg.(DeleteErrorMsg)
+				if !ok {
+					t.Fatal("Expected DeleteErrorMsg")
+				}
+				if deleteErr.Err == nil {
+					t.Error("expected error, got nil")
+				} else if tt.errMsg != "" && deleteErr.Err.Error() != tt.errMsg {
+					t.Errorf("expected error message %q, got %q", tt.errMsg, deleteErr.Err.Error())
+				}
+				if deleteErr.EntityType != "Task" {
+					t.Errorf("expected entity type 'Task', got %q", deleteErr.EntityType)
+				}
+				if deleteErr.EntityName != tt.taskTitle {
+					t.Errorf("expected entity name %q, got %q", tt.taskTitle, deleteErr.EntityName)
+				}
+				return
+			}
+
+			deleteSuccess, ok := msg.(DeleteSuccessMsg)
+			if !ok {
+				t.Fatalf("Expected DeleteSuccessMsg, got %T", msg)
+			}
+
+			if deleteSuccess.EntityType != "Task" {
+				t.Errorf("expected entity type 'Task', got %q", deleteSuccess.EntityType)
+			}
+			if deleteSuccess.EntityName != tt.taskTitle {
+				t.Errorf("expected entity name %q, got %q", tt.taskTitle, deleteSuccess.EntityName)
+			}
+		})
+	}
+}

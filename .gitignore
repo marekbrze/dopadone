@@ -11,6 +11,9 @@ tui.test
 coverage.out
 *.cover
 
+# Goreleaser
+dist/
+
 # Temporary and backup files
 *.tmp
 *.bak

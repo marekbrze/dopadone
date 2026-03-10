@@ -372,6 +372,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		}
 
+		if m.isConfirmModalOpen && m.confirmModal != nil {
+			switch msg.String() {
+			case "q", "ctrl+c":
+				return m, tea.Quit
+			}
+			var cmd tea.Cmd
+			m.confirmModal, cmd = m.confirmModal.Update(msg)
+			return m, cmd
+		}
+
 		switch msg.String() {
 		case "q", "ctrl+c":
 			return m, tea.Quit
@@ -410,11 +420,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "a":
 			return m.handleQuickAdd()
 		case "d":
-			if m.isConfirmModalOpen && m.confirmModal != nil {
-				var cmd tea.Cmd
-				m.confirmModal, cmd = m.confirmModal.Update(msg)
-				return m, cmd
-			}
 			return m, m.handleDeleteKey()
 		case "?":
 			return m.handleHelp(), nil

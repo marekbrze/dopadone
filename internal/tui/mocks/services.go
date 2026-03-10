@@ -252,6 +252,13 @@ func (m *MockProjectService) HardDelete(ctx context.Context, id string) error {
 	return nil
 }
 
+func (m *MockProjectService) SoftDeleteWithCascade(ctx context.Context, id string) error {
+	if m.SoftDeleteWithCascadeFunc != nil {
+		return m.SoftDeleteWithCascadeFunc(ctx, id)
+	}
+	return nil
+}
+
 func (m *MockProjectService) GetStats(ctx context.Context, id string) (*service.ProjectStats, error) {
 	if m.GetStatsFunc != nil {
 		return m.GetStatsFunc(ctx, id)

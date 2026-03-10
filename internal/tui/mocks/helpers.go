@@ -172,3 +172,39 @@ func SetupMockAreaStatsError(areaSvc *MockAreaService, err error) {
 		return nil, err
 	}
 }
+
+func SetupMockSubareaDelete(subareaSvc *MockSubareaService) {
+	subareaSvc.SoftDeleteFunc = func(ctx context.Context, id string) error {
+		return nil
+	}
+}
+
+func SetupMockSubareaDeleteError(subareaSvc *MockSubareaService, err error) {
+	subareaSvc.SoftDeleteFunc = func(ctx context.Context, id string) error {
+		return err
+	}
+}
+
+func SetupMockProjectDeleteWithCascade(projectSvc *MockProjectService) {
+	projectSvc.SoftDeleteWithCascadeFunc = func(ctx context.Context, id string) error {
+		return nil
+	}
+}
+
+func SetupMockProjectDeleteWithCascadeError(projectSvc *MockProjectService, err error) {
+	projectSvc.SoftDeleteWithCascadeFunc = func(ctx context.Context, id string) error {
+		return err
+	}
+}
+
+func SetupMockTaskDelete(taskSvc *MockTaskService) {
+	taskSvc.SoftDeleteFunc = func(ctx context.Context, id string) error {
+		return nil
+	}
+}
+
+func SetupMockTaskDeleteError(taskSvc *MockTaskService, err error) {
+	taskSvc.SoftDeleteFunc = func(ctx context.Context, id string) error {
+		return err
+	}
+}
