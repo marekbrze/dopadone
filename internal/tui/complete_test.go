@@ -42,7 +42,7 @@ func TestTUICompleteFlow(t *testing.T) {
 	t.Logf("Loaded %d areas", len(areaMsg.Areas))
 
 	newModel, cmd := model.Update(areaMsg)
-	model = newModel.(Model)
+	model = *newModel.(*Model)
 
 	if len(model.tabs) != len(model.areas) {
 		t.Errorf("Tabs mismatch: %d tabs, %d areas", len(model.tabs), len(model.areas))
@@ -52,19 +52,19 @@ func TestTUICompleteFlow(t *testing.T) {
 	if cmd != nil {
 		msg := cmd().(SubareasLoadedMsg)
 		newModel, cmd = model.Update(msg)
-		model = newModel.(Model)
+		model = *newModel.(*Model)
 		t.Logf("Loaded %d subareas", len(model.subareas))
 
 		if cmd != nil {
 			msg := cmd().(ProjectsLoadedMsg)
 			newModel, cmd = model.Update(msg)
-			model = newModel.(Model)
+			model = *newModel.(*Model)
 			t.Logf("Loaded %d projects", len(model.projects))
 
 			if cmd != nil {
 				msg := cmd().(TasksLoadedMsg)
 				newModel, _ = model.Update(msg)
-				model = newModel.(Model)
+				model = *newModel.(*Model)
 				t.Logf("Loaded %d tasks", len(model.tasks))
 			}
 		}

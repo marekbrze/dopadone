@@ -52,7 +52,7 @@ func TestTUIDisplaysSeededData(t *testing.T) {
 		areasMsg.Areas[2].Name)
 
 	newModel, subareaCmd := model.Update(areasMsg)
-	model = newModel.(Model)
+	model = *newModel.(*Model)
 
 	if len(model.tabs) != 3 {
 		t.Errorf("Expected 3 tabs, got %d", len(model.tabs))
@@ -68,7 +68,7 @@ func TestTUIDisplaysSeededData(t *testing.T) {
 		subareaMsg := subareaCmd()
 		if subareasMsg, ok := subareaMsg.(SubareasLoadedMsg); ok {
 			newModel, projCmd := model.Update(subareasMsg)
-			model = newModel.(Model)
+			model = *newModel.(*Model)
 
 			if len(model.subareas) == 0 {
 				t.Error("No subareas loaded")
@@ -80,7 +80,7 @@ func TestTUIDisplaysSeededData(t *testing.T) {
 				projMsg := projCmd()
 				if projectsMsg, ok := projMsg.(ProjectsLoadedMsg); ok {
 					newModel, taskCmd := model.Update(projectsMsg)
-					model = newModel.(Model)
+					model = *newModel.(*Model)
 
 					if len(model.projects) == 0 {
 						t.Error("No projects loaded")
@@ -92,7 +92,7 @@ func TestTUIDisplaysSeededData(t *testing.T) {
 						taskMsg := taskCmd()
 						if tasksMsg, ok := taskMsg.(TasksLoadedMsg); ok {
 							newModel, _ := model.Update(tasksMsg)
-							model = newModel.(Model)
+							model = *newModel.(*Model)
 
 							if len(model.tasks) == 0 {
 								t.Log("No tasks loaded for first project (this is OK if project has no tasks)")

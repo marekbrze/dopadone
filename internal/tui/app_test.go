@@ -63,7 +63,7 @@ func TestModelUpdateAreasLoaded(t *testing.T) {
 
 	msg := AreasLoadedMsg{Areas: areas}
 	updatedModel, _ := model.Update(msg)
-	m := updatedModel.(Model)
+	m := *updatedModel.(*Model)
 
 	if len(m.areas) != 2 {
 		t.Errorf("Expected 2 areas, got %d", len(m.areas))
@@ -79,7 +79,7 @@ func TestModelUpdateAreasLoadedWithError(t *testing.T) {
 
 	msg := AreasLoadedMsg{Err: errors.New("database error")}
 	updatedModel, _ := model.Update(msg)
-	m := updatedModel.(Model)
+	m := *updatedModel.(*Model)
 
 	if len(m.areas) != 0 {
 		t.Errorf("Expected 0 areas on error, got %d", len(m.areas))
@@ -98,7 +98,7 @@ func TestModelUpdateSubareasLoaded(t *testing.T) {
 
 	msg := SubareasLoadedMsg{Subareas: subareas}
 	updatedModel, _ := model.Update(msg)
-	m := updatedModel.(Model)
+	m := *updatedModel.(*Model)
 
 	if len(m.subareas) != 1 {
 		t.Errorf("Expected 1 subarea, got %d", len(m.subareas))
@@ -117,7 +117,7 @@ func TestModelUpdateProjectsLoaded(t *testing.T) {
 
 	msg := ProjectsLoadedMsg{Projects: projects}
 	updatedModel, _ := model.Update(msg)
-	m := updatedModel.(Model)
+	m := *updatedModel.(*Model)
 
 	if len(m.projects) != 1 {
 		t.Errorf("Expected 1 project, got %d", len(m.projects))
@@ -136,7 +136,7 @@ func TestModelUpdateTasksLoaded(t *testing.T) {
 
 	msg := TasksLoadedMsg{Tasks: tasks}
 	updatedModel, _ := model.Update(msg)
-	m := updatedModel.(Model)
+	m := *updatedModel.(*Model)
 
 	if len(m.tasks) != 1 {
 		t.Errorf("Expected 1 task, got %d", len(m.tasks))
@@ -168,7 +168,7 @@ func TestModelUpdateKeyPress(t *testing.T) {
 
 			msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(tt.key)}
 			updatedModel, _ := model.Update(msg)
-			m := updatedModel.(Model)
+			m := *updatedModel.(*Model)
 
 			if m.focus != tt.expected {
 				t.Errorf("Expected focus %v, got %v", tt.expected, m.focus)
@@ -341,7 +341,7 @@ func TestCascadeLoadingAreasToSubareas(t *testing.T) {
 
 	msg := AreasLoadedMsg{Areas: model.areas}
 	updatedModel, _ := model.Update(msg)
-	m := updatedModel.(Model)
+	m := *updatedModel.(*Model)
 
 	if m.selectedAreaIndex != 0 {
 		t.Errorf("Expected selectedAreaIndex to be 0, got %d", m.selectedAreaIndex)
@@ -357,7 +357,7 @@ func TestCascadeLoadingSubareasToProjects(t *testing.T) {
 
 	msg := SubareasLoadedMsg{Subareas: model.subareas}
 	updatedModel, _ := model.Update(msg)
-	m := updatedModel.(Model)
+	m := *updatedModel.(*Model)
 
 	if m.selectedSubareaIndex != 0 {
 		t.Errorf("Expected selectedSubareaIndex to be 0, got %d", m.selectedSubareaIndex)
@@ -373,7 +373,7 @@ func TestCascadeLoadingProjectsToTasks(t *testing.T) {
 
 	msg := ProjectsLoadedMsg{Projects: model.projects}
 	updatedModel, _ := model.Update(msg)
-	m := updatedModel.(Model)
+	m := *updatedModel.(*Model)
 
 	if m.selectedProjectIndex != 0 {
 		t.Errorf("Expected selectedProjectIndex to be 0, got %d", m.selectedProjectIndex)
@@ -386,7 +386,7 @@ func TestModelUpdateWindowSize(t *testing.T) {
 
 	msg := tea.WindowSizeMsg{Width: 100, Height: 50}
 	updatedModel, _ := model.Update(msg)
-	m := updatedModel.(Model)
+	m := *updatedModel.(*Model)
 
 	if m.width != 100 {
 		t.Errorf("Expected width 100, got %d", m.width)
@@ -431,7 +431,7 @@ func TestModelUpdateSubareasLoadedWithError(t *testing.T) {
 
 	msg := SubareasLoadedMsg{Err: errors.New("database error")}
 	updatedModel, _ := model.Update(msg)
-	m := updatedModel.(Model)
+	m := *updatedModel.(*Model)
 
 	if len(m.subareas) != 0 {
 		t.Errorf("Expected 0 subareas on error, got %d", len(m.subareas))
@@ -447,7 +447,7 @@ func TestModelUpdateProjectsLoadedWithError(t *testing.T) {
 
 	msg := ProjectsLoadedMsg{Err: errors.New("database error")}
 	updatedModel, _ := model.Update(msg)
-	m := updatedModel.(Model)
+	m := *updatedModel.(*Model)
 
 	if len(m.projects) != 0 {
 		t.Errorf("Expected 0 projects on error, got %d", len(m.projects))
@@ -463,7 +463,7 @@ func TestModelUpdateTasksLoadedWithError(t *testing.T) {
 
 	msg := TasksLoadedMsg{Err: errors.New("database error")}
 	updatedModel, _ := model.Update(msg)
-	m := updatedModel.(Model)
+	m := *updatedModel.(*Model)
 
 	if len(m.tasks) != 0 {
 		t.Errorf("Expected 0 tasks on error, got %d", len(m.tasks))

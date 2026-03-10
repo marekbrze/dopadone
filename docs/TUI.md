@@ -921,6 +921,38 @@ m.AreaSvc.ListFunc = func(ctx context.Context) ([]domain.Area, error) {
 }
 ```
 
+### Type Assertions with Pointer Receivers
+
+When testing Bubble Tea models that use pointer receivers, type assertions must match the receiver type:
+
+**The Problem**:
+The `Model` struct uses pointer receivers for its methods (e.g., `func (m *Model) Update(msg tea.Msg)`). When `Update()` returns `tea.Model`, it returns `*Model`, not `Model`. Attempting to assert to `.(Model)` causes a panic.
+
+**Correct Pattern**:
+```go
+// ❌ WRONG - Panics with "interface conversion: tea.Model is *tui.Model, not tui.Model"
+updatedModel, _ := model.Update(msg)
+m := updatedModel.(tui.Model)  // Panic!
+
+// ✅ CORRECT - Assert to pointer type, then dereference
+updatedModel, _ := model.Update(msg)
+m := *updatedModel.(*tui.Model)  // Works!
+```
+
+**Why This Happens**:
+- Bubble Tea's `tea.Model` interface requires methods like `Update()` and `View()`
+- When methods are defined with pointer receivers (`func (m *Model) Update()`), the interface is implemented by `*Model`, not `Model`
+- The interface value contains a pointer, so type assertion must match
+
+**Test File Examples**:
+- `app_test.go`: Testing model updates and state changes
+- `complete_test.go`: Testing task completion flows
+- `db_test.go`: Testing database operations
+- `integration_test.go`: Testing complete user workflows
+
+**Best Practice**:
+Always use `(*Model)` for type assertions in TUI tests, then dereference with `*` to get the actual model value for inspection.
+
 ### Manual Verification Checklist
 
 For each release, manually verify:

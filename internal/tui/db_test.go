@@ -110,7 +110,7 @@ func TestTUILoadAreasFromDB(t *testing.T) {
 	}
 
 	newModel, _ := model.Update(areasMsg)
-	model = newModel.(Model)
+	model = *newModel.(*Model)
 
 	if len(model.areas) == 0 {
 		t.Error("Model has no areas after update")
@@ -165,7 +165,7 @@ func TestFullTUIFlowFromDB(t *testing.T) {
 	t.Logf("✓ Loaded %d areas", len(areasMsg.Areas))
 
 	newModel, subareaCmd := model.Update(areasMsg)
-	model = newModel.(Model)
+	model = *newModel.(*Model)
 
 	if len(model.tabs) != len(model.areas) {
 		t.Errorf("Tabs count mismatch: tabs=%d, areas=%d", len(model.tabs), len(model.areas))
@@ -175,21 +175,21 @@ func TestFullTUIFlowFromDB(t *testing.T) {
 		subareaMsg := subareaCmd()
 		if subareasMsg, ok := subareaMsg.(SubareasLoadedMsg); ok {
 			newModel, projCmd := model.Update(subareasMsg)
-			model = newModel.(Model)
+			model = *newModel.(*Model)
 			t.Logf("✓ Loaded %d subareas", len(model.subareas))
 
 			if projCmd != nil {
 				projMsg := projCmd()
 				if projectsMsg, ok := projMsg.(ProjectsLoadedMsg); ok {
 					newModel, taskCmd := model.Update(projectsMsg)
-					model = newModel.(Model)
+					model = *newModel.(*Model)
 					t.Logf("✓ Loaded %d projects", len(model.projects))
 
 					if taskCmd != nil {
 						taskMsg := taskCmd()
 						if tasksMsg, ok := taskMsg.(TasksLoadedMsg); ok {
 							newModel, _ := model.Update(tasksMsg)
-							model = newModel.(Model)
+							model = *newModel.(*Model)
 							t.Logf("✓ Loaded %d tasks", len(model.tasks))
 						}
 					}

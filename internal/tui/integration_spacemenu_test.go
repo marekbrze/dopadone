@@ -15,14 +15,14 @@ func TestSpaceMenuIntegration(t *testing.T) {
 		model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc)
 
 		newModel, _ := model.Update(tea.WindowSizeMsg{Width: 100, Height: 30})
-		model = newModel.(Model)
+		model = *newModel.(*Model)
 
 		if model.isSpaceMenuOpen {
 			t.Error("spacemenu should not be open initially")
 		}
 
 		newModel, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(" ")})
-		model = newModel.(Model)
+		model = *newModel.(*Model)
 
 		if !model.isSpaceMenuOpen {
 			t.Error("spacemenu should be open after pressing Space")
@@ -38,13 +38,13 @@ func TestSpaceMenuIntegration(t *testing.T) {
 		model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc)
 
 		newModel, _ := model.Update(tea.WindowSizeMsg{Width: 100, Height: 30})
-		model = newModel.(Model)
+		model = *newModel.(*Model)
 
 		model.isHelpOpen = true
 		model.helpModal = help.New()
 
 		newModel, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(" ")})
-		model = newModel.(Model)
+		model = *newModel.(*Model)
 
 		if model.isSpaceMenuOpen {
 			t.Error("spacemenu should not open when help modal is open")
@@ -56,12 +56,12 @@ func TestSpaceMenuIntegration(t *testing.T) {
 		model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc)
 
 		newModel, _ := model.Update(tea.WindowSizeMsg{Width: 100, Height: 30})
-		model = newModel.(Model)
+		model = *newModel.(*Model)
 		model.isSpaceMenuOpen = true
 		model.spaceMenu = spacemenu.New()
 
 		newModel, cmd := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(" ")})
-		model = newModel.(Model)
+		model = *newModel.(*Model)
 
 		if cmd == nil {
 			t.Fatal("Expected command to be returned when Space is pressed")
@@ -73,7 +73,7 @@ func TestSpaceMenuIntegration(t *testing.T) {
 		}
 
 		newModel, _ = model.Update(msg)
-		model = newModel.(Model)
+		model = *newModel.(*Model)
 
 		if model.isSpaceMenuOpen {
 			t.Error("spacemenu should close on Space key")
@@ -89,12 +89,12 @@ func TestSpaceMenuIntegration(t *testing.T) {
 		model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc)
 
 		newModel, _ := model.Update(tea.WindowSizeMsg{Width: 100, Height: 30})
-		model = newModel.(Model)
+		model = *newModel.(*Model)
 		model.isSpaceMenuOpen = true
 		model.spaceMenu = spacemenu.New()
 
 		newModel, cmd := model.Update(tea.KeyMsg{Type: tea.KeyEsc})
-		model = newModel.(Model)
+		model = *newModel.(*Model)
 
 		if cmd == nil {
 			t.Fatal("Expected command to be returned when Escape is pressed")
@@ -106,7 +106,7 @@ func TestSpaceMenuIntegration(t *testing.T) {
 		}
 
 		newModel, _ = model.Update(msg)
-		model = newModel.(Model)
+		model = *newModel.(*Model)
 
 		if model.isSpaceMenuOpen {
 			t.Error("spacemenu should close on Escape key")
@@ -118,12 +118,12 @@ func TestSpaceMenuIntegration(t *testing.T) {
 		model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc)
 
 		newModel, _ := model.Update(tea.WindowSizeMsg{Width: 100, Height: 30})
-		model = newModel.(Model)
+		model = *newModel.(*Model)
 		model.isSpaceMenuOpen = true
 		model.spaceMenu = spacemenu.New()
 
 		newModel, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("c")})
-		model = newModel.(Model)
+		model = *newModel.(*Model)
 
 		if model.spaceMenu == nil || model.spaceMenu.State() != spacemenu.StateConfig {
 			t.Error("spacemenu should be in Config state after pressing 'c'")

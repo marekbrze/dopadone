@@ -58,7 +58,7 @@ func TestToggleTaskCompletion_KeyboardBinding(t *testing.T) {
 		t.Error("x key should trigger toggle command when focus is on Tasks")
 	}
 
-	m = model.(Model)
+	m = *model.(*Model)
 	if m.tasks[0].Status != domain.TaskStatusDone {
 		t.Errorf("task should be toggled to done, got %v", m.tasks[0].Status)
 	}

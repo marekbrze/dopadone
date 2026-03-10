@@ -128,7 +128,7 @@ func TestAreasLoadedUpdatesTabs(t *testing.T) {
 	}
 
 	updatedModel, _ := m.Update(msg)
-	model := updatedModel.(Model)
+	model := *updatedModel.(*Model)
 
 	if len(model.tabs) != 2 {
 		t.Fatalf("Expected 2 tabs after AreasLoadedMsg, got %d", len(model.tabs))
@@ -162,7 +162,7 @@ func TestAreasLoadedUpdatesTabsCorrectSelection(t *testing.T) {
 	}
 
 	updatedModel, _ := m.Update(msg)
-	model := updatedModel.(Model)
+	model := *updatedModel.(*Model)
 
 	if len(model.tabs) != 3 {
 		t.Fatalf("Expected 3 tabs, got %d", len(model.tabs))
