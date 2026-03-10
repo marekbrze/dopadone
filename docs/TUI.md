@@ -931,11 +931,27 @@ For each release, manually verify:
 - [ ] Tree expand/collapse works
 - [ ] Help modal shows all shortcuts
 - [ ] Toast notifications appear and auto-dismiss
-- [ ] Quick-add modal creates items in correct context
-- [ ] Terminal resize handling
-- [ ] No visual artifacts or rendering issues
+- [ ] All keyboard shortcuts work as documented
+- [ ] Tab navigation wraps correctly
+- [ ] Column focus indicators are visible
+- [ ] Tree expand/collapse works
+- [ ] Help modal shows all shortcuts
+- [ ] Toast notifications appear and auto-dismiss
 
-## Theme System
+- [ ] Quick-add modal creates items in correct context
+
+## Delete Functionality
+
+- [ ] Press `d` on selected item opens confirmation modal
+- [ ] Press `y` confirms deletion
+- [ ] Press `n` or `Escape` cancels deletion
+- [ ] Verify success toast appears
+- [ ] Press `d` on empty column does does nothing (no-op)
+- [ ] Verify cascade delete works for projects with subprojects
+    - Deleting a project also deletes all child projects and their tasks
+    - Verify error toast appears on failure
+
+- [ ] Verify footer shows `d: delete` shortcut
 
 The TUI includes a comprehensive theming system that automatically adapts colors based on the terminal's background color, ensuring readability across different terminal themes.
 
