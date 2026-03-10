@@ -565,6 +565,134 @@ func printTaskUpdateSuccess(task *domain.Task) {
 
 ---
 
+## Reusable Helper Patterns
+
+### Delete Helper Pattern
+
+When multiple commands share identical logic patterns, extract them into reusable helpers with interfaces. This reduces code duplication and improves maintainability.
+
+#### Interface-Based Abstraction
+
+Define an interface that captures the common operations:
+
+```go
+// internal/cli/delete.go
+
+// Deleteable defines the interface for entities that support soft and hard deletion.
+type Deleteable interface {
+    // GetByID retrieves an entity to verify its existence before deletion.
+    GetByID(ctx context.Context, id string) (any, error)
+
+    // SoftDelete marks an entity as deleted without removing it from the database.
+    SoftDelete(ctx context.Context, id string) error
+
+    // HardDelete permanently removes an entity from the database.
+    HardDelete(ctx context.Context, id string) error
+}
+
+// DeleteParams contains the parameters needed for the RunDelete helper.
+type DeleteParams struct {
+    ID          string
+    Permanent   bool
+    EntityName  string
+    NotFoundErr error
+}
+
+// RunDelete executes a delete operation (soft or hard) on an entity using the provided service.
+func RunDelete(ctx context.Context, svc Deleteable, params DeleteParams) error {
+    // Verify entity exists
+    _, err := svc.GetByID(ctx, params.ID)
+    if err != nil {
+        if params.NotFoundErr != nil && err == params.NotFoundErr {
+            return fmt.Errorf("%s not found: %s", params.EntityName, params.ID)
+        }
+        return WrapError(err, fmt.Sprintf("failed to get %s", params.EntityName))
+    }
+
+    // Perform deletion
+    if params.Permanent {
+        if err := svc.HardDelete(ctx, params.ID); err != nil {
+            return WrapError(err, fmt.Sprintf("failed to permanently delete %s", params.EntityName))
+        }
+        output.PrintSuccess(fmt.Sprintf("%s permanently deleted: %s", params.EntityName, params.ID))
+        return nil
+    }
+
+    if err := svc.SoftDelete(ctx, params.ID); err != nil {
+        if params.NotFoundErr != nil && err == params.NotFoundErr {
+            return fmt.Errorf("%s not found: %s", params.EntityName, params.ID)
+        }
+        return WrapError(err, fmt.Sprintf("failed to delete %s", params.EntityName))
+    }
+
+    output.PrintSuccess(fmt.Sprintf("%s deleted: %s", params.EntityName, params.ID))
+    return nil
+}
+```
+
+#### Using the Helper in Commands
+
+Implement the interface for each entity type and use the helper:
+
+```go
+// cmd/dopa/projects.go
+
+// projectDeleter wraps ProjectService to implement Deleteable interface
+type projectDeleter struct {
+    *service.ProjectService
+}
+
+func (p *projectDeleter) GetByID(ctx context.Context, id string) (any, error) {
+    return p.ProjectService.GetByID(ctx, id)
+}
+
+func runProjectsDelete(cmd *cobra.Command, args []string) {
+    id := args[0]
+    permanent, _ := cmd.Flags().GetBool("permanent")
+
+    services, err := GetServices()
+    if err != nil {
+        cli.ExitWithError(cli.WrapError(err, "failed to connect to database"))
+    }
+    defer cli.CloseWithLog(services, "services")
+
+    ctx := context.Background()
+    params := cli.DeleteParams{
+        ID:          id,
+        Permanent:   permanent,
+        EntityName:  "project",
+        NotFoundErr: service.ErrProjectNotFound,
+    }
+
+    if err := cli.RunDelete(ctx, &projectDeleter{services.Projects}, params); err != nil {
+        cli.ExitWithError(err)
+    }
+}
+```
+
+#### Benefits of This Pattern
+
+1. **Eliminates Duplicate Code**: Removes 40+ lines of duplicate logic from each delete command
+2. **Consistent Error Handling**: All delete operations handle errors the same way
+3. **Testability**: Helper logic is tested once, not duplicated across multiple command tests
+4. **Maintainability**: Bug fixes and improvements apply to all entity types
+5. **Linting Compliance**: Resolves `dupl` warnings about duplicate code
+
+#### When to Use
+
+- Multiple commands share identical logic patterns
+- Code duplication detected by linters (e.g., `dupl`, `goconst`)
+- Common operations across entity types (CRUD operations, validation, formatting)
+- Before/After hooks that repeat across commands
+
+#### Related Patterns
+
+- **Validator Helpers**: Common input validation logic
+- **Formatter Helpers**: Shared output formatting patterns
+- **Middleware/Interceptors**: Cross-cutting concerns like logging, metrics
+
+---
+
 ## Key Files
 
 | File | Purpose |
@@ -578,6 +706,7 @@ func printTaskUpdateSuccess(task *domain.Task) {
 | `internal/cli/filter/parser.go` | Filter parsing |
 | `internal/cli/errors.go` | CLI error handling |
 | `internal/cli/helpers.go` | Cleanup helpers (CloseWithLog) |
+| `internal/cli/delete.go` | Delete helper (Deleteable interface, RunDelete) |
 
 ---
 

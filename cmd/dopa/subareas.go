@@ -354,32 +354,31 @@ func runSubareasDelete(cmd *cobra.Command, args []string) {
 
 	ctx := context.Background()
 
-	_, err = services.Subareas.GetByID(ctx, id)
-	if err != nil {
-		if err == service.ErrSubareaNotFound {
-			cli.ExitWithError(fmt.Errorf("subarea not found: %s", id))
-		}
-		cli.ExitWithError(cli.WrapError(err, "failed to get subarea"))
+	params := cli.DeleteParams{
+		ID:          id,
+		Permanent:   subareaPermanent,
+		EntityName:  "subarea",
+		NotFoundErr: service.ErrSubareaNotFound,
 	}
-
-	if subareaPermanent {
-		err := services.Subareas.HardDelete(ctx, id)
-		if err != nil {
-			cli.ExitWithError(cli.WrapError(err, "failed to permanently delete subarea"))
-		}
-		output.PrintSuccess(fmt.Sprintf("Subarea permanently deleted: %s", id))
-		return
+	if err := cli.RunDelete(ctx, &subareaDeleter{svc: services.Subareas}, params); err != nil {
+		cli.ExitWithError(err)
 	}
+}
 
-	err = services.Subareas.SoftDelete(ctx, id)
-	if err != nil {
-		if err == service.ErrSubareaNotFound {
-			cli.ExitWithError(fmt.Errorf("subarea not found: %s", id))
-		}
-		cli.ExitWithError(cli.WrapError(err, "failed to delete subarea"))
-	}
+type subareaDeleter struct {
+	svc service.SubareaServiceInterface
+}
 
-	output.PrintSuccess(fmt.Sprintf("Subarea deleted: %s", id))
+func (d *subareaDeleter) GetByID(ctx context.Context, id string) (any, error) {
+	return d.svc.GetByID(ctx, id)
+}
+
+func (d *subareaDeleter) SoftDelete(ctx context.Context, id string) error {
+	return d.svc.SoftDelete(ctx, id)
+}
+
+func (d *subareaDeleter) HardDelete(ctx context.Context, id string) error {
+	return d.svc.HardDelete(ctx, id)
 }
 
 func domainSubareaToMap(s domain.Subarea) map[string]interface{} {

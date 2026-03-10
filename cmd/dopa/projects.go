@@ -561,32 +561,32 @@ func runProjectsDelete(cmd *cobra.Command, args []string) {
 
 	ctx := context.Background()
 
-	_, err = services.Projects.GetByID(ctx, id)
-	if err != nil {
-		if err == service.ErrProjectNotFound {
-			cli.ExitWithError(fmt.Errorf("project not found: %s", id))
-		}
-		cli.ExitWithError(cli.WrapError(err, "failed to get project"))
+	params := cli.DeleteParams{
+		ID:          id,
+		Permanent:   projPermanent,
+		EntityName:  "project",
+		NotFoundErr: service.ErrProjectNotFound,
 	}
 
-	if projPermanent {
-		err := services.Projects.HardDelete(ctx, id)
-		if err != nil {
-			cli.ExitWithError(cli.WrapError(err, "failed to permanently delete project"))
-		}
-		output.PrintSuccess(fmt.Sprintf("Project permanently deleted: %s", id))
-		return
+	if err := cli.RunDelete(ctx, &projectDeleter{svc: services.Projects}, params); err != nil {
+		cli.ExitWithError(err)
 	}
+}
 
-	err = services.Projects.SoftDelete(ctx, id)
-	if err != nil {
-		if err == service.ErrProjectNotFound {
-			cli.ExitWithError(fmt.Errorf("project not found: %s", id))
-		}
-		cli.ExitWithError(cli.WrapError(err, "failed to delete project"))
-	}
+type projectDeleter struct {
+	svc service.ProjectServiceInterface
+}
 
-	output.PrintSuccess(fmt.Sprintf("Project deleted: %s", id))
+func (d *projectDeleter) GetByID(ctx context.Context, id string) (any, error) {
+	return d.svc.GetByID(ctx, id)
+}
+
+func (d *projectDeleter) SoftDelete(ctx context.Context, id string) error {
+	return d.svc.SoftDelete(ctx, id)
+}
+
+func (d *projectDeleter) HardDelete(ctx context.Context, id string) error {
+	return d.svc.HardDelete(ctx, id)
 }
 
 func domainProjectToMap(p domain.Project) map[string]interface{} {

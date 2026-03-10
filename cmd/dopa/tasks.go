@@ -446,32 +446,31 @@ func runTasksDelete(cmd *cobra.Command, args []string) {
 
 	ctx := context.Background()
 
-	_, err = services.Tasks.GetByID(ctx, id)
-	if err != nil {
-		if err == service.ErrTaskNotFound {
-			cli.ExitWithError(fmt.Errorf("task not found: %s", id))
-		}
-		cli.ExitWithError(cli.WrapError(err, "failed to get task"))
+	params := cli.DeleteParams{
+		ID:          id,
+		Permanent:   taskPermanent,
+		EntityName:  "task",
+		NotFoundErr: service.ErrTaskNotFound,
 	}
-
-	if taskPermanent {
-		err := services.Tasks.HardDelete(ctx, id)
-		if err != nil {
-			cli.ExitWithError(cli.WrapError(err, "failed to permanently delete task"))
-		}
-		output.PrintSuccess(fmt.Sprintf("Task permanently deleted: %s", id))
-		return
+	if err := cli.RunDelete(ctx, &taskDeleter{svc: services.Tasks}, params); err != nil {
+		cli.ExitWithError(err)
 	}
+}
 
-	err = services.Tasks.SoftDelete(ctx, id)
-	if err != nil {
-		if err == service.ErrTaskNotFound {
-			cli.ExitWithError(fmt.Errorf("task not found: %s", id))
-		}
-		cli.ExitWithError(cli.WrapError(err, "failed to delete task"))
-	}
+type taskDeleter struct {
+	svc service.TaskServiceInterface
+}
 
-	output.PrintSuccess(fmt.Sprintf("Task deleted: %s", id))
+func (d *taskDeleter) GetByID(ctx context.Context, id string) (any, error) {
+	return d.svc.GetByID(ctx, id)
+}
+
+func (d *taskDeleter) SoftDelete(ctx context.Context, id string) error {
+	return d.svc.SoftDelete(ctx, id)
+}
+
+func (d *taskDeleter) HardDelete(ctx context.Context, id string) error {
+	return d.svc.HardDelete(ctx, id)
 }
 
 func domainTaskToMap(t domain.Task) map[string]interface{} {

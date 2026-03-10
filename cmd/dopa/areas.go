@@ -10,6 +10,7 @@ import (
 	"github.com/marekbrze/dopadone/internal/cli/filter"
 	"github.com/marekbrze/dopadone/internal/cli/output"
 	"github.com/marekbrze/dopadone/internal/domain"
+	"github.com/marekbrze/dopadone/internal/service"
 	"github.com/spf13/cobra"
 )
 
@@ -332,26 +333,30 @@ func runAreasDelete(cmd *cobra.Command, args []string) {
 
 	ctx := context.Background()
 
-	_, err = services.Areas.GetByID(ctx, id)
-	if err != nil {
-		cli.ExitWithError(fmt.Errorf("area not found: %s", id))
+	params := cli.DeleteParams{
+		ID:         id,
+		Permanent:  areaPermanent,
+		EntityName: "area",
 	}
-
-	if areaPermanent {
-		err := services.Areas.HardDelete(ctx, id)
-		if err != nil {
-			cli.ExitWithError(cli.WrapError(err, "failed to permanently delete area"))
-		}
-		output.PrintSuccess(fmt.Sprintf("Area permanently deleted: %s", id))
-		return
+	if err := cli.RunDelete(ctx, &areaDeleter{svc: services.Areas}, params); err != nil {
+		cli.ExitWithError(err)
 	}
+}
 
-	err = services.Areas.SoftDelete(ctx, id)
-	if err != nil {
-		cli.ExitWithError(cli.WrapError(err, "failed to delete area"))
-	}
+type areaDeleter struct {
+	svc service.AreaServiceInterface
+}
 
-	output.PrintSuccess(fmt.Sprintf("Area deleted: %s", id))
+func (d *areaDeleter) GetByID(ctx context.Context, id string) (any, error) {
+	return d.svc.GetByID(ctx, id)
+}
+
+func (d *areaDeleter) SoftDelete(ctx context.Context, id string) error {
+	return d.svc.SoftDelete(ctx, id)
+}
+
+func (d *areaDeleter) HardDelete(ctx context.Context, id string) error {
+	return d.svc.HardDelete(ctx, id)
 }
 
 func domainAreaToMap(a domain.Area) map[string]interface{} {
