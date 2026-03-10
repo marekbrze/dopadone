@@ -50,6 +50,7 @@ release:
     owner: marekbrze
     name: dopadone
   prerelease: auto
+  mode: replace
   name_template: "Release {{ .Version }}"
   footer: |
     ## Installation
