@@ -71,7 +71,7 @@ var migrateUpCmd = &cobra.Command{
 			fmt.Fprintf(os.Stderr, "Failed to connect to database: %v\n", err)
 			os.Exit(1)
 		}
-		defer db.Close()
+		defer cli.CloseWithLog(db, "database")
 
 		if err := migrate.Run(db, "up"); err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
@@ -90,7 +90,7 @@ var migrateDownCmd = &cobra.Command{
 			fmt.Fprintf(os.Stderr, "Failed to connect to database: %v\n", err)
 			os.Exit(1)
 		}
-		defer db.Close()
+		defer cli.CloseWithLog(db, "database")
 
 		if err := migrate.Run(db, "down"); err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
@@ -109,7 +109,7 @@ var migrateStatusCmd = &cobra.Command{
 			fmt.Fprintf(os.Stderr, "Failed to connect to database: %v\n", err)
 			os.Exit(1)
 		}
-		defer db.Close()
+		defer cli.CloseWithLog(db, "database")
 
 		if err := migrate.Run(db, "status"); err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
@@ -127,7 +127,7 @@ var migrateResetCmd = &cobra.Command{
 			fmt.Fprintf(os.Stderr, "Failed to connect to database: %v\n", err)
 			os.Exit(1)
 		}
-		defer db.Close()
+		defer cli.CloseWithLog(db, "database")
 
 		if err := migrate.Run(db, "reset"); err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)

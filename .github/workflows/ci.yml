@@ -2,16 +2,14 @@ name: CI
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   test:
     name: Test
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -20,7 +18,8 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: "1.25"
-          cache: true
+          # Disable GitHub-hosted cache to save bandwidth; Mac Mini's disk is persistent!
+          cache: false
 
       - name: Download dependencies
         run: go mod download
@@ -37,7 +36,7 @@ jobs:
 
   lint:
     name: Lint
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -46,22 +45,21 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: "1.25"
-          cache: true
+          cache: false
 
-      - name: Download dependencies
-        run: go mod download
-
-      - name: Run go vet
-        run: go vet ./...
+      - name: Install golangci-lint
+        # On macOS runners, we install the binary directly instead of using a Docker-based action
+        run: |
+          if ! command -v golangci-lint &> /dev/null; then
+            curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin
+          fi
 
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v9.2.0
-        with:
-          version: latest
+        run: $(go env GOPATH)/bin/golangci-lint run ./...
 
   build:
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [test, lint]
     steps:
       - name: Checkout code
@@ -71,10 +69,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: "1.25"
-          cache: true
-
-      - name: Download dependencies
-        run: go mod download
+          cache: false
 
       - name: Build
         run: go build -v ./...

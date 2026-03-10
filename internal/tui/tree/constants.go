@@ -22,6 +22,8 @@ const (
 	SelectedIcon = "► "
 	// DefaultSelected is the default selection marker (empty).
 	DefaultSelected = ""
+	// RootNodeName is the name used for the dummy root node.
+	RootNodeName = "root"
 )
 
 // TreeStyle defines the visual characters used for tree rendering.

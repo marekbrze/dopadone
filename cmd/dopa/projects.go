@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/marekbrze/dopadone/internal/cli"
@@ -165,7 +166,9 @@ func init() {
 	projectsCreateCmd.Flags().StringVar(&projCreateColor, "color", "", "color in hex format (e.g., #FF5733)")
 	projectsCreateCmd.Flags().StringVar(&projCreateGoal, "goal", "", "project goal/outcome")
 	projectsCreateCmd.Flags().StringVar(&projCreateDescription, "description", "", "project description")
-	projectsCreateCmd.MarkFlagRequired("name")
+	if err := projectsCreateCmd.MarkFlagRequired("name"); err != nil {
+		panic(fmt.Sprintf("failed to mark 'name' flag as required: %v", err))
+	}
 
 	projectsListCmd.Flags().StringVar(&projListStatus, "status", "", "filter by status")
 	projectsListCmd.Flags().StringVar(&projListPriority, "priority", "", "filter by priority")
@@ -231,7 +234,11 @@ func runProjectsCreate(cmd *cobra.Command, args []string) {
 	if err != nil {
 		cli.ExitWithError(cli.WrapError(err, "failed to connect to database"))
 	}
-	defer services.Close()
+	defer func() {
+		if closeErr := services.Close(); closeErr != nil {
+			slog.Warn("failed to close services", "error", closeErr)
+		}
+	}()
 
 	ctx := context.Background()
 
@@ -284,24 +291,36 @@ func runProjectsList(cmd *cobra.Command, args []string) {
 	if err != nil {
 		cli.ExitWithError(cli.WrapError(err, "failed to connect to database"))
 	}
-	defer services.Close()
+	defer func() {
+		if closeErr := services.Close(); closeErr != nil {
+			slog.Warn("failed to close services", "error", closeErr)
+		}
+	}()
 
 	ctx := context.Background()
 
 	var projects []domain.Project
 
 	if projListStatus != "" {
-		status, err := cli.ParseProjectStatus(projListStatus)
-		if err != nil {
-			cli.ExitWithError(err)
+		status, parseErr := cli.ParseProjectStatus(projListStatus)
+		if parseErr != nil {
+			cli.ExitWithError(parseErr)
 		}
-		projects, err = services.Projects.ListByStatus(ctx, status)
+		var listErr error
+		projects, listErr = services.Projects.ListByStatus(ctx, status)
+		if listErr != nil {
+			cli.ExitWithError(cli.WrapError(listErr, "failed to list projects by status"))
+		}
 	} else if projListPriority != "" {
-		priority, err := cli.ParsePriority(projListPriority)
-		if err != nil {
-			cli.ExitWithError(err)
+		priority, parseErr := cli.ParsePriority(projListPriority)
+		if parseErr != nil {
+			cli.ExitWithError(parseErr)
 		}
-		projects, err = services.Projects.ListByPriority(ctx, priority)
+		var listErr error
+		projects, listErr = services.Projects.ListByPriority(ctx, priority)
+		if listErr != nil {
+			cli.ExitWithError(cli.WrapError(listErr, "failed to list projects by priority"))
+		}
 	} else if projListSubareaID != "" {
 		projects, err = services.Projects.ListBySubarea(ctx, projListSubareaID)
 	} else if projListParentID != "" {
@@ -326,8 +345,8 @@ func runProjectsList(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	useJSON := projListJSON || projListFormat == "json"
-	useYAML := projListFormat == "yaml"
+	useJSON := projListJSON || projListFormat == cli.FormatJSON
+	useYAML := projListFormat == cli.FormatYAML
 
 	if useJSON {
 		formatter := output.NewJSONFormatter()
@@ -372,7 +391,9 @@ func runProjectsList(cmd *cobra.Command, args []string) {
 			deadlineStr,
 		})
 	}
-	formatter.Flush()
+	if flushErr := formatter.Flush(); flushErr != nil {
+		cli.ExitWithError(cli.WrapError(flushErr, "failed to output table"))
+	}
 }
 
 func runProjectsGet(cmd *cobra.Command, args []string) {
@@ -382,7 +403,11 @@ func runProjectsGet(cmd *cobra.Command, args []string) {
 	if err != nil {
 		cli.ExitWithError(cli.WrapError(err, "failed to connect to database"))
 	}
-	defer services.Close()
+	defer func() {
+		if closeErr := services.Close(); closeErr != nil {
+			slog.Warn("failed to close services", "error", closeErr)
+		}
+	}()
 
 	ctx := context.Background()
 
@@ -441,7 +466,11 @@ func runProjectsUpdate(cmd *cobra.Command, args []string) {
 	if err != nil {
 		cli.ExitWithError(cli.WrapError(err, "failed to connect to database"))
 	}
-	defer services.Close()
+	defer func() {
+		if closeErr := services.Close(); closeErr != nil {
+			slog.Warn("failed to close services", "error", closeErr)
+		}
+	}()
 
 	ctx := context.Background()
 
@@ -524,7 +553,11 @@ func runProjectsDelete(cmd *cobra.Command, args []string) {
 	if err != nil {
 		cli.ExitWithError(cli.WrapError(err, "failed to connect to database"))
 	}
-	defer services.Close()
+	defer func() {
+		if closeErr := services.Close(); closeErr != nil {
+			slog.Warn("failed to close services", "error", closeErr)
+		}
+	}()
 
 	ctx := context.Background()
 

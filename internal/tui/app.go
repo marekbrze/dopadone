@@ -142,7 +142,6 @@ func (m Model) Init() tea.Cmd {
 	if m.areaSvc == nil {
 		return nil
 	}
-	m.isLoadingAreas = true
 	return tea.Batch(
 		m.spinner.Tick,
 		LoadAreasCmd(m.areaSvc),
@@ -332,7 +331,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		if m.isHelpOpen {
 			switch msg.String() {
-			case "q", "ctrl+c":
+			case KeyQ, KeyCtrlC:
 				return m, tea.Quit
 			}
 			var cmd tea.Cmd
@@ -342,7 +341,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if m.isModalOpen {
 			switch msg.String() {
-			case "q", "ctrl+c":
+			case KeyQ, KeyCtrlC:
 				return m, tea.Quit
 			}
 			var cmd tea.Cmd
@@ -352,7 +351,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if m.isAreaModalOpen && m.areaModal != nil {
 			switch msg.String() {
-			case "q", "ctrl+c":
+			case KeyQ, KeyCtrlC:
 				return m, tea.Quit
 			}
 			var cmd tea.Cmd
@@ -362,7 +361,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if m.isSpaceMenuOpen && m.spaceMenu != nil {
 			switch msg.String() {
-			case "q", "ctrl+c":
+			case KeyQ, KeyCtrlC:
 				if m.spaceMenu != nil && m.spaceMenu.State() == spacemenu.StateMain {
 					return m, tea.Quit
 				}
@@ -374,7 +373,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if m.isConfirmModalOpen && m.confirmModal != nil {
 			switch msg.String() {
-			case "q", "ctrl+c":
+			case KeyQ, KeyCtrlC:
 				return m, tea.Quit
 			}
 			var cmd tea.Cmd
@@ -383,7 +382,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		switch msg.String() {
-		case "q", "ctrl+c":
+		case KeyQ, KeyCtrlC:
 			return m, tea.Quit
 		case " ":
 			if !m.isModalOpen && !m.isAreaModalOpen && !m.isHelpOpen {

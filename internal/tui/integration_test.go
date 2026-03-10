@@ -60,7 +60,7 @@ func TestTUIIntegrationWithRealDB(t *testing.T) {
 	newModel, _ := model.Update(tea.WindowSizeMsg{Width: 100, Height: 30})
 	model = newModel.(Model)
 
-	newModel, cmd = model.Update(areasMsg)
+	newModel, _ = model.Update(areasMsg)
 	model = newModel.(Model)
 
 	if len(model.areas) == 0 {

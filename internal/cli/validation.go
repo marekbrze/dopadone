@@ -110,3 +110,42 @@ func ValidateTaskProjectID(projectID string) error {
 	}
 	return nil
 }
+
+func ValidateMutuallyExclusiveFlags(flagA, flagB bool, flagNameA, flagNameB string) error {
+	if flagA && flagB {
+		return NewValidationError("", fmt.Sprintf("cannot specify both %s and %s, choose one", flagNameA, flagNameB))
+	}
+	return nil
+}
+
+func ValidateUpdateFlags(cmd *cobra.Command) error {
+	hasChanges := false
+	flags := []string{
+		taskUpdateTitle,
+		taskUpdateDescription,
+		taskUpdateStatus,
+		taskUpdatePriority,
+		taskUpdateStartDate,
+		taskUpdateDeadline,
+		taskUpdateContext,
+	}
+	for _, f := range flags {
+		if f != "" {
+			hasChanges = true
+			break
+		}
+	}
+	if !hasChanges && cmd.Flags().Changed("duration") {
+		hasChanges = true
+	}
+	if !hasChanges && (taskUpdateNext || taskUpdateNoNext) {
+		hasChanges = true
+	}
+	if !hasChanges {
+		return NewValidationError("", "at least one field must be provided to update")
+	}
+	if taskUpdateNext && taskUpdateNoNext {
+		return NewValidationError("", "cannot specify both --next and --no-next, choose one")
+	}
+	return nil
+}

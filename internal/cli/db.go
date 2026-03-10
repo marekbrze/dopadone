@@ -30,7 +30,7 @@ func Connect(dbPath string) (*sql.DB, error) {
 	}
 
 	if err := db.Ping(); err != nil {
-		db.Close()
+		_ = db.Close()
 		return nil, WrapError(err, "failed to connect to database")
 	}
 

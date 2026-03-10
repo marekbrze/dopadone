@@ -3,30 +3,45 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 permissions:
   contents: write
 
 jobs:
   goreleaser:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      - name: Unlock macOS Keychain
+        # Essential for GoReleaser if you use local OrbStack/Docker
+        # or plan to add macOS code signing later.
+        env:
+          MAC_PASSWORD: ${{ secrets.MAC_MINI_PASSWORD }}
+        run: |
+          security unlock-keychain -p "$MAC_PASSWORD" ~/Library/Keychains/login.keychain-db
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$MAC_PASSWORD" ~/Library/Keychains/login.keychain-db
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.25'
-          cache: true
+          go-version: "1.25"
+          cache: false # Mac Mini persistence handles this locally
+
+      - name: Install GoReleaser
+        run: |
+          if ! command -v goreleaser &> /dev/null; then
+            brew install goreleaser/tap/goreleaser
+          fi
 
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v5
-        with:
-          version: latest
-          args: release --clean
+        run: goreleaser release --clean
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Use your new PAT instead of the default token
+          GITHUB_TOKEN: ${{ secrets.MY_GORELEASER_PAT }}
+          # Ensures GoReleaser can see OrbStack's Docker daemon
+          DOCKER_HOST: unix:///Users/${{ github.actor }}/.orbstack/run/docker.sock

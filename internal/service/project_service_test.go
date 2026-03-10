@@ -1007,14 +1007,6 @@ func projectToRow(p db.Project) db.ListProjectsBySubareaRecursiveRow {
 	}
 }
 
-func projectsToRows(projects []db.Project) []db.ListProjectsBySubareaRecursiveRow {
-	rows := make([]db.ListProjectsBySubareaRecursiveRow, len(projects))
-	for i, p := range projects {
-		rows[i] = projectToRow(p)
-	}
-	return rows
-}
-
 func TestProjectService_SoftDeleteWithCascade(t *testing.T) {
 	ctx := context.Background()
 	now := time.Now()

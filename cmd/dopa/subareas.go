@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/marekbrze/dopadone/internal/cli"
@@ -114,8 +115,12 @@ func init() {
 	subareasCreateCmd.Flags().StringVar(&subareaName, "name", "", "subarea name (required)")
 	subareasCreateCmd.Flags().StringVar(&subareaAreaID, "area-id", "", "parent area ID (required)")
 	subareasCreateCmd.Flags().StringVar(&subareaColor, "color", "", "color in hex format (e.g., #FF5733)")
-	subareasCreateCmd.MarkFlagRequired("name")
-	subareasCreateCmd.MarkFlagRequired("area-id")
+	if err := subareasCreateCmd.MarkFlagRequired("name"); err != nil {
+		panic(fmt.Sprintf("failed to mark 'name' flag as required: %v", err))
+	}
+	if err := subareasCreateCmd.MarkFlagRequired("area-id"); err != nil {
+		panic(fmt.Sprintf("failed to mark 'area-id' flag as required: %v", err))
+	}
 
 	subareasListCmd.Flags().StringVar(&subareaListAreaID, "area-id", "", "filter by area ID")
 	subareasListCmd.Flags().BoolVar(&subareaJSON, "json", false, "output as JSON")
@@ -145,7 +150,11 @@ func runSubareasCreate(cmd *cobra.Command, args []string) {
 	if err != nil {
 		cli.ExitWithError(cli.WrapError(err, "failed to connect to database"))
 	}
-	defer services.Close()
+	defer func() {
+		if closeErr := services.Close(); closeErr != nil {
+			slog.Warn("failed to close services", "error", closeErr)
+		}
+	}()
 
 	ctx := context.Background()
 
@@ -173,7 +182,11 @@ func runSubareasList(cmd *cobra.Command, args []string) {
 	if err != nil {
 		cli.ExitWithError(cli.WrapError(err, "failed to connect to database"))
 	}
-	defer services.Close()
+	defer func() {
+		if closeErr := services.Close(); closeErr != nil {
+			slog.Warn("failed to close services", "error", closeErr)
+		}
+	}()
 
 	ctx := context.Background()
 
@@ -201,8 +214,8 @@ func runSubareasList(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	useJSON := subareaJSON || subareaFormat == "json"
-	useYAML := subareaFormat == "yaml"
+	useJSON := subareaJSON || subareaFormat == cli.FormatJSON
+	useYAML := subareaFormat == cli.FormatYAML
 
 	if useJSON {
 		formatter := output.NewJSONFormatter()
@@ -242,7 +255,9 @@ func runSubareasList(cmd *cobra.Command, args []string) {
 			m["created_at"].(string)[:10],
 		})
 	}
-	formatter.Flush()
+	if flushErr := formatter.Flush(); flushErr != nil {
+		cli.ExitWithError(cli.WrapError(flushErr, "failed to output table"))
+	}
 }
 
 func runSubareasGet(cmd *cobra.Command, args []string) {
@@ -252,7 +267,11 @@ func runSubareasGet(cmd *cobra.Command, args []string) {
 	if err != nil {
 		cli.ExitWithError(cli.WrapError(err, "failed to connect to database"))
 	}
-	defer services.Close()
+	defer func() {
+		if closeErr := services.Close(); closeErr != nil {
+			slog.Warn("failed to close services", "error", closeErr)
+		}
+	}()
 
 	ctx := context.Background()
 
@@ -286,7 +305,11 @@ func runSubareasUpdate(cmd *cobra.Command, args []string) {
 	if err != nil {
 		cli.ExitWithError(cli.WrapError(err, "failed to connect to database"))
 	}
-	defer services.Close()
+	defer func() {
+		if closeErr := services.Close(); closeErr != nil {
+			slog.Warn("failed to close services", "error", closeErr)
+		}
+	}()
 
 	ctx := context.Background()
 
@@ -323,7 +346,11 @@ func runSubareasDelete(cmd *cobra.Command, args []string) {
 	if err != nil {
 		cli.ExitWithError(cli.WrapError(err, "failed to connect to database"))
 	}
-	defer services.Close()
+	defer func() {
+		if closeErr := services.Close(); closeErr != nil {
+			slog.Warn("failed to close services", "error", closeErr)
+		}
+	}()
 
 	ctx := context.Background()
 

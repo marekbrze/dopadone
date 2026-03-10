@@ -24,3 +24,14 @@ const (
 	ErrMsgCancelled = "Operation cancelled"
 	ErrMsgNotFound  = "Resource not found"
 )
+
+const (
+	KeyCtrlC = "ctrl+c"
+	KeyEnter = "enter"
+	KeyEsc   = "esc"
+	KeyQ     = "q"
+)
+
+const (
+	EntityTask = "Task"
+)

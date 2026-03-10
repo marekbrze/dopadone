@@ -117,8 +117,7 @@ func TestAreasCreateCommand_RequiredFlags(t *testing.T) {
 		return
 	}
 
-	if !createCmd.Flags().Changed("name") {
-	}
+	_ = createCmd.Flags().Changed("name")
 }
 
 func TestAreasUpdateCommand_Flags(t *testing.T) {

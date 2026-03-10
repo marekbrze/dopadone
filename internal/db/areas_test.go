@@ -24,26 +24,26 @@ func setupTestDB(t *testing.T) (*sql.DB, func()) {
 	dbPath := filepath.Join(tmpDir, "test.db")
 	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
-		os.RemoveAll(tmpDir)
+		_ = os.RemoveAll(tmpDir)
 		t.Fatalf("failed to open database: %v", err)
 	}
 
 	if err := goose.SetDialect("sqlite3"); err != nil {
-		db.Close()
-		os.RemoveAll(tmpDir)
+		_ = db.Close()
+		_ = os.RemoveAll(tmpDir)
 		t.Fatalf("failed to set goose dialect: %v", err)
 	}
 
 	migrationsDir := "../../migrations"
 	if err := goose.Up(db, migrationsDir); err != nil {
-		db.Close()
-		os.RemoveAll(tmpDir)
+		_ = db.Close()
+		_ = os.RemoveAll(tmpDir)
 		t.Fatalf("failed to run goose up: %v", err)
 	}
 
 	cleanup := func() {
-		db.Close()
-		os.RemoveAll(tmpDir)
+		_ = db.Close()
+		_ = os.RemoveAll(tmpDir)
 	}
 
 	return db, cleanup

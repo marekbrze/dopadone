@@ -160,8 +160,12 @@ func init() {
 	tasksCreateCmd.Flags().StringVar(&taskCreateContext, "context", "", "task context (e.g., 'backend', 'frontend')")
 	tasksCreateCmd.Flags().IntVar(&taskCreateDuration, "duration", 0, "estimated duration in minutes (5|15|30|60|120|240|480)")
 	tasksCreateCmd.Flags().BoolVar(&taskCreateNext, "next", false, "mark as priority/next task")
-	tasksCreateCmd.MarkFlagRequired("project-id")
-	tasksCreateCmd.MarkFlagRequired("title")
+	if err := tasksCreateCmd.MarkFlagRequired("project-id"); err != nil {
+		panic(err)
+	}
+	if err := tasksCreateCmd.MarkFlagRequired("title"); err != nil {
+		panic(err)
+	}
 
 	tasksListCmd.Flags().StringVar(&taskListProjectID, "project-id", "", "filter by project ID")
 	tasksListCmd.Flags().StringVar(&taskListStatus, "status", "", "filter by status")
@@ -222,7 +226,7 @@ func runTasksCreate(cmd *cobra.Command, args []string) {
 	if err != nil {
 		cli.ExitWithError(cli.WrapError(err, "failed to connect to database"))
 	}
-	defer services.Close()
+	defer cli.CloseWithLog(services, "services")
 
 	ctx := context.Background()
 
@@ -267,7 +271,7 @@ func runTasksList(cmd *cobra.Command, args []string) {
 	if err != nil {
 		cli.ExitWithError(cli.WrapError(err, "failed to connect to database"))
 	}
-	defer services.Close()
+	defer cli.CloseWithLog(services, "services")
 
 	ctx := context.Background()
 
@@ -309,8 +313,8 @@ func runTasksList(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	useJSON := taskListJSON || taskListFormat == "json"
-	useYAML := taskListFormat == "yaml"
+	useJSON := taskListJSON || taskListFormat == cli.FormatJSON
+	useYAML := taskListFormat == cli.FormatYAML
 
 	if useJSON {
 		formatter := output.NewJSONFormatter()
@@ -360,7 +364,9 @@ func runTasksList(cmd *cobra.Command, args []string) {
 			deadlineStr,
 		})
 	}
-	formatter.Flush()
+	if err := formatter.Flush(); err != nil {
+		cli.ExitWithError(cli.WrapError(err, "failed to flush output"))
+	}
 }
 
 func runTasksNext(cmd *cobra.Command, args []string) {
@@ -375,7 +381,7 @@ func runTasksGet(cmd *cobra.Command, args []string) {
 	if err != nil {
 		cli.ExitWithError(cli.WrapError(err, "failed to connect to database"))
 	}
-	defer services.Close()
+	defer cli.CloseWithLog(services, "services")
 
 	ctx := context.Background()
 
@@ -396,34 +402,15 @@ func runTasksGet(cmd *cobra.Command, args []string) {
 func runTasksUpdate(cmd *cobra.Command, args []string) {
 	id := args[0]
 
-	flags := []string{taskUpdateTitle, taskUpdateDescription, taskUpdateStatus, taskUpdatePriority, taskUpdateStartDate, taskUpdateDeadline, taskUpdateContext}
-	hasChanges := false
-	for _, f := range flags {
-		if f != "" {
-			hasChanges = true
-			break
-		}
-	}
-	if !hasChanges && cmd.Flags().Changed("duration") {
-		hasChanges = true
-	}
-	if !hasChanges && (taskUpdateNext || taskUpdateNoNext) {
-		hasChanges = true
-	}
-
-	if !hasChanges {
-		cli.ExitWithError(cli.NewValidationError("", "at least one field must be provided to update"))
-	}
-
-	if taskUpdateNext && taskUpdateNoNext {
-		cli.ExitWithError(cli.NewValidationError("", "cannot specify both --next and --no-next, choose one"))
+	if err := validateUpdateFlags(cmd); err != nil {
+		cli.ExitWithError(err)
 	}
 
 	services, err := GetServices()
 	if err != nil {
 		cli.ExitWithError(cli.WrapError(err, "failed to connect to database"))
 	}
-	defer services.Close()
+	defer cli.CloseWithLog(services, "services")
 
 	ctx := context.Background()
 
@@ -435,100 +422,13 @@ func runTasksUpdate(cmd *cobra.Command, args []string) {
 		cli.ExitWithError(cli.WrapError(err, "failed to get task"))
 	}
 
-	newTitle := existing.Title
-	if taskUpdateTitle != "" {
-		if err := cli.ValidateTaskTitle(taskUpdateTitle); err != nil {
-			cli.ExitWithError(err)
-		}
-		newTitle = taskUpdateTitle
-	}
-
-	newStatus := existing.Status
-	if taskUpdateStatus != "" {
-		status, err := cli.ParseTaskStatus(taskUpdateStatus)
-		if err != nil {
-			cli.ExitWithError(err)
-		}
-		newStatus = status
-	}
-
-	newPriority := existing.Priority
-	if taskUpdatePriority != "" {
-		priority, err := cli.ParseTaskPriority(taskUpdatePriority)
-		if err != nil {
-			cli.ExitWithError(err)
-		}
-		newPriority = priority
-	}
-
-	newDescription := existing.Description
-	if taskUpdateDescription != "" {
-		newDescription = taskUpdateDescription
-	}
-
-	newContext := existing.Context
-	if taskUpdateContext != "" {
-		newContext = taskUpdateContext
-	}
-
-	var newDuration domain.TaskDuration
-	if cmd.Flags().Changed("duration") {
-		if taskUpdateDuration > 0 {
-			duration, err := cli.ParseTaskDuration(taskUpdateDuration)
-			if err != nil {
-				cli.ExitWithError(err)
-			}
-			newDuration = duration
-		}
-	} else {
-		newDuration = existing.EstimatedDuration
-	}
-
-	newIsNext := existing.IsNext
-	if taskUpdateNext {
-		newIsNext = true
-	} else if taskUpdateNoNext {
-		newIsNext = false
-	}
-
-	newStartDate := existing.StartDate
-	newDeadline := existing.Deadline
-	if taskUpdateStartDate != "" || taskUpdateDeadline != "" {
-		startDate, deadline, err := cli.ParseDate(taskUpdateStartDate, taskUpdateDeadline)
-		if err != nil {
-			cli.ExitWithError(err)
-		}
-		if startDate != nil {
-			newStartDate = startDate
-		}
-		if deadline != nil {
-			newDeadline = deadline
-		}
-	}
-
-	params := service.UpdateTaskParams{
-		ID:                id,
-		Title:             newTitle,
-		Description:       newDescription,
-		StartDate:         newStartDate,
-		Deadline:          newDeadline,
-		Priority:          newPriority,
-		Context:           newContext,
-		EstimatedDuration: newDuration,
-		Status:            newStatus,
-		IsNext:            newIsNext,
-	}
-
+	params := prepareTaskUpdateParams(cmd, existing)
 	task, err := services.Tasks.Update(ctx, params)
 	if err != nil {
 		cli.ExitWithError(cli.WrapError(err, "failed to update task"))
 	}
 
-	nextFlag := ""
-	if task.IsNext {
-		nextFlag = " [NEXT]"
-	}
-	output.PrintSuccess(fmt.Sprintf("Task updated: %s%s", task.ID, nextFlag))
+	printTaskUpdateSuccess(task)
 }
 
 func runTasksDelete(cmd *cobra.Command, args []string) {
@@ -538,7 +438,7 @@ func runTasksDelete(cmd *cobra.Command, args []string) {
 	if err != nil {
 		cli.ExitWithError(cli.WrapError(err, "failed to connect to database"))
 	}
-	defer services.Close()
+	defer cli.CloseWithLog(services, "services")
 
 	ctx := context.Background()
 
