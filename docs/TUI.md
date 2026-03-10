@@ -33,6 +33,9 @@ internal/tui/
 ├── toast/              # Toast notification component
 │   ├── toast.go        # Toast logic with auto-dismiss
 │   └── styles.go       # Error/success styling
+├── confirmmodal/       # Confirmation modal component
+│   ├── modal.go        # Confirmation modal logic (y/n/esc)
+│   └── styles.go       # Destructive action warning styling
 ├── modal/              # Quick-add modal component
 │   ├── modal.go        # Modal dialog logic
 │   ├── styles.go       # Modal styling
@@ -562,6 +565,56 @@ Persistent footer showing common keyboard shortcuts.
 **Display**: `h/l: columns | j/k: nav | a: add | x: toggle | ?: help | q: quit`
 
 **Implementation**: Footer rendered in main `View()` function
+
+### 10. Confirmation Modal
+
+Reusable confirmation dialog for destructive actions (delete operations).
+
+**Implementation**: `confirmmodal/modal.go`, `confirmmodal/styles.go`
+
+**Features**:
+- Centered overlay modal using lipgloss.Place
+- Warning styling with theme.Error color (red border/text)
+- Displays entity type and item name
+- Long names truncated with ellipsis (max 40 chars)
+- Keyboard shortcuts: `y` (confirm), `n`/`Escape` (cancel)
+
+**Entity Types Supported**:
+- `EntityTypeSubarea`: Delete subarea confirmation
+- `EntityTypeProject`: Delete project confirmation
+- `EntityTypeTask`: Delete task confirmation
+
+**Message Types**:
+- `ConfirmMsg`: Returned on `y` key press, contains EntityType, EntityID, EntityName
+- `CancelMsg`: Returned on `n` or `Escape` key press
+
+**Usage**:
+```go
+// Create confirmation modal
+modal := confirmmodal.New("Project Name", confirmmodal.EntityTypeProject, "proj-123")
+
+// Handle messages in Update()
+case confirmmodal.ConfirmMsg:
+    // Execute delete operation
+    return m, DeleteProjectCmd(m.projectSvc, msg.EntityID)
+    
+case confirmmodal.CancelMsg:
+    // Close modal, no action taken
+    m.confirmModal = nil
+    m.isConfirmModalOpen = false
+```
+
+**Theme Integration**:
+- Border uses `theme.Default.Error` for destructive action warning
+- Title uses bold + error color
+- Hint text uses muted color for keyboard hints
+- Automatic adaptation to light/dark terminal themes
+
+**Integration Points**:
+- Model needs: `confirmModal *confirmmodal.Modal`, `isConfirmModalOpen bool`
+- Open trigger: `d` key in tree navigation (Task-68.3)
+- Close on: ConfirmMsg, CancelMsg
+- Use with: DeleteSubareaCmd, DeleteProjectCmd, DeleteTaskCmd
 
 ## Keyboard Shortcuts
 
