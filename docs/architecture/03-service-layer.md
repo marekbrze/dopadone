@@ -92,6 +92,7 @@ type ProjectServiceInterface interface {
     ListAll(ctx context.Context) ([]domain.Project, error)
     Update(ctx context.Context, params UpdateProjectParams) (*domain.Project, error)
     SoftDelete(ctx context.Context, id string) error
+    SoftDeleteWithCascade(ctx context.Context, id string) error
     HardDelete(ctx context.Context, id string) error
 }
 ```
@@ -519,6 +520,108 @@ ORDER BY t.is_next DESC, t.priority DESC, t.deadline ASC, t.title ASC;
 **Dependencies:**
 - Service may need to inject other services for complex operations
 - SQL query uses WITH RECURSIVE (supported by SQLite, PostgreSQL)
+
+### Cascade Soft Delete Operations
+
+For hierarchical entities with nested children, services provide cascade soft delete functionality that recursively marks all descendants as deleted in a single atomic operation.
+
+**Implementation Pattern**:
+
+```go
+// SoftDeleteWithCascade soft deletes a project and all its descendants (child projects and tasks).
+// The operation is atomic - either all deletions succeed or none do.
+func (s *ProjectService) SoftDeleteWithCascade(ctx context.Context, id string) error {
+    // Step 1: Validate project exists
+    project, err := s.repo.GetProjectByID(ctx, id)
+    if err != nil {
+        if errors.Is(err, sql.ErrNoRows) {
+            return ErrProjectNotFound
+        }
+        return fmt.Errorf("get project %s: %w", id, err)
+    }
+    
+    // Step 2: Check if already deleted (idempotent)
+    if project.DeletedAt.Valid {
+        return nil // Already soft deleted, no-op
+    }
+
+    // Step 3: Execute in transaction for atomicity
+    if s.tm == nil {
+        return s.softDeleteRecursive(ctx, s.repo, id)
+    }
+
+    return s.tm.WithTransaction(ctx, func(ctx context.Context, tx db.Querier) error {
+        return s.softDeleteRecursive(ctx, tx, id)
+    })
+}
+```
+
+**Recursive Helper**:
+
+```go
+// softDeleteRecursive recursively soft deletes a project, its children, and their tasks.
+// Uses depth-first traversal: delete children first, then parent.
+func (s *ProjectService) softDeleteRecursive(ctx context.Context, q db.Querier, projectID string) error {
+    // Step 1: Get all direct children
+    children, err := q.ListProjectsByParent(ctx, sql.NullString{
+        String: projectID,
+        Valid:  true,
+    })
+    if err != nil {
+        return fmt.Errorf("list child projects of %s: %w", projectID, err)
+    }
+
+    // Step 2: Recursively delete each child (depth-first)
+    for _, child := range children {
+        if err := s.softDeleteRecursive(ctx, q, child.ID); err != nil {
+            return fmt.Errorf("cascade delete child %s: %w", child.ID, err)
+        }
+    }
+
+    // Step 3: Soft delete all tasks in current project
+    now := time.Now()
+    if err := q.SoftDeleteTasksByProject(ctx, db.SoftDeleteTasksByProjectParams{
+        DeletedAt: sql.NullTime{Time: now, Valid: true},
+        ProjectID: projectID,
+    }); err != nil {
+        return fmt.Errorf("soft delete tasks in project %s: %w", projectID, err)
+    }
+
+    // Step 4: Soft delete current project
+    if err := q.SoftDeleteProject(ctx, db.SoftDeleteProjectParams{
+        DeletedAt: sql.NullTime{Time: now, Valid: true},
+        ID:        projectID,
+    }); err != nil {
+        return fmt.Errorf("soft delete project %s: %w", projectID, err)
+    }
+
+    return nil
+}
+```
+
+**Key Design Decisions**:
+- **Depth-first traversal**: Children deleted before parent to maintain referential integrity
+- **Transaction support**: All operations in single transaction for atomicity
+- **Idempotency**: Safe to call multiple times (no error if already deleted)
+- **Error wrapping**: Each operation wrapped with context for debugging
+- **Same timestamp**: All deletions in cascade use same `now` value for consistent audit trail
+
+**SQL Query**:
+
+```sql
+-- name: SoftDeleteTasksByProject :exec
+-- Soft deletes all tasks within a project
+UPDATE tasks
+SET deleted_at = ?
+WHERE project_id = ? AND deleted_at IS NULL;
+```
+
+**When to Use**:
+- Deleting a parent project that has subprojects
+- Ensuring data consistency across hierarchy
+- When all descendant data should be marked as deleted together
+
+**See Also**: `internal/service/project_service.go` for reference implementation
 
 **Dependency Injection for Complex Services:**
 

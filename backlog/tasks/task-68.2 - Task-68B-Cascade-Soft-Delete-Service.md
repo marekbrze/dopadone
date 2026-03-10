@@ -1,11 +1,11 @@
 ---
 id: TASK-68.2
 title: 'Task-68B: Cascade Soft Delete Service'
-status: In Progress
+status: Done
 assignee:
   - '@opencode'
 created_date: '2026-03-09 19:04'
-updated_date: '2026-03-09 20:50'
+updated_date: '2026-03-10 06:35'
 labels: []
 dependencies: []
 references:
