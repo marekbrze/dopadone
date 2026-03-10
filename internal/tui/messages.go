@@ -95,3 +95,14 @@ type TaskStatusToggledMsg struct {
 	TaskIndex      int
 	Err            error
 }
+
+type DeleteSuccessMsg struct {
+	EntityName string
+	EntityType string
+}
+
+type DeleteErrorMsg struct {
+	Err        error
+	EntityName string
+	EntityType string
+}

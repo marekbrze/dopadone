@@ -53,9 +53,9 @@ git push origin v1.0.1
 
 Once the tag is pushed, GitHub Actions will automatically:
 
-1. **Build binaries** for all platforms:
+1. **Build binaries** using GoReleaser for all platforms:
    - Linux (amd64)
-   - macOS (amd64, arm64)
+   - macOS (arm64 only)
    - Windows (amd64)
 
 2. **Inject version information** into each binary:
@@ -63,19 +63,19 @@ Once the tag is pushed, GitHub Actions will automatically:
    - Git commit SHA
    - Build timestamp
 
-3. **Create distribution archives**:
+3. **Create distribution archives** using GoReleaser:
    - `.tar.gz` for Linux and macOS
    - `.zip` for Windows
 
-4. **Generate SHA256 checksums** for all archives
+4. **Generate SHA256 checksums** for all archives automatically
 
 5. **Create a GitHub Release** with:
    - All binary archives
-   - SHA256 checksum files
-   - Auto-generated release notes from commits
+   - SHA256 checksums file
+   - Auto-generated release notes from git history
    - Pre-release marker (if tag contains a hyphen)
 
-The entire process is defined in `.github/workflows/release.yml` and typically completes in 5-10 minutes.
+The entire process is managed by GoReleaser via `.github/workflows/release.yml` and typically completes in 2-3 minutes.
 
 ### 5. Verify the Release
 
@@ -138,6 +138,9 @@ make build-all
 
 # Build with version info
 VERSION=v1.0.0 make build-versioned
+
+# Test GoReleaser locally (no actual release)
+goreleaser release --snapshot --clean
 ```
 
 ## Rollback
@@ -258,11 +261,17 @@ The repository includes a comprehensive test suite for the installation script:
 1. Go to [Releases](https://github.com/marekbrze/dopadone/releases/latest)
 2. Download the archive for your platform:
    - Linux: `dopa-linux-amd64.tar.gz`
-   - macOS (Intel): `dopa-darwin-amd64.tar.gz`
    - macOS (Apple Silicon): `dopa-darwin-arm64.tar.gz`
    - Windows: `dopa-windows-amd64.zip`
 
-3. Extract and install:
+3. (Optional) Verify checksum:
+   ```bash
+   # Download checksums file from the release
+   # Then verify:
+   sha256sum -c dopa-*-checksums.txt
+   ```
+
+4. Extract and install:
 
 **Linux/macOS:**
 ```bash

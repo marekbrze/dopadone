@@ -169,6 +169,7 @@ type MockProjectService struct {
 	ListBySubareaRecursiveFunc  func(ctx context.Context, subareaID string) ([]domain.Project, error)
 	UpdateFunc                  func(ctx context.Context, params service.UpdateProjectParams) (*domain.Project, error)
 	SoftDeleteFunc              func(ctx context.Context, id string) error
+	SoftDeleteWithCascadeFunc   func(ctx context.Context, id string) error
 	HardDeleteFunc              func(ctx context.Context, id string) error
 	GetStatsFunc                func(ctx context.Context, id string) (*service.ProjectStats, error)
 	ValidateParentHierarchyFunc func(ctx context.Context, parentID string, projectID string) error

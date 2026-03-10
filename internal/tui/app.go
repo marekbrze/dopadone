@@ -9,6 +9,7 @@ import (
 	"github.com/marekbrze/dopadone/internal/domain"
 	"github.com/marekbrze/dopadone/internal/service"
 	"github.com/marekbrze/dopadone/internal/tui/areamodal"
+	"github.com/marekbrze/dopadone/internal/tui/confirmmodal"
 	"github.com/marekbrze/dopadone/internal/tui/help"
 	"github.com/marekbrze/dopadone/internal/tui/modal"
 	"github.com/marekbrze/dopadone/internal/tui/spacemenu"
@@ -70,6 +71,9 @@ type Model struct {
 
 	spaceMenu       *spacemenu.SpaceMenu
 	isSpaceMenuOpen bool
+
+	confirmModal       *confirmmodal.Modal
+	isConfirmModalOpen bool
 
 	toasts []toast.Toast
 }
@@ -405,11 +409,29 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "a":
 			return m.handleQuickAdd()
+		case "d":
+			if m.isConfirmModalOpen && m.confirmModal != nil {
+				var cmd tea.Cmd
+				m.confirmModal, cmd = m.confirmModal.Update(msg)
+				return m, cmd
+			}
+			return m, m.handleDeleteKey()
 		case "?":
 			return m.handleHelp(), nil
 		case "ctrl+a":
 			return m.handleOpenAreaModal()
 		}
+
+	case confirmmodal.ConfirmMsg:
+		return m.handleConfirmModalConfirm(msg)
+	case confirmmodal.CancelMsg:
+		m.handleConfirmModalCancel()
+		return m, nil
+	case DeleteSuccessMsg:
+		return m.handleDeleteSuccess(msg)
+	case DeleteErrorMsg:
+		m.handleDeleteError(msg)
+		return m, nil
 
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
@@ -423,6 +445,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		if m.spaceMenu != nil {
 			m.spaceMenu, _ = m.spaceMenu.Update(msg)
+		}
+		if m.confirmModal != nil {
+			m.confirmModal, _ = m.confirmModal.Update(msg)
 		}
 	}
 
@@ -544,6 +569,16 @@ func (m Model) View() string {
 			lipgloss.Center,
 			lipgloss.Center,
 			overlay(baseView, m.spaceMenu.View(), m.width, m.height),
+		)
+	}
+
+	if m.isConfirmModalOpen && m.confirmModal != nil {
+		return lipgloss.Place(
+			m.width,
+			m.height,
+			lipgloss.Center,
+			lipgloss.Center,
+			overlay(baseView, m.confirmModal.View(), m.width, m.height),
 		)
 	}
 

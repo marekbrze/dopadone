@@ -144,6 +144,10 @@ type ProjectServiceInterface interface {
 	// SoftDelete marks a project as deleted without removing it from the database.
 	SoftDelete(ctx context.Context, id string) error
 
+	// SoftDeleteWithCascade marks a project and all its child projects and tasks as deleted.
+	// This performs a cascading soft delete recursively down the project hierarchy.
+	SoftDeleteWithCascade(ctx context.Context, id string) error
+
 	// HardDelete permanently removes a project from the database.
 	// Returns an error if the project has non-deleted children.
 	HardDelete(ctx context.Context, id string) error

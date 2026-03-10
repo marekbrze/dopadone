@@ -212,3 +212,33 @@ func ToggleTaskStatusCmd(
 		}
 	}
 }
+
+func DeleteSubareaCmd(subareaSvc service.SubareaServiceInterface, id string, name string) tea.Cmd {
+	return func() tea.Msg {
+		err := subareaSvc.SoftDelete(context.Background(), id)
+		if err != nil {
+			return DeleteErrorMsg{Err: err, EntityType: "Subarea", EntityName: name}
+		}
+		return DeleteSuccessMsg{EntityType: "Subarea", EntityName: name}
+	}
+}
+
+func DeleteProjectCmd(projectSvc service.ProjectServiceInterface, id string, name string) tea.Cmd {
+	return func() tea.Msg {
+		err := projectSvc.SoftDeleteWithCascade(context.Background(), id)
+		if err != nil {
+			return DeleteErrorMsg{Err: err, EntityType: "Project", EntityName: name}
+		}
+		return DeleteSuccessMsg{EntityType: "Project", EntityName: name}
+	}
+}
+
+func DeleteTaskCmd(taskSvc service.TaskServiceInterface, id string, title string) tea.Cmd {
+	return func() tea.Msg {
+		err := taskSvc.SoftDelete(context.Background(), id)
+		if err != nil {
+			return DeleteErrorMsg{Err: err, EntityType: "Task", EntityName: title}
+		}
+		return DeleteSuccessMsg{EntityType: "Task", EntityName: title}
+	}
+}

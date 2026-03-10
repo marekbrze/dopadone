@@ -38,6 +38,6 @@ func (m *Model) RenderFooter() string {
 		Background(theme.Default.FooterBackground()).
 		Padding(0, 1)
 
-	shortcuts := "h/l: columns | j/k: navigate | a: add | x: toggle | ?: help | q: quit"
+	shortcuts := "h/l: columns | j/k: navigate | a: add | d: delete | ?: help | q: quit"
 	return footerStyle.Render(shortcuts)
 }

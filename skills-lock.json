@@ -66,6 +66,11 @@
       "sourceType": "github",
       "computedHash": "33d87d1f12d214506ad284c36c3c7bf315c6c7315268d603803d06bbb515c2b1"
     },
+    "github-actions-templates": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "computedHash": "8604814828637308a8cdc45c53e647f0029395328184937312330e4b8e8c587f"
+    },
     "golang-patterns": {
       "source": "affaan-m/everything-claude-code",
       "sourceType": "github",

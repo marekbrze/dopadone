@@ -604,7 +604,7 @@ case confirmmodal.CancelMsg:
     m.isConfirmModalOpen = false
 ```
 
-**Theme Integration**:
+ **Theme Integration**:
 - Border uses `theme.Default.Error` for destructive action warning
 - Title uses bold + error color
 - Hint text uses muted color for keyboard hints
@@ -615,6 +615,74 @@ case confirmmodal.CancelMsg:
 - Open trigger: `d` key in tree navigation (Task-68.3)
 - Close on: ConfirmMsg, CancelMsg
 - Use with: DeleteSubareaCmd, DeleteProjectCmd, DeleteTaskCmd
+
+**Supported Entity Types**:
+- Subareas: Deletes subarea and all its within it
+- Projects: Deletes project with CASCADE (soft-deletes child projects and tasks recursively)
+- Tasks: Deletes individual tasks (no cascade)
+
+**Cascade Delete Behavior**:
+When deleting a project that the service:
+   1. Marks project as soft-deleted
+   2. Finds all child projects and soft-deletes them
+   3. Finds all tasks belonging to those child projects and soft-deletes them
+   4. Updates parent references: remaining children now point to root projects
+   5. Saves deletion to database
+
+**Cascade Soft Delete Service**: Implemented in `internal/service/project_service.go`
+
+```go
+func (s *ProjectService) SoftDeleteWithCascade(ctx context.Context, projectID string) error {
+    tx, err := s.db.Begin()
+    if err != nil {
+        tx.Rollback()
+        return nil, domain.NewDatabaseError("SoftDeleteWithCascade", err)
+    }
+    
+    // Mark parent as soft-deleted
+    err := s.db.MarkParentSoftDeleted(ctx, projectID)
+    if err != nil {
+        return nil, domain.NewDatabaseError("MarkParentSoftDeleted", err)
+    }
+    
+    // Find and delete child projects recursively
+    childProjects, err := s.db.GetProjectsByParentID(ctx, projectID)
+    if err != nil {
+        return nil, domain.NewDatabaseError("GetProjectsByParentID", err)
+    }
+    
+    for _, childProject := range childProjects {
+        if err := s.softDeleteWithCascade(ctx, childProject.ID); err != nil {
+            return err
+        }
+    }
+    
+    // Find and delete tasks recursively
+    childTasks, err := s.db.GetTasksByProjectID(ctx, projectID)
+    if err != nil {
+        return nil, domain.NewDatabaseError("GetTasksByProjectID", err)
+    }
+    
+    for _, childTask := range childTasks {
+        if err := s.taskSvc.SoftDelete(ctx, childTask.ID); err != nil {
+            return err
+        }
+    }
+    
+    // Mark parent as soft-deleted
+    err := s.db.MarkParentSoftDeleted(ctx, projectID)
+    if err != nil {
+        return nil, domain.NewDatabaseError("MarkParentSoftDeleted", err)
+    }
+    
+    return nil
+}
+```
+
+This ensures:
+- **Referential integrity**: No orphaned tasks or projects remain in the database
+- **Consistent UX**: Users see confirmation before deletion
+- **Safety**: Accidental deletion prevented by requiring explicit confirmation
 
 ## Keyboard Shortcuts
 
@@ -637,6 +705,7 @@ case confirmmodal.CancelMsg:
 | `Enter`, `Space` | Toggle Expand/Collapse | Expand or collapse project tree nodes |
 | `a` | Quick Add | Open modal to create new item |
 | `x` | Toggle Task Completion | Mark task as done/undone (Tasks column only) |
+| `d` | Delete | Delete selected item (shows confirmation modal) |
 | `Tab`, `Shift+Tab` | Navigate Modal | In quick-add modal: cycle between input and checkbox (when visible) |
 | `Space` | Toggle Checkbox | In quick-add modal: toggle checkbox when focused |
 

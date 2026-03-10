@@ -15,7 +15,7 @@ Dopadone uses GitHub Actions for automated building, testing, and releasing. The
 
 ### Release Workflow (`.github/workflows/release.yml`)
 
-The release workflow is the main CI/CD pipeline that handles building and publishing releases.
+The release workflow uses **GoReleaser** to automate building and publishing releases.
 
 #### Triggers
 
@@ -33,59 +33,35 @@ The workflow runs when:
 
 #### Build Matrix
 
-The workflow builds binaries for all supported platforms in parallel:
+GoReleaser builds binaries for all supported platforms:
 
-| OS       | Architecture | Runner          | Binary Extension |
-|----------|--------------|-----------------|------------------|
-| Linux    | amd64        | ubuntu-latest   | (none)           |
-| macOS    | amd64        | macos-13        | (none)           |
-| macOS    | arm64        | macos-latest    | (none)           |
-| Windows  | amd64        | windows-latest  | .exe             |
+| OS       | Architecture | Binary Extension |
+|----------|--------------|------------------|
+| Linux    | amd64        | (none)           |
+| macOS    | arm64        | (none)           |
+| Windows  | amd64        | .exe             |
 
 #### Build Process
 
-For each platform, the workflow:
+The workflow uses GoReleaser for automated release management:
 
 1. **Checks out the code** with full git history
 2. **Sets up Go 1.21** with build caching
-3. **Extracts version information**:
-   - Version: from git tag (e.g., `v1.0.0`)
-   - Git commit: current commit SHA
-   - Build date: UTC timestamp
-
-4. **Builds the binary** with:
-   ```bash
-   CGO_ENABLED=0 \
-   GOOS=$os GOARCH=$arch \
-   go build -trimpath \
-     -ldflags "-s -w \
-       -X github.com/marekbrze/dopadone/internal/version.Version=$version \
-       -X github.com/marekbrze/dopadone/internal/version.GitCommit=$commit \
-       -X github.com/marekbrze/dopadone/internal/version.BuildDate=$date" \
-     -o dopa-$os-$arch \
-     ./cmd/dopa
-   ```
-
-   Build flags explained:
-   - `CGO_ENABLED=0`: Pure Go build (no C dependencies)
-   - `-trimpath`: Remove local paths for reproducible builds
-   - `-s -w`: Strip debug info and symbol table (smaller binaries)
-   - `-X`: Inject version variables at compile time
-
-5. **Creates distribution archives**:
-   - **Unix** (Linux/macOS): `tar.gz` format
-   - **Windows**: `zip` format
-
-6. **Generates SHA256 checksums**:
-   - **Linux**: Uses `sha256sum`
-   - **macOS**: Uses `shasum -a 256`
-   - **Windows**: Uses PowerShell `Get-FileHash`
-
-7. **Uploads artifacts** for the release job
+3. **Runs GoReleaser** which automatically:
+   - Extracts version from git tag (e.g., `v1.0.0`)
+   - Builds binaries with ldflags for version injection
+   - Creates archives (`.tar.gz` for Unix, `.zip` for Windows)
+   - Generates SHA256 checksums
+   - Creates GitHub Release with auto-generated notes
+   - Handles pre-release detection (tags with hyphens)
 
 #### Release Creation
 
-After all builds complete, the release job:
+After GoReleaser completes, build, a GitHub Release is created with:
+- All binary archives (`.tar.gz` and `.zip`)
+- Single checksums file (`dopa-VERSION-checksums.txt`)
+- Auto-generated release notes from git history
+- Pre-release flag (if tag contains a hyphen)
 
 1. **Downloads all build artifacts** from the build matrix
 2. **Prepares release assets** by collecting all archives and checksums
