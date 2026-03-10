@@ -1,3 +1,0 @@
-2f058fbd518d28e5bb9900836ad6382329f5b424e3f30aa484c74815166cc87e  dopadone-darwin-arm64.tar.gz
-1c0fde6b6fac93d871b9c494f293e912d74d01bd794773b9d763040e4d6a59d8  dopadone-linux-amd64.tar.gz
-571ee6763a6285f5d72582a9dd2f69e9a2924c7bf07d20f974eeec92a2f08e0c  dopadone-windows-amd64.zip
