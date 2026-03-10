@@ -1570,6 +1570,107 @@ func TestTaskLoadingError(t *testing.T) {
 }
 ```
 
+### Handler Extraction Pattern
+
+To maintain code quality and reduce cyclomatic complexity, the TUI uses a handler extraction pattern that groups related message types into dedicated dispatcher functions.
+
+**Problem**: The main `Update()` function can quickly become complex with many message type cases, leading to high cyclomatic complexity scores.
+
+**Solution**: Extract related handlers into category-specific dispatcher functions:
+
+```go
+func (m *Model) handleAreaMessages(msg interface{}) (tea.Model, tea.Cmd, bool) {
+    switch msg := msg.(type) {
+    case areamodal.SubmitMsg:
+        model, cmd := m.handleAreaModalSubmit(msg)
+        return model, cmd, true
+    case areamodal.UpdateMsg:
+        model, cmd := m.handleAreaModalUpdate(msg)
+        return model, cmd, true
+    case areamodal.DeleteMsg:
+        model, cmd := m.handleAreaModalDelete(msg)
+        return model, cmd, true
+    case areamodal.CloseMsg:
+        model, cmd := m.handleAreaModalClose()
+        return model, cmd, true
+    case AreaCreatedMsg:
+        model, cmd := m.handleAreaCreated(msg)
+        return model, cmd, true
+    case AreaUpdatedMsg:
+        model, cmd := m.handleAreaUpdated(msg)
+        return model, cmd, true
+    case AreaDeletedMsg:
+        model, cmd := m.handleAreaDeleted(msg)
+        return model, cmd, true
+    case AreasReorderedMsg:
+        model, cmd := m.handleAreasReordered(msg)
+        return model, cmd, true
+    case AreaStatsLoadedMsg:
+        model, cmd := m.handleAreaStatsLoaded(msg)
+        return model, cmd, true
+    case LoadAreaStatsMsg:
+        model, cmd := m.handleLoadAreaStats(msg)
+        return model, cmd, true
+    }
+    return m, nil, false
+}
+```
+
+**Integration in Update()**:
+
+```go
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+    if model, cmd, handled := m.handleAreaMessages(msg); handled {
+        return model, cmd
+    }
+
+    switch msg := msg.(type) {
+    case spinner.TickMsg:
+        return m.handleSpinnerTick(msg)
+    // ... remaining cases
+    }
+}
+```
+
+**Benefits**:
+- Reduces cyclomatic complexity of main Update function
+- Groups related message handlers logically
+- Maintains single responsibility per handler file
+- Easier to navigate and maintain
+
+**Handler Files**:
+- `area_handlers.go`: Area and areamodal message handlers + dispatcher
+- `handlers.go`: Core message handlers (modal close, help close)
+- `data_loader_handlers.go`: Data loading message handlers
+- `modal_handlers.go`: Modal submit and form handlers
+- `task_handlers.go`: Task-related message handlers
+
+**Inline Handler Extraction**:
+
+Simple inline handlers (close messages) are extracted to dedicated methods:
+
+```go
+func (m *Model) handleModalClose() (tea.Model, tea.Cmd) {
+    m.isModalOpen = false
+    m.modal = nil
+    return m, nil
+}
+
+func (m *Model) handleAreaModalClose() (tea.Model, tea.Cmd) {
+    m.isAreaModalOpen = false
+    m.areaModal = nil
+    return m, nil
+}
+
+func (m *Model) handleHelpClose() (tea.Model, tea.Cmd) {
+    m.isHelpOpen = false
+    m.helpModal = nil
+    return m, nil
+}
+```
+
+**Quality Threshold**: Maintain cyclomatic complexity ≤30 for all functions as enforced by `gocyclo -over 30 ./internal/tui/`.
+
 ## Performance Considerations
 
 ### Efficient Rendering

@@ -98,3 +98,44 @@ func (m *Model) handleAreasReordered(msg AreasReorderedMsg) (tea.Model, tea.Cmd)
 	m.isLoadingAreas = true
 	return m, LoadAreasCmd(m.areaSvc)
 }
+
+func (m *Model) handleAreaMessages(msg interface{}) (tea.Model, tea.Cmd, bool) {
+	switch msg := msg.(type) {
+	case areamodal.SubmitMsg:
+		model, cmd := m.handleAreaModalSubmit(msg)
+		return model, cmd, true
+	case areamodal.UpdateMsg:
+		model, cmd := m.handleAreaModalUpdate(msg)
+		return model, cmd, true
+	case areamodal.DeleteMsg:
+		model, cmd := m.handleAreaModalDelete(msg)
+		return model, cmd, true
+	case areamodal.ReorderMsg:
+		model, cmd := m.handleAreaModalReorder(msg)
+		return model, cmd, true
+	case areamodal.CloseMsg:
+		model, cmd := m.handleAreaModalClose()
+		return model, cmd, true
+	case areamodal.LoadStatsMsg:
+		return m, LoadAreaStatsCmd(m.areaSvc, msg.AreaID), true
+	case AreaCreatedMsg:
+		model, cmd := m.handleAreaCreated(msg)
+		return model, cmd, true
+	case AreaUpdatedMsg:
+		model, cmd := m.handleAreaUpdated(msg)
+		return model, cmd, true
+	case AreaDeletedMsg:
+		model, cmd := m.handleAreaDeleted(msg)
+		return model, cmd, true
+	case AreasReorderedMsg:
+		model, cmd := m.handleAreasReordered(msg)
+		return model, cmd, true
+	case AreaStatsLoadedMsg:
+		model, cmd := m.handleAreaStatsLoaded(msg)
+		return model, cmd, true
+	case LoadAreaStatsMsg:
+		model, cmd := m.handleLoadAreaStats(msg)
+		return model, cmd, true
+	}
+	return m, nil, false
+}

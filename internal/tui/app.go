@@ -152,6 +152,10 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if model, cmd, handled := m.handleAreaMessages(msg); handled {
+		return model, cmd
+	}
+
 	switch msg := msg.(type) {
 	case spinner.TickMsg:
 		return m.handleSpinnerTick(msg)
@@ -172,9 +176,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.handleModalSubmit(msg)
 
 	case modal.CloseMsg:
-		m.isModalOpen = false
-		m.modal = nil
-		return m, nil
+		return m.handleModalClose()
 
 	case SubareaCreatedMsg:
 		return m.handleSubareaCreated(msg)
@@ -188,41 +190,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case TaskStatusToggledMsg:
 		return m.handleTaskStatusToggled(msg)
 
-	case areamodal.SubmitMsg:
-		return m.handleAreaModalSubmit(msg)
-	case areamodal.UpdateMsg:
-		return m.handleAreaModalUpdate(msg)
-	case areamodal.DeleteMsg:
-		return m.handleAreaModalDelete(msg)
-	case areamodal.ReorderMsg:
-		return m.handleAreaModalReorder(msg)
-	case areamodal.CloseMsg:
-		m.isAreaModalOpen = false
-		m.areaModal = nil
-		return m, nil
-	case areamodal.LoadStatsMsg:
-		return m, LoadAreaStatsCmd(m.areaSvc, msg.AreaID)
-
-	case AreaCreatedMsg:
-		return m.handleAreaCreated(msg)
-	case AreaUpdatedMsg:
-		return m.handleAreaUpdated(msg)
-	case AreaDeletedMsg:
-		return m.handleAreaDeleted(msg)
-	case AreasReorderedMsg:
-		return m.handleAreasReordered(msg)
-	case AreaStatsLoadedMsg:
-		return m.handleAreaStatsLoaded(msg)
-	case LoadAreaStatsMsg:
-		return m.handleLoadAreaStats(msg)
-
 	case ToastTickMsg:
 		return m.handleToastTick()
 
 	case help.CloseMsg:
-		m.isHelpOpen = false
-		m.helpModal = nil
-		return m, nil
+		return m.handleHelpClose()
 
 	case spacemenu.CloseMsg:
 		return m.handleSpaceMenuClose()
@@ -271,7 +243,7 @@ func (m *Model) toggleTaskCompletion() tea.Cmd {
 	return ToggleTaskStatusCmd(m.taskSvc, task.ID, newStatus, originalStatus, m.selectedTaskIndex)
 }
 
-func (m Model) handleSpaceMenuClose() (tea.Model, tea.Cmd) {
+func (m *Model) handleSpaceMenuClose() (tea.Model, tea.Cmd) {
 	m.isSpaceMenuOpen = false
 	m.spaceMenu = nil
 	return m, nil

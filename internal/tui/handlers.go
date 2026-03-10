@@ -181,3 +181,21 @@ func (m *Model) removeExpiredToasts() {
 	}
 	m.toasts = validToasts
 }
+
+func (m *Model) handleModalClose() (tea.Model, tea.Cmd) {
+	m.isModalOpen = false
+	m.modal = nil
+	return m, nil
+}
+
+func (m *Model) handleAreaModalClose() (tea.Model, tea.Cmd) {
+	m.isAreaModalOpen = false
+	m.areaModal = nil
+	return m, nil
+}
+
+func (m *Model) handleHelpClose() (tea.Model, tea.Cmd) {
+	m.isHelpOpen = false
+	m.helpModal = nil
+	return m, nil
+}
