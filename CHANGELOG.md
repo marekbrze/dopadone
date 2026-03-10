@@ -9,6 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Delete Functionality in TUI (Task-68)
+
+Comprehensive delete functionality for the Terminal User Interface with confirmation flow:
+
+- **Delete Key Binding**: Press `d` on selected item to open confirmation modal
+- **Confirmation Modal**: Reusable `confirmmodal` component with y/n/escape handling
+  - Displays entity type and item name
+  - Theme-aware warning styling (red border for destructive actions)
+  - Long names truncated with ellipsis (max 40 chars)
+- **Cascade Soft Delete for Projects**: `SoftDeleteWithCascade` service method
+  - Recursively soft deletes all child projects
+  - Soft deletes all tasks within deleted projects
+  - Transaction-wrapped for atomicity
+- **Entity Support**: Subareas, Projects (with cascade), Tasks
+- **Toast Notifications**: Success/error feedback after deletion
+- **Column Refresh**: Automatic data reload after successful delete
+- **No-op on Empty Columns**: Safe behavior when no item selected
+- **Footer Update**: Shows `d: delete` shortcut
+
+**Implementation Files**:
+- `internal/tui/confirmmodal/` - Confirmation modal component
+- `internal/tui/delete_handlers.go` - Delete key and message handlers
+- `internal/service/project_service.go` - Cascade soft delete method
+- `internal/tui/renderer_footer.go` - Updated footer with delete shortcut
+
 ### Changed
 
 ### Deprecated

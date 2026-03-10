@@ -562,7 +562,7 @@ type TaskGroup struct {
 
 Persistent footer showing common keyboard shortcuts.
 
-**Display**: `h/l: columns | j/k: nav | a: add | x: toggle | ?: help | q: quit`
+**Display**: `h/l: columns | j/k: navigate | a: add | d: delete | ?: help | q: quit`
 
 **Implementation**: Footer rendered in main `View()` function
 

@@ -1,11 +1,11 @@
 ---
 id: TASK-68
 title: 'Add option to delete subareas, projects and tasks in tui'
-status: In Progress
+status: Done
 assignee:
   - '@opencode'
 created_date: '2026-03-09 18:15'
-updated_date: '2026-03-10 07:31'
+updated_date: '2026-03-10 11:16'
 labels: []
 milestone: m-2
 dependencies: []
