@@ -1,11 +1,11 @@
 ---
 id: TASK-71
 title: Fix lint errors
-status: In Progress
+status: Done
 assignee:
   - '@opencode'
 created_date: '2026-03-10 12:03'
-updated_date: '2026-03-10 12:12'
+updated_date: '2026-03-10 21:14'
 labels: []
 dependencies: []
 ---

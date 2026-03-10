@@ -411,4 +411,4 @@ defer func() { _ = rows.Close() }()
 ---
 
 **Last Updated**: 2026-03-10  
-**Related**: TASK-75 (errcheck fixes), TASK-73 (gocyclo), TASK-74 (TUI complexity), TASK-78 (goconst string literals)
+**Related**: TASK-71 (lint error fixes - complete), TASK-75 (errcheck fixes), TASK-73 (gocyclo), TASK-74 (TUI complexity), TASK-78 (goconst string literals), TASK-79 (delete helper extraction)
