@@ -6,6 +6,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/marekbrze/dopadone/internal/tui/internal/constants"
 )
 
 type CloseMsg struct{}
@@ -41,7 +42,7 @@ func (sm *SpaceMenu) Update(msg tea.Msg) (*SpaceMenu, tea.Cmd) {
 
 	case tea.KeyMsg:
 		switch msg.String() {
-		case " ", "esc", "q":
+		case " ", constants.KeyEsc, "q":
 			if sm.state == StateMain {
 				return sm, func() tea.Msg { return CloseMsg{} }
 			}

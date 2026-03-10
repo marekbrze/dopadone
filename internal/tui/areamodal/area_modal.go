@@ -8,6 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/marekbrze/dopadone/internal/domain"
+	"github.com/marekbrze/dopadone/internal/tui/internal/constants"
 	"github.com/marekbrze/dopadone/internal/tui/theme"
 )
 
@@ -253,13 +254,13 @@ func (m *Modal) handleListKeys(msg tea.KeyMsg) (*Modal, tea.Cmd) {
 		m.mode = ModeReorder
 		m.reorderChanged = false
 		return m, nil
-	case "enter":
+	case constants.KeyEnter:
 		if len(m.areas) > 0 {
 			return m, func() tea.Msg {
 				return CloseMsg{}
 			}
 		}
-	case "esc":
+	case constants.KeyEsc:
 		return m, func() tea.Msg {
 			return CloseMsg{}
 		}
@@ -275,7 +276,7 @@ func (m *Modal) handleFormKeys(msg tea.KeyMsg) (*Modal, tea.Cmd) {
 	case "shift+tab":
 		m.colorIndex = (m.colorIndex - 1 + len(PredefinedColors)) % len(PredefinedColors)
 		return m, nil
-	case "enter":
+	case constants.KeyEnter:
 		name := strings.TrimSpace(m.input.Value())
 		if name == "" {
 			m.errorMsg = "Name is required"
@@ -291,7 +292,7 @@ func (m *Modal) handleFormKeys(msg tea.KeyMsg) (*Modal, tea.Cmd) {
 				return UpdateMsg{ID: m.editAreaID, Name: name, Color: color}
 			}
 		}
-	case "esc":
+	case constants.KeyEsc:
 		m.mode = ModeList
 		m.errorMsg = ""
 		return m, nil
@@ -311,7 +312,7 @@ func (m *Modal) handleDeleteConfirmKeys(msg tea.KeyMsg) (*Modal, tea.Cmd) {
 		return m, func() tea.Msg {
 			return DeleteMsg{ID: m.areas[m.selectedIndex].ID, Hard: true}
 		}
-	case "esc":
+	case constants.KeyEsc:
 		m.mode = ModeList
 		return m, nil
 	}
@@ -332,7 +333,7 @@ func (m *Modal) handleReorderKeys(msg tea.KeyMsg) (*Modal, tea.Cmd) {
 			m.selectedIndex++
 			m.reorderChanged = true
 		}
-	case "enter":
+	case constants.KeyEnter:
 		if m.reorderChanged {
 			ids := make([]string, len(m.areas))
 			for i, a := range m.areas {
@@ -344,7 +345,7 @@ func (m *Modal) handleReorderKeys(msg tea.KeyMsg) (*Modal, tea.Cmd) {
 		}
 		m.mode = ModeList
 		return m, nil
-	case "esc":
+	case constants.KeyEsc:
 		m.mode = ModeList
 		return m, nil
 	}

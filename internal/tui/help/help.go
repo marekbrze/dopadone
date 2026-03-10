@@ -6,6 +6,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/marekbrze/dopadone/internal/tui/internal/constants"
 )
 
 type Shortcut struct {
@@ -45,7 +46,7 @@ func (h *HelpModal) Update(msg tea.Msg) (*HelpModal, tea.Cmd) {
 
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "?", "esc", "q":
+		case "?", constants.KeyEsc, "q":
 			return h, func() tea.Msg { return CloseMsg{} }
 		}
 	}

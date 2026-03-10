@@ -44,7 +44,7 @@ func (r *Renderer) Render(root *TreeNode, selectedID string) string {
 		return ""
 	}
 
-	if root.Name == "root" && root.ID == "" {
+	if root.Name == RootNodeName && root.ID == "" {
 		var lines []string
 		for i, child := range root.Children {
 			isLast := i == len(root.Children)-1
@@ -84,7 +84,7 @@ func (r *Renderer) buildLine(node *TreeNode, levels []bool, isLast bool, selecte
 		prefix.WriteString(r.style.Indent)
 	}
 
-	if !node.IsRoot() || (node.Name != "root" || node.ID != "") {
+	if !node.IsRoot() || (node.Name != RootNodeName || node.ID != "") {
 		prefix.WriteString(r.style.Indent)
 	}
 

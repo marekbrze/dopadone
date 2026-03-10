@@ -57,7 +57,7 @@ func (b *Builder) BuildFromProjects(projects []domain.Project) *TreeNode {
 		})
 	}
 
-	dummyRoot := NewTreeNode("", "root", nil)
+	dummyRoot := NewTreeNode("", RootNodeName, nil)
 	for _, root := range roots {
 		b.attachChildren(root, childrenMap)
 		dummyRoot.AddChild(root)

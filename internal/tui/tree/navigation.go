@@ -45,7 +45,7 @@ func GetAllVisibleNodes(root *TreeNode) []*TreeNode {
 	}
 
 	var nodes []*TreeNode
-	collectVisibleNodes(root, &nodes, root.Name == "root" && root.ID == "")
+	collectVisibleNodes(root, &nodes, root.Name == RootNodeName && root.ID == "")
 	return nodes
 }
 

@@ -26,12 +26,5 @@ const (
 )
 
 const (
-	KeyCtrlC = "ctrl+c"
-	KeyEnter = "enter"
-	KeyEsc   = "esc"
-	KeyQ     = "q"
-)
-
-const (
 	EntityTask = "Task"
 )

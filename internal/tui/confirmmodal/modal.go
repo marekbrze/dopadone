@@ -5,6 +5,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/marekbrze/dopadone/internal/tui/internal/constants"
 )
 
 type EntityType string
@@ -63,7 +64,7 @@ func (m *Modal) Update(msg tea.Msg) (*Modal, tea.Cmd) {
 				}
 			}
 
-		case "n", "esc":
+		case "n", constants.KeyEsc:
 			return m, func() tea.Msg {
 				return CancelMsg{}
 			}

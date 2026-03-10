@@ -14,6 +14,8 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/marekbrze/dopadone/internal/constants"
 )
 
 var (
@@ -88,7 +90,7 @@ func getPlatformString() string {
 
 func getAssetName() string {
 	platform := getPlatformString()
-	if runtime.GOOS == "windows" {
+	if runtime.GOOS == constants.OSWindows {
 		return fmt.Sprintf("dopa-%s.zip", platform)
 	}
 	return fmt.Sprintf("dopa-%s.tar.gz", platform)
@@ -128,7 +130,7 @@ func downloadFile(url, dest string) error {
 
 func extractBinary(archivePath, destDir string) (string, error) {
 	binaryName := "dopa"
-	if runtime.GOOS == "windows" {
+	if runtime.GOOS == constants.OSWindows {
 		binaryName = "dopa.exe"
 	}
 
@@ -214,7 +216,7 @@ func getCurrentBinaryPath() (string, error) {
 }
 
 func replaceBinary(newBinary, currentBinary string) error {
-	if runtime.GOOS == "windows" {
+	if runtime.GOOS == constants.OSWindows {
 		oldPath := currentBinary + ".old"
 		if err := os.Rename(currentBinary, oldPath); err != nil {
 			return fmt.Errorf("failed to rename old binary: %w", err)

@@ -137,6 +137,62 @@ See [CLI Layer Documentation](architecture/06-cli-layer.md) for detailed example
 
 **Rule**: Extract repeated strings (3+ occurrences) as constants.
 
+#### Available String Constants
+
+The project defines string constants in centralized locations:
+
+**Key String Constants** (`internal/tui/internal/constants/keys.go`):
+```go
+const (
+    KeyCtrlC = "ctrl+c"
+    KeyEnter = "enter"
+    KeyEsc   = "esc"
+    KeyQ     = "q"
+)
+```
+
+**TUI Key Constants** (`internal/tui/keyboard_handler.go`):
+```go
+const (
+    KeySpace        = " "
+    KeyH            = "h"
+    KeyL            = "l"
+    KeyLeft         = "left"
+    KeyRight        = "right"
+    KeyTab          = "tab"
+    KeyJ            = "j"
+    KeyK            = "k"
+    KeyDown         = "down"
+    KeyUp           = "up"
+    KeyX            = "x"
+    KeyA            = "a"
+    KeyD            = "d"
+    KeyHelp         = "?"
+    KeyCtrlA        = "ctrl+a"
+    KeyBracketOpen  = "["
+    KeyBracketClose = "]"
+    KeyQ            = "q"
+    KeyCtrlC        = "ctrl+c"
+    KeyEnter        = "enter"
+)
+```
+
+**Tree Node Constants** (`internal/tui/tree/constants.go`):
+```go
+const (
+    RootNodeName = "root"
+)
+```
+
+**OS Constants** (`internal/constants/os.go`):
+```go
+const (
+    OSWindows = "windows"
+)
+```
+
+#### Usage Pattern
+
 ```go
 // ❌ BAD: Repeated strings
 func processStatus(status string) {
@@ -355,4 +411,4 @@ defer func() { _ = rows.Close() }()
 ---
 
 **Last Updated**: 2026-03-10  
-**Related**: TASK-75 (errcheck fixes), TASK-73 (gocyclo), TASK-74 (TUI complexity)
+**Related**: TASK-75 (errcheck fixes), TASK-73 (gocyclo), TASK-74 (TUI complexity), TASK-78 (goconst string literals)

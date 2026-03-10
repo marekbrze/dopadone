@@ -23,6 +23,9 @@ const (
 	KeyCtrlA        = "ctrl+a"
 	KeyBracketOpen  = "["
 	KeyBracketClose = "]"
+	KeyQ            = "q"
+	KeyCtrlC        = "ctrl+c"
+	KeyEnter        = "enter"
 )
 
 func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
