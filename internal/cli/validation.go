@@ -1,9 +1,11 @@
 package cli
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/marekbrze/dopadone/internal/domain"
+	"github.com/spf13/cobra"
 )
 
 func ParseProjectStatus(s string) (domain.ProjectStatus, error) {
@@ -118,34 +120,43 @@ func ValidateMutuallyExclusiveFlags(flagA, flagB bool, flagNameA, flagNameB stri
 	return nil
 }
 
-func ValidateUpdateFlags(cmd *cobra.Command) error {
-	hasChanges := false
-	flags := []string{
-		taskUpdateTitle,
-		taskUpdateDescription,
-		taskUpdateStatus,
-		taskUpdatePriority,
-		taskUpdateStartDate,
-		taskUpdateDeadline,
-		taskUpdateContext,
-	}
-	for _, f := range flags {
-		if f != "" {
-			hasChanges = true
-			break
-		}
-	}
+type UpdateFlagValues struct {
+	Title       string
+	Description string
+	Status      string
+	Priority    string
+	StartDate   string
+	Deadline    string
+	Context     string
+	Duration    int
+	Next        bool
+	NoNext      bool
+}
+
+func ValidateUpdateFlags(cmd *cobra.Command, flags UpdateFlagValues) error {
+	hasChanges := flags.Title != "" ||
+		flags.Description != "" ||
+		flags.Status != "" ||
+		flags.Priority != "" ||
+		flags.StartDate != "" ||
+		flags.Deadline != "" ||
+		flags.Context != ""
+
 	if !hasChanges && cmd.Flags().Changed("duration") {
 		hasChanges = true
 	}
-	if !hasChanges && (taskUpdateNext || taskUpdateNoNext) {
+
+	if !hasChanges && (flags.Next || flags.NoNext) {
 		hasChanges = true
 	}
+
 	if !hasChanges {
 		return NewValidationError("", "at least one field must be provided to update")
 	}
-	if taskUpdateNext && taskUpdateNoNext {
+
+	if flags.Next && flags.NoNext {
 		return NewValidationError("", "cannot specify both --next and --no-next, choose one")
 	}
+
 	return nil
 }

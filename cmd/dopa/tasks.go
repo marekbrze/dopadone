@@ -422,7 +422,11 @@ func runTasksUpdate(cmd *cobra.Command, args []string) {
 		cli.ExitWithError(cli.WrapError(err, "failed to get task"))
 	}
 
-	params := prepareTaskUpdateParams(cmd, existing)
+	params, err := prepareTaskUpdateParams(cmd, existing)
+	if err != nil {
+		cli.ExitWithError(err)
+	}
+
 	task, err := services.Tasks.Update(ctx, params)
 	if err != nil {
 		cli.ExitWithError(cli.WrapError(err, "failed to update task"))
@@ -506,4 +510,108 @@ func truncate(s string, maxLen int) string {
 		return s
 	}
 	return s[:maxLen-3] + "..."
+}
+
+func validateUpdateFlags(cmd *cobra.Command) error {
+	return cli.ValidateUpdateFlags(cmd, cli.UpdateFlagValues{
+		Title:       taskUpdateTitle,
+		Description: taskUpdateDescription,
+		Status:      taskUpdateStatus,
+		Priority:    taskUpdatePriority,
+		StartDate:   taskUpdateStartDate,
+		Deadline:    taskUpdateDeadline,
+		Context:     taskUpdateContext,
+		Duration:    taskUpdateDuration,
+		Next:        taskUpdateNext,
+		NoNext:      taskUpdateNoNext,
+	})
+}
+
+func prepareTaskUpdateParams(cmd *cobra.Command, existing *domain.Task) (service.UpdateTaskParams, error) {
+	params := service.UpdateTaskParams{
+		ID:                existing.ID,
+		Title:             existing.Title,
+		Description:       existing.Description,
+		StartDate:         existing.StartDate,
+		Deadline:          existing.Deadline,
+		Priority:          existing.Priority,
+		Context:           existing.Context,
+		EstimatedDuration: existing.EstimatedDuration,
+		Status:            existing.Status,
+		IsNext:            existing.IsNext,
+	}
+
+	if taskUpdateTitle != "" {
+		params.Title = taskUpdateTitle
+	}
+	if taskUpdateDescription != "" {
+		params.Description = taskUpdateDescription
+	}
+	if taskUpdateStatus != "" {
+		status, err := cli.ParseTaskStatus(taskUpdateStatus)
+		if err != nil {
+			return service.UpdateTaskParams{}, err
+		}
+		params.Status = status
+	}
+	if taskUpdatePriority != "" {
+		priority, err := cli.ParseTaskPriority(taskUpdatePriority)
+		if err != nil {
+			return service.UpdateTaskParams{}, err
+		}
+		params.Priority = priority
+	}
+	if taskUpdateStartDate != "" || taskUpdateDeadline != "" {
+		startDate, deadline, err := cli.ParseDate(taskUpdateStartDate, taskUpdateDeadline)
+		if err != nil {
+			return service.UpdateTaskParams{}, err
+		}
+		if startDate != nil {
+			params.StartDate = startDate
+		}
+		if deadline != nil {
+			params.Deadline = deadline
+		}
+	}
+	if taskUpdateContext != "" {
+		params.Context = taskUpdateContext
+	}
+	if cmd.Flags().Changed("duration") {
+		if taskUpdateDuration > 0 {
+			duration, err := cli.ParseTaskDuration(taskUpdateDuration)
+			if err != nil {
+				return service.UpdateTaskParams{}, err
+			}
+			params.EstimatedDuration = duration
+		} else {
+			params.EstimatedDuration = 0
+		}
+	}
+	if taskUpdateNext {
+		params.IsNext = true
+	}
+	if taskUpdateNoNext {
+		params.IsNext = false
+	}
+
+	return params, nil
+}
+
+func printTaskUpdateSuccess(task *domain.Task) {
+	formatter, err := GetFormatter()
+	if err != nil {
+		cli.ExitWithError(err)
+	}
+
+	if jsonFormatter, ok := formatter.(*output.JSONFormatter); ok {
+		if err := jsonFormatter.PrintObject(domainTaskToMap(*task)); err != nil {
+			cli.ExitWithError(cli.WrapError(err, "failed to output task"))
+		}
+	} else {
+		nextFlag := ""
+		if task.IsNext {
+			nextFlag = " [NEXT]"
+		}
+		output.PrintSuccess(fmt.Sprintf("Task updated: %s%s", task.ID, nextFlag))
+	}
 }

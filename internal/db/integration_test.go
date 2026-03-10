@@ -375,7 +375,11 @@ func TestIndexPerformance(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to get query plan: %v", err)
 		}
-		defer rows.Close()
+		defer func() {
+			if err := rows.Close(); err != nil {
+				t.Logf("failed to close rows: %v", err)
+			}
+		}()
 
 		var planLines []string
 		for rows.Next() {
@@ -406,7 +410,11 @@ func TestIndexPerformance(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to get query plan: %v", err)
 		}
-		defer rows.Close()
+		defer func() {
+			if err := rows.Close(); err != nil {
+				t.Logf("failed to close rows: %v", err)
+			}
+		}()
 
 		var planLines []string
 		for rows.Next() {
@@ -434,7 +442,11 @@ func TestIndexPerformance(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to get query plan: %v", err)
 		}
-		defer rows.Close()
+		defer func() {
+			if err := rows.Close(); err != nil {
+				t.Logf("failed to close rows: %v", err)
+			}
+		}()
 
 		var planLines []string
 		for rows.Next() {
@@ -471,7 +483,11 @@ func TestIndexPerformance(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Deadline query failed: %v", err)
 		}
-		defer deadlineRows.Close()
+		defer func() {
+			if err := deadlineRows.Close(); err != nil {
+				t.Logf("failed to close deadlineRows: %v", err)
+			}
+		}()
 		for deadlineRows.Next() {
 			var p Project
 			if err := deadlineRows.Scan(&p.ID, &p.Name, &p.Status, &p.Priority, &p.Deadline); err != nil {
@@ -494,14 +510,22 @@ func TestMigrationIdempotency(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() {
+		if err := os.RemoveAll(tmpDir); err != nil {
+			t.Logf("failed to remove temp dir: %v", err)
+		}
+	}()
 
 	dbPath := filepath.Join(tmpDir, "test.db")
 	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			t.Logf("failed to close database: %v", err)
+		}
+	}()
 
 	if err := goose.SetDialect("sqlite3"); err != nil {
 		t.Fatalf("failed to set goose dialect: %v", err)
@@ -536,7 +560,11 @@ func TestMigrationIdempotency(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to query tables: %v", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			t.Logf("failed to close rows: %v", err)
+		}
+	}()
 
 	tables := make(map[string]bool)
 	for rows.Next() {

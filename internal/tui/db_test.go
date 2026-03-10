@@ -25,7 +25,11 @@ func TestDatabaseConnectionAndData(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to open database: %v", err)
 	}
-	defer database.Close()
+	defer func() {
+		if err := database.Close(); err != nil {
+			t.Logf("failed to close database: %v", err)
+		}
+	}()
 
 	if err := database.Ping(); err != nil {
 		t.Fatalf("Failed to ping database: %v", err)
@@ -69,7 +73,11 @@ func TestTUILoadAreasFromDB(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to open database: %v", err)
 	}
-	defer database.Close()
+	defer func() {
+		if err := database.Close(); err != nil {
+			t.Logf("failed to close database: %v", err)
+		}
+	}()
 
 	repo := db.New(database)
 
@@ -132,7 +140,11 @@ func TestFullTUIFlowFromDB(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to open database: %v", err)
 	}
-	defer database.Close()
+	defer func() {
+		if err := database.Close(); err != nil {
+			t.Logf("failed to close database: %v", err)
+		}
+	}()
 
 	repo := db.New(database)
 

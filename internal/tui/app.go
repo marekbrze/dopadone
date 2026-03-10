@@ -152,105 +152,21 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmds []tea.Cmd
-
 	switch msg := msg.(type) {
 	case spinner.TickMsg:
-		var cmd tea.Cmd
-		m.spinner, cmd = m.spinner.Update(msg)
-		return m, cmd
+		return m.handleSpinnerTick(msg)
 
 	case AreasLoadedMsg:
-		m.isLoadingAreas = false
-		if msg.Err != nil {
-			m.areaLoadError = msg.Err
-			m.addToast(toast.NewError("Failed to load areas: " + msg.Err.Error()))
-			return m, nil
-		}
-		m.areaLoadError = nil
-		m.areas = msg.Areas
-		m.tabs = updateTabsFromAreas(m.areas, m.selectedAreaIndex)
-		m.selectedTab = m.selectedAreaIndex
-		if len(m.areas) > 0 && m.selectedAreaIndex == 0 {
-			m.selectedAreaIndex = 0
-			m.isLoadingSubareas = true
-			cmds = append(cmds, LoadSubareasCmd(m.subareaSvc, m.areas[0].ID))
-		}
-		return m, tea.Batch(cmds...)
+		return m.handleAreasLoaded(msg)
 
 	case SubareasLoadedMsg:
-		m.isLoadingSubareas = false
-		if msg.Err != nil {
-			m.subareaLoadError = msg.Err
-			m.addToast(toast.NewError("Failed to load subareas: " + msg.Err.Error()))
-			return m, nil
-		}
-		m.subareaLoadError = nil
-		m.subareas = msg.Subareas
-		if len(m.subareas) > 0 && m.selectedSubareaIndex == 0 {
-			m.selectedSubareaIndex = 0
-			m.isLoadingProjects = true
-			cmds = append(cmds, LoadProjectsCmd(m.projectSvc, &m.subareas[0].ID))
-		}
-		return m, tea.Batch(cmds...)
+		return m.handleSubareasLoaded(msg)
 
 	case ProjectsLoadedMsg:
-		m.isLoadingProjects = false
-		if msg.Err != nil {
-			m.projectLoadError = msg.Err
-			m.addToast(toast.NewError("Failed to load projects: " + msg.Err.Error()))
-			return m, nil
-		}
-		m.projectLoadError = nil
-		m.projects = msg.Projects
-
-		builder := tree.NewBuilder()
-		m.projectTree = builder.BuildFromProjects(m.projects)
-
-		if m.projectTree != nil {
-			firstNode := tree.GetFirstVisibleNode(m.projectTree)
-			if firstNode != nil {
-				m.selectedProjectID = firstNode.ID
-				m.selectedProjectIndex = 0
-				m.isLoadingTasks = true
-				m.tasks = nil
-				m.selectedTaskIndex = 0
-				cmds = append(cmds, LoadTasksCmd(m.taskSvc, firstNode.ID))
-			}
-		}
-		return m, tea.Batch(cmds...)
+		return m.handleProjectsLoaded(msg)
 
 	case TasksLoadedMsg:
-		m.isLoadingTasks = false
-		if msg.Err != nil {
-			m.taskLoadError = msg.Err
-			m.addToast(toast.NewError("Failed to load tasks: " + msg.Err.Error()))
-			return m, nil
-		}
-		m.taskLoadError = nil
-		m.tasks = msg.Tasks
-		m.groupedTasks = msg.GroupedTasks
-
-		if m.expandedTaskGroups == nil {
-			m.expandedTaskGroups = make(map[string]bool)
-		}
-
-		if m.groupedTasks != nil {
-			for i := range m.groupedTasks.Groups {
-				groupID := m.groupedTasks.Groups[i].ProjectID
-				if _, exists := m.expandedTaskGroups[groupID]; !exists {
-					m.expandedTaskGroups[groupID] = true
-					m.groupedTasks.Groups[i].IsExpanded = true
-				} else {
-					m.groupedTasks.Groups[i].IsExpanded = m.expandedTaskGroups[groupID]
-				}
-			}
-		}
-
-		if m.selectedTaskIndex >= len(m.tasks) {
-			m.selectedTaskIndex = 0
-		}
-		return m, nil
+		return m.handleTasksLoaded(msg)
 
 	case modal.SubmitMsg:
 		return m.handleModalSubmit(msg)
@@ -270,16 +186,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.handleTaskCreated(msg)
 
 	case TaskStatusToggledMsg:
-		if msg.Err != nil {
-			if msg.TaskIndex < len(m.tasks) {
-				m.tasks[msg.TaskIndex].Status = msg.OriginalStatus
-			}
-
-			m.addToast(toast.NewError("Failed to update task status: " + msg.Err.Error()))
-			return m, nil
-		}
-
-		return m, nil
+		return m.handleTaskStatusToggled(msg)
 
 	case areamodal.SubmitMsg:
 		return m.handleAreaModalSubmit(msg)
@@ -310,10 +217,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.handleLoadAreaStats(msg)
 
 	case ToastTickMsg:
-		m.removeExpiredToasts()
-		return m, tea.Tick(time.Second, func(t time.Time) tea.Msg {
-			return ToastTickMsg{}
-		})
+		return m.handleToastTick()
 
 	case help.CloseMsg:
 		m.isHelpOpen = false
@@ -321,110 +225,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case spacemenu.CloseMsg:
-		m.isSpaceMenuOpen = false
-		m.spaceMenu = nil
-		return m, nil
+		return m.handleSpaceMenuClose()
 
 	case spacemenu.ActionMsg:
 		return m.handleSpaceMenuAction(msg)
 
 	case tea.KeyMsg:
-		if m.isHelpOpen {
-			switch msg.String() {
-			case KeyQ, KeyCtrlC:
-				return m, tea.Quit
-			}
-			var cmd tea.Cmd
-			m.helpModal, cmd = m.helpModal.Update(msg)
-			return m, cmd
-		}
-
-		if m.isModalOpen {
-			switch msg.String() {
-			case KeyQ, KeyCtrlC:
-				return m, tea.Quit
-			}
-			var cmd tea.Cmd
-			m.modal, cmd = m.modal.Update(msg)
-			return m, cmd
-		}
-
-		if m.isAreaModalOpen && m.areaModal != nil {
-			switch msg.String() {
-			case KeyQ, KeyCtrlC:
-				return m, tea.Quit
-			}
-			var cmd tea.Cmd
-			m.areaModal, cmd = m.areaModal.Update(msg)
-			return m, cmd
-		}
-
-		if m.isSpaceMenuOpen && m.spaceMenu != nil {
-			switch msg.String() {
-			case KeyQ, KeyCtrlC:
-				if m.spaceMenu != nil && m.spaceMenu.State() == spacemenu.StateMain {
-					return m, tea.Quit
-				}
-			}
-			var cmd tea.Cmd
-			m.spaceMenu, cmd = m.spaceMenu.Update(msg)
-			return m, cmd
-		}
-
-		if m.isConfirmModalOpen && m.confirmModal != nil {
-			switch msg.String() {
-			case KeyQ, KeyCtrlC:
-				return m, tea.Quit
-			}
-			var cmd tea.Cmd
-			m.confirmModal, cmd = m.confirmModal.Update(msg)
-			return m, cmd
-		}
-
-		switch msg.String() {
-		case KeyQ, KeyCtrlC:
-			return m, tea.Quit
-		case " ":
-			if !m.isModalOpen && !m.isAreaModalOpen && !m.isHelpOpen {
-				m.isSpaceMenuOpen = true
-				m.spaceMenu = spacemenu.New()
-				m.spaceMenu, _ = m.spaceMenu.Update(tea.WindowSizeMsg{Width: m.width, Height: m.height})
-				return m, nil
-			}
-			m.handleEnterOrSpace()
-		case "h", "left":
-			m.focus = m.focus.Prev()
-		case "l", "right":
-			m.focus = m.focus.Next()
-		case "tab":
-			m.focus = m.focus.Next()
-		case "j", "down":
-			if !m.IsEmpty(m.focus) {
-				return m.NavigateDownWithLoad(m.focus)
-			}
-		case "k", "up":
-			if !m.IsEmpty(m.focus) {
-				return m.NavigateUpWithLoad(m.focus)
-			}
-		case "[":
-			return m, m.SwitchToPreviousArea()
-		case "]":
-			return m, m.SwitchToNextArea()
-		case "enter":
-			m.handleEnterOrSpace()
-		case "x":
-			if m.focus == FocusTasks && (len(m.tasks) > 0 || (m.groupedTasks != nil && m.groupedTasks.TotalCount > 0)) {
-				return m, m.toggleTaskCompletion()
-			}
-		case "a":
-			return m.handleQuickAdd()
-		case "d":
-			return m, m.handleDeleteKey()
-		case "?":
-			return m.handleHelp(), nil
-		case "ctrl+a":
-			return m.handleOpenAreaModal()
-		}
+		return m.handleKeyPress(msg)
 
 	case confirmmodal.ConfirmMsg:
 		return m.handleConfirmModalConfirm(msg)
@@ -438,21 +245,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tea.WindowSizeMsg:
-		m.width = msg.Width
-		m.height = msg.Height
-		m.ready = true
-		if m.helpModal != nil {
-			m.helpModal, _ = m.helpModal.Update(msg)
-		}
-		if m.areaModal != nil {
-			m.areaModal, _ = m.areaModal.Update(msg)
-		}
-		if m.spaceMenu != nil {
-			m.spaceMenu, _ = m.spaceMenu.Update(msg)
-		}
-		if m.confirmModal != nil {
-			m.confirmModal, _ = m.confirmModal.Update(msg)
-		}
+		return m.handleWindowSize(msg)
 	}
 
 	return m, nil
@@ -476,6 +269,12 @@ func (m *Model) toggleTaskCompletion() tea.Cmd {
 	task.Status = newStatus
 
 	return ToggleTaskStatusCmd(m.taskSvc, task.ID, newStatus, originalStatus, m.selectedTaskIndex)
+}
+
+func (m Model) handleSpaceMenuClose() (tea.Model, tea.Cmd) {
+	m.isSpaceMenuOpen = false
+	m.spaceMenu = nil
+	return m, nil
 }
 
 func (m Model) handleSpaceMenuAction(msg spacemenu.ActionMsg) (tea.Model, tea.Cmd) {
