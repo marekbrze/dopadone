@@ -2,8 +2,6 @@ version: "2"
 
 linters:
   enable:
-    - gofmt
-    - goimports
     - govet
     - errcheck
     - staticcheck
@@ -11,25 +9,28 @@ linters:
     - goconst
     - gocyclo
     - dupl
+  settings:
+    gocyclo:
+      min-complexity: 20
+    goconst:
+      min-len: 3
+      min-occurrences: 3
+    dupl:
+      threshold: 150
+  exclusions:
+    paths:
+      - vendor
+      - testdata
+    rules:
+      - path: _test\.go
+        linters:
+          - dupl
+          - goconst
 
-linters-settings:
-  gocyclo:
-    min-complexity: 20
-  goconst:
-    min-len: 3
-    min-occurrences: 3
-  dupl:
-    threshold: 150
+formatters:
+  enable:
+    - gofmt
+    - goimports
 
 run:
   timeout: 5m
-
-issues:
-  exclude-dirs:
-    - vendor
-    - testdata
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - dupl
-        - goconst
