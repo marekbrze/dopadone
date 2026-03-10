@@ -8,8 +8,6 @@ linters:
     - errcheck
     - staticcheck
     - ineffassign
-    - typecheck
-    - gosimple
     - goconst
     - gocyclo
     - dupl
