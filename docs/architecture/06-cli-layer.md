@@ -436,6 +436,135 @@ service := NewTaskService(db)
 
 ---
 
+## Reducing Cyclomatic Complexity
+
+When command functions become too complex (gocyclo limit: 30), extract helper functions to improve maintainability.
+
+### Pattern: Extract Helper Functions
+
+Break down complex command logic into focused helper functions:
+
+```go
+// ✅ Good: Complex command with helper functions
+func runTasksUpdate(cmd *cobra.Command, args []string) {
+    id := args[0]
+
+    if err := validateUpdateFlags(cmd); err != nil {
+        cli.ExitWithError(err)
+    }
+
+    services, err := GetServices()
+    if err != nil {
+        cli.ExitWithError(cli.WrapError(err, "failed to connect to database"))
+    }
+    defer cli.CloseWithLog(services, "services")
+
+    ctx := context.Background()
+
+    existing, err := services.Tasks.GetByID(ctx, id)
+    if err != nil {
+        if err == service.ErrTaskNotFound {
+            cli.ExitWithError(fmt.Errorf("task not found: %s", id))
+        }
+        cli.ExitWithError(cli.WrapError(err, "failed to get task"))
+    }
+
+    params, err := prepareTaskUpdateParams(cmd, existing)
+    if err != nil {
+        cli.ExitWithError(err)
+    }
+
+    task, err := services.Tasks.Update(ctx, params)
+    if err != nil {
+        cli.ExitWithError(cli.WrapError(err, "failed to update task"))
+    }
+
+    printTaskUpdateSuccess(task)
+}
+
+// Helper: Validate update flags
+func validateUpdateFlags(cmd *cobra.Command) error {
+    return cli.ValidateUpdateFlags(cmd, cli.UpdateFlagValues{
+        Title:       taskUpdateTitle,
+        Description: taskUpdateDescription,
+        Status:      taskUpdateStatus,
+        Priority:    taskUpdatePriority,
+        StartDate:   taskUpdateStartDate,
+        Deadline:    taskUpdateDeadline,
+        Context:     taskUpdateContext,
+        Duration:    taskUpdateDuration,
+        Next:        taskUpdateNext,
+        NoNext:      taskUpdateNoNext,
+    })
+}
+
+// Helper: Prepare update parameters
+func prepareTaskUpdateParams(cmd *cobra.Command, existing *domain.Task) (service.UpdateTaskParams, error) {
+    params := service.UpdateTaskParams{
+        ID:                existing.ID,
+        Title:             existing.Title,
+        Description:       existing.Description,
+        StartDate:         existing.StartDate,
+        Deadline:          existing.Deadline,
+        Priority:          existing.Priority,
+        Context:           existing.Context,
+        EstimatedDuration: existing.EstimatedDuration,
+        Status:            existing.Status,
+        IsNext:            existing.IsNext,
+    }
+
+    if taskUpdateTitle != "" {
+        params.Title = taskUpdateTitle
+    }
+    if taskUpdateStatus != "" {
+        status, err := cli.ParseTaskStatus(taskUpdateStatus)
+        if err != nil {
+            return service.UpdateTaskParams{}, err
+        }
+        params.Status = status
+    }
+    // ... more field updates
+
+    return params, nil
+}
+
+// Helper: Print success message
+func printTaskUpdateSuccess(task *domain.Task) {
+    formatter, err := GetFormatter()
+    if err != nil {
+        cli.ExitWithError(err)
+    }
+
+    if jsonFormatter, ok := formatter.(*output.JSONFormatter); ok {
+        if err := jsonFormatter.PrintObject(domainTaskToMap(*task)); err != nil {
+            cli.ExitWithError(cli.WrapError(err, "failed to output task"))
+        }
+    } else {
+        nextFlag := ""
+        if task.IsNext {
+            nextFlag = " [NEXT]"
+        }
+        output.PrintSuccess(fmt.Sprintf("Task updated: %s%s", task.ID, nextFlag))
+    }
+}
+```
+
+### Benefits of This Pattern
+
+1. **Reduced Complexity**: Each function has a single responsibility
+2. **Testability**: Helper functions can be unit tested independently
+3. **Readability**: Main command logic is easier to follow
+4. **Maintainability**: Changes to validation/output don't affect core logic
+
+### When to Extract
+
+- Function exceeds gocyclo limit of 30
+- Multiple nested conditionals
+- Repeated patterns across commands
+- Complex flag validation logic
+
+---
+
 ## Key Files
 
 | File | Purpose |
