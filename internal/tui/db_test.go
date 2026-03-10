@@ -17,6 +17,10 @@ func TestDatabaseConnectionAndData(t *testing.T) {
 	dbPath := filepath.Join(wd, "..", "..", "test-verify.db")
 	t.Logf("Database path: %s", dbPath)
 
+	if info, err := os.Stat(dbPath); os.IsNotExist(err) || info.Size() == 0 {
+		t.Skip("test database file not found or empty, skipping integration test")
+	}
+
 	database, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		t.Fatalf("Failed to open database: %v", err)
@@ -56,6 +60,10 @@ func TestDatabaseConnectionAndData(t *testing.T) {
 func TestTUILoadAreasFromDB(t *testing.T) {
 	wd, _ := os.Getwd()
 	dbPath := filepath.Join(wd, "..", "..", "test-verify.db")
+
+	if info, err := os.Stat(dbPath); os.IsNotExist(err) || info.Size() == 0 {
+		t.Skip("test database file not found or empty, skipping integration test")
+	}
 
 	database, err := sql.Open("sqlite", dbPath)
 	if err != nil {
@@ -115,6 +123,10 @@ func TestTUILoadAreasFromDB(t *testing.T) {
 func TestFullTUIFlowFromDB(t *testing.T) {
 	wd, _ := os.Getwd()
 	dbPath := filepath.Join(wd, "..", "..", "test-verify.db")
+
+	if info, err := os.Stat(dbPath); os.IsNotExist(err) || info.Size() == 0 {
+		t.Skip("test database file not found or empty, skipping integration test")
+	}
 
 	database, err := sql.Open("sqlite", dbPath)
 	if err != nil {

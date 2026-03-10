@@ -5,12 +5,13 @@ status: In Progress
 assignee:
   - '@assistant'
 created_date: '2026-03-07 15:49'
-updated_date: '2026-03-08 19:03'
+updated_date: '2026-03-10 07:30'
 labels:
   - feature
   - database
   - turso
   - libsql
+milestone: m-1
 dependencies: []
 references:
   - backlog/tasks/task-60.6 - Integration-tests-for-database-modes.md

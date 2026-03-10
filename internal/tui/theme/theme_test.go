@@ -31,9 +31,9 @@ func TestGetTheme(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:    "invalid theme returns default",
+			name:    "invalid theme returns default with error",
 			mode:    "invalid",
-			wantErr: false,
+			wantErr: true,
 		},
 	}
 

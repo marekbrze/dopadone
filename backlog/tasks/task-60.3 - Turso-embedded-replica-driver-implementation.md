@@ -4,11 +4,13 @@ title: Turso embedded replica driver implementation
 status: To Do
 assignee: []
 created_date: '2026-03-08 19:01'
+updated_date: '2026-03-10 07:30'
 labels:
   - database
   - turso
   - libsql
   - replication
+milestone: m-1
 dependencies: []
 parent_task_id: TASK-60
 priority: high

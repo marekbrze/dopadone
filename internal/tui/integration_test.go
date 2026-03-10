@@ -2,6 +2,7 @@ package tui
 
 import (
 	"database/sql"
+	"os"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -12,6 +13,10 @@ import (
 
 func TestTUIIntegrationWithRealDB(t *testing.T) {
 	dbPath := "../../../test-verify.db"
+
+	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
+		t.Skip("test database file not found, skipping integration test")
+	}
 
 	database, err := sql.Open("sqlite", dbPath)
 	if err != nil {

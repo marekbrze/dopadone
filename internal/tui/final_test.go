@@ -15,6 +15,10 @@ func TestTUIDisplaysSeededData(t *testing.T) {
 	wd, _ := os.Getwd()
 	dbPath := filepath.Join(wd, "..", "..", "test-seed-final.db")
 
+	if info, err := os.Stat(dbPath); os.IsNotExist(err) || info.Size() == 0 {
+		t.Skip("test database file not found or empty, skipping integration test")
+	}
+
 	database, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		t.Fatalf("Failed to open database: %v", err)

@@ -5,8 +5,9 @@ status: Done
 assignee:
   - '@opencode'
 created_date: '2026-03-09 19:04'
-updated_date: '2026-03-10 06:35'
+updated_date: '2026-03-10 07:31'
 labels: []
+milestone: m-2
 dependencies: []
 references:
   - '# Parent: TASK-68 - Add option to delete subareas'

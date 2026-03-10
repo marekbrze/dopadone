@@ -4,7 +4,7 @@ title: 'Task-68C: TUI Delete Integration'
 status: To Do
 assignee: []
 created_date: '2026-03-09 19:04'
-updated_date: '2026-03-09 19:06'
+updated_date: '2026-03-10 06:50'
 labels: []
 dependencies:
   - TASK-68.1
@@ -40,8 +40,29 @@ Wire up delete functionality in TUI with confirmation modal. Add 'd' key binding
 - [ ] #10 Write integration tests for delete flow
 <!-- AC:END -->
 
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+Wire up delete functionality in TUI with confirmation modal. Add 'd' key binding to all focus columns. Open confirmation modal with correct item name when 'd' pressed. Handle confirmation, execute appropriate delete command on 'y' confirmation, Show success toast and refresh column after delete. Handle 'n' and Escape to cancel delete. No-op when pressing 'd' on empty columns. Update footer to show 'd: delete' shortcut. Write integration tests for delete flow
+<!-- SECTION:PLAN:END -->
+
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
 \n## Part of\n\nThis is subtask 3 of 4 for TASK-68. Integration layer - requires Task-68.1 and Task-68.2 to be complete first.
+
+Scoping complete
+
+Confirmed approach:
+- Keep all 10 ACs separate
+- Follow existing modal pattern (confirmModal + isConfirmModalOpen)
+- Use existing services (SoftDelete, SoftDeleteWithCascade)
+- Show item name in toast
+- d before x: toggle in footer
+
+Test strategy:
+- Separate test file (app_delete_test.go)
+- 100% coverage for new code
+
+Estimated effort: 4-6 hours
 <!-- SECTION:NOTES:END -->
