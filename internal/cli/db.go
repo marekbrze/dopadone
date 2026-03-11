@@ -5,10 +5,14 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/marekbrze/dopadone/internal/db/driver"
+	"github.com/marekbrze/dopadone/internal/migrate"
 	_ "modernc.org/sqlite"
 )
+
+var migrationMutex sync.Mutex
 
 func Connect(dbPath string) (*sql.DB, error) {
 	if dbPath == "" {
@@ -70,6 +74,21 @@ func RunMigrations(db *sql.DB, migrationsPath string) error {
 
 	if _, err := os.Stat(migrationsPath); os.IsNotExist(err) {
 		return NewValidationError("migrations", fmt.Sprintf("migrations directory does not exist: %s", migrationsPath))
+	}
+
+	return nil
+}
+
+func EnsureMigrations(db *sql.DB) error {
+	if db == nil {
+		return NewValidationError("db", "database connection is nil")
+	}
+
+	migrationMutex.Lock()
+	defer migrationMutex.Unlock()
+
+	if err := migrate.Run(db, "up"); err != nil {
+		return WrapError(err, "failed to run auto-migrations")
 	}
 
 	return nil

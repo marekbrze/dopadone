@@ -1,11 +1,13 @@
 .PHONY: help build clean run dev test lint install-deps sqlc-generate \
         migrate-up migrate-down migrate-status migrate-reset seed \
         deploy deploy-staging \
-        build-all build-linux build-darwin-amd64 build-darwin-arm64 build-windows
+        build-all build-linux build-darwin-amd64 build-darwin-arm64 build-windows \
+        dev-build dev-run dev-tui dev-clean
 
 # Variables
 BINARY_NAME=dopa
 DB_PATH=dopadone.db
+DEV_DB_PATH=./dopa.db
 MIGRATIONS_DIR=migrations
 GO=go
 GOOSE=goose
@@ -80,9 +82,25 @@ clean: ## Remove build artifacts
 run: build ## Build and run the application
 	./bin/$(BINARY_NAME)
 
-dev: ## Run in development mode (with hot reload if available)
-	@echo "Running in development mode..."
-	$(GO) run ./cmd/$(BINARY_NAME)
+dev: ## Run in development mode (uses ./dopa.db)
+	@echo "Running in development mode with local DB..."
+	$(GO) run ./cmd/$(BINARY_NAME) --dev
+
+dev-build: ## Build binary for dev testing
+	@echo "Building for dev testing..."
+	$(GO) build -ldflags "$(LDFLAGS)" -o bin/$(BINARY_NAME) ./cmd/$(BINARY_NAME)
+	@echo "Build complete: bin/$(BINARY_NAME)"
+
+dev-run: dev-build ## Build and run with --dev flag (local ./dopa.db)
+	./bin/$(BINARY_NAME) --dev
+
+dev-tui: dev-build ## Build and launch TUI with --dev flag
+	./bin/$(BINARY_NAME) tui --dev
+
+dev-clean: ## Remove dev database
+	@echo "Removing dev database..."
+	rm -f $(DEV_DB_PATH)
+	@echo "Dev database removed"
 
 test: ## Run all tests
 	@echo "Running tests..."

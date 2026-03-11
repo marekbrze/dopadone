@@ -28,6 +28,7 @@ var (
 	dbMode       string
 	syncInterval string
 	configPath   string
+	devMode      bool
 )
 
 var rootCmd = &cobra.Command{
@@ -180,8 +181,9 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&syncInterval, "sync-interval", "60s", "Sync interval for embedded replica mode")
 	rootCmd.PersistentFlags().StringVar(&configPath, "config", "", "Path to config file (default: ./dopadone.yaml, ~/.config/dopadone/config.yaml, ~/.dopadone.yaml)")
 	rootCmd.PersistentFlags().StringVarP(&outputFormat, "output", "o", "table", "output format (table|json)")
+	rootCmd.PersistentFlags().BoolVar(&skipMigrate, "skip-migrate", false, "skip running auto-migrations on startup")
+	rootCmd.PersistentFlags().BoolVarP(&devMode, "dev", "D", false, "use ./dopa.db in current directory (for testing)")
 	versionCmd.Flags().BoolVar(&showAll, "all", false, "show detailed build information")
-	upgradeCmd.Flags().BoolVar(&skipMigrate, "skip-migrate", false, "skip running migrations after upgrade")
 
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(upgradeCmd)
@@ -211,8 +213,14 @@ func GetDriver() (driver.DatabaseDriver, error) {
 		syncDur = 60 * time.Second
 	}
 
+	effectiveDBPath := dbPath
+	if devMode {
+		effectiveDBPath = "./dopa.db"
+		log.Printf("[Database] Dev mode: using local ./dopa.db")
+	}
+
 	cfg, err := LoadConfig(LoadConfigParams{
-		DBPath:       dbPath,
+		DBPath:       effectiveDBPath,
 		TursoURL:     tursoURL,
 		TursoToken:   tursoToken,
 		DBMode:       dbMode,
@@ -241,6 +249,14 @@ func GetDriver() (driver.DatabaseDriver, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		if !skipMigrate {
+			if err := cli.EnsureMigrations(db); err != nil {
+				_ = db.Close()
+				return nil, fmt.Errorf("auto-migration failed: %w", err)
+			}
+		}
+
 		return &sqlDriverWrapper{db: db}, nil
 	case driver.DriverTursoRemote, driver.DriverTursoReplica:
 		drv, err := cli.ConnectWithDriver(
@@ -258,6 +274,13 @@ func GetDriver() (driver.DatabaseDriver, error) {
 
 		if err := drv.Connect(ctx); err != nil {
 			return nil, fmt.Errorf("failed to connect to database: %w", err)
+		}
+
+		if !skipMigrate {
+			if err := cli.EnsureMigrations(drv.GetDB()); err != nil {
+				_ = drv.Close()
+				return nil, fmt.Errorf("auto-migration failed: %w", err)
+			}
 		}
 
 		log.Printf("[Database] Connected successfully in %s mode", result.Type)

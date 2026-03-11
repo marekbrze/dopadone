@@ -21,10 +21,7 @@ go install github.com/marekbrze/dopadone/cmd/dopa@latest
 # OR: download binary from releases
 # OR: make build
 
-# Initialize database with migrations
-dopa migrate up
-
-# CREATE: Add a new area
+# CREATE: Add a new area (migrations run automatically on first use!)
 dopa area create --name "Work" --color "#3B82F6"
 
 # READ: List all areas
@@ -378,6 +375,8 @@ These flags work with all commands:
 | `--turso-auth-token` | Turso authentication token | - |
 | `--sync-interval` | Sync interval for replica mode | `60s` |
 | `--config` | Path to YAML config file | Auto-discovered |
+| `-D, --dev` | Use `./dopa.db` in current directory | `false` |
+| `--skip-migrate` | Skip auto-migrations on startup | `false` |
 | `-o, --output` | Output format (`table`, `json`) | `table` |
 | `--format` | Extended output format (`table`, `json`, `yaml`) | `table` |
 
@@ -397,6 +396,13 @@ dopa --db-mode remote --turso-url "libsql://db.turso.io" --turso-auth-token "tok
 
 # Use config file
 dopa --config ./dopadone.yaml tasks list
+
+# Dev mode: use local ./dopa.db for testing
+dopa --dev area list
+dopa -D tui
+
+# Skip auto-migrations (advanced)
+dopa --skip-migrate migrate status
 
 # Output as JSON for scripting
 dopa -o json project list --status active
@@ -454,43 +460,48 @@ For comprehensive TUI documentation including architecture, components, and impl
 
 ## Database Migrations
 
-Dopadone manages its own schema via embedded migrations:
+Dopadone manages its own schema via embedded migrations. **Migrations run automatically** on first startup - no manual intervention needed!
 
 ```bash
-# Apply migrations (run once after install)
-dopa migrate up
+# Migrations run automatically when you first use any command
+dopa area list  # First run: creates DB + applies migrations
 
-# Check migration status
-dopa migrate status
+# Manual migration commands (if needed)
+dopa migrate up      # Apply pending migrations
+dopa migrate status  # Check migration status
+dopa migrate down    # Rollback last migration
+dopa migrate reset   # Reset database (warning: destroys data)
+dopa migrate verify  # Verify schema consistency
 
-# Rollback last migration
-dopa migrate down
-
-# Reset database (warning: destroys data)
-dopa migrate reset
+# Skip auto-migrations (for special cases)
+dopa --skip-migrate area list
 ```
 
----
+## Development & Testing
 
-## Development
+### Dev Mode Flag
 
-### Prerequisites
-
-- Go 1.21+
-- SQLite3
-- [goose](https://github.com/pressly/goose) (for migrations)
-- [sqlc](https://sqlc.dev/) (for query generation)
-
-### Build Commands
+Use `--dev` or `-D` to use a local `./dopa.db` file for testing without affecting your main database:
 
 ```bash
-make build          # Build binary to bin/dopa
-make build-all      # Cross-compile for all platforms
-make dist           # Build + create distribution archives
-make clean          # Remove build artifacts
+# Use local ./dopa.db for testing
+dopa --dev area list
+dopa -D tui
+
+# Combine with other flags
+dopa --dev --skip-migrate area create --name "Test"
 ```
 
-### Development Workflow
+### Make Targets for Development
+
+```bash
+make dev-build    # Build binary for testing
+make dev-run      # Build and run with --dev flag
+make dev-tui      # Launch TUI with --dev flag
+make dev-clean    # Remove ./dopa.db
+```
+
+### Full Development Workflow
 
 ```bash
 make run            # Build and run

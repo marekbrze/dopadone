@@ -12,6 +12,27 @@ Dopadone supports three database modes to accommodate different workflows:
 | **Turso Remote** | Direct connection to Turso cloud | Always-online, cloud-first workflow |
 | **Turso Replica** | Local replica with cloud sync | Offline-capable with cloud backup |
 
+## Automatic Migrations
+
+Dopadone automatically runs database migrations on startup. This means:
+
+- **First run**: Database is created and all migrations are applied
+- **Subsequent runs**: Only pending migrations are applied (if any)
+- **Already up-to-date**: No action taken (idempotent)
+
+No manual `migrate up` is needed. Just start using the app:
+
+```bash
+# First command automatically sets up the database
+dopa area list
+```
+
+To skip auto-migrations (advanced use cases):
+
+```bash
+dopa --skip-migrate area list
+```
+
 ## SQLite Mode (Default)
 
 SQLite mode uses a local database file. This is the default and requires no additional configuration.
@@ -36,6 +57,21 @@ dopa tasks list
 
 # Specify custom database path
 dopa --db /path/to/my-database.db tasks list
+```
+
+### Dev Mode (Testing)
+
+Use `--dev` or `-D` to use a local `./dopa.db` file for testing without affecting your main database:
+
+```bash
+# Use ./dopa.db in current directory
+dopa --dev tasks list
+dopa -D tui
+
+# Make targets for dev workflow
+make dev-run    # Build and run with --dev
+make dev-tui    # Launch TUI with --dev
+make dev-clean  # Remove ./dopa.db
 ```
 
 ### Environment Variables
@@ -155,6 +191,8 @@ dopa --sync-interval 5m tasks list
 | `--db-mode` | Database mode: `local`, `remote`, `replica`, `auto` | `auto` |
 | `--sync-interval` | Sync interval for replica mode | `60s` |
 | `--config` | Path to YAML config file | Auto-discovered |
+| `-D, --dev` | Use `./dopa.db` in current directory | `false` |
+| `--skip-migrate` | Skip auto-migrations on startup | `false` |
 
 ### Environment Variables
 

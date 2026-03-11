@@ -25,25 +25,24 @@ func Run(db *sql.DB, command string) error {
 	}
 	goose.SetBaseFS(fsys)
 
+	var runErr error
 	switch command {
 	case "up":
-		if err := goose.Up(db, "."); err != nil {
-			return fmt.Errorf("migration up failed: %w", err)
-		}
+		runErr = goose.Up(db, ".")
 	case "down":
-		if err := goose.Down(db, "."); err != nil {
-			return fmt.Errorf("migration down failed: %w", err)
-		}
+		runErr = goose.Down(db, ".")
 	case "status":
-		if err := goose.Status(db, "."); err != nil {
-			return fmt.Errorf("migration status failed: %w", err)
-		}
+		runErr = goose.Status(db, ".")
 	case "reset":
-		if err := goose.Reset(db, "."); err != nil {
-			return fmt.Errorf("migration reset failed: %w", err)
-		}
+		runErr = goose.Reset(db, ".")
 	default:
 		return fmt.Errorf("unknown migration command: %s", command)
+	}
+
+	goose.SetBaseFS(nil)
+
+	if runErr != nil {
+		return fmt.Errorf("migration %s failed: %w", command, runErr)
 	}
 
 	return nil
