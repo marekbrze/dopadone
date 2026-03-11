@@ -275,21 +275,128 @@ dopa area list --format yaml
 }
 ```
 
+## Database Configuration
+
+Dopadone supports three database modes:
+
+| Mode | Description | Best For |
+|------|-------------|----------|
+| **local** | Local SQLite database (default) | Single-device, offline work |
+| **remote** | Direct connection to Turso cloud | Always-online, multi-device sync |
+| **replica** | Local replica with cloud sync | Offline-capable with cloud backup |
+
+### Quick Examples
+
+```bash
+# Local SQLite (default)
+dopa tasks list
+
+# Turso Remote mode (cloud database)
+dopa --db-mode remote \
+     --turso-url "libsql://your-db.turso.io" \
+     --turso-auth-token "your-token" \
+     tasks list
+
+# Turso Replica mode (local + sync)
+dopa --db-mode replica \
+     --db ./replica.db \
+     --turso-url "libsql://your-db.turso.io" \
+     --turso-auth-token "your-token" \
+     tasks list
+```
+
+### Environment Variables
+
+```bash
+# Turso credentials
+export TURSO_DATABASE_URL="libsql://your-db.turso.io"
+export TURSO_AUTH_TOKEN="your-token"
+
+# Database mode
+export DOPA_DB_MODE=remote    # or: local, replica, auto
+export DOPA_DB_PATH=./dopa.db # Local database path
+```
+
+### YAML Configuration File
+
+Create `dopadone.yaml` for persistent settings:
+
+```yaml
+database:
+  mode: replica
+  path: ./dopadone-replica.db
+  sync_interval: 60s
+  turso:
+    url: libsql://your-db.turso.io
+    token: ${TURSO_AUTH_TOKEN}  # Reference env variable
+```
+
+Config file discovery order:
+1. `--config /path/to/config.yaml` (explicit)
+2. `./dopadone.yaml` (current directory)
+3. `~/.config/dopadone/config.yaml` (XDG config home)
+4. `~/.dopadone.yaml` (home directory)
+
+### Configuration Precedence
+
+```
+CLI flags > Environment variables > Config file > Defaults
+```
+
+### Getting Started with Turso
+
+1. Install Turso CLI: `brew install tursodatabase/tap/turso`
+2. Create account: `turso auth signup`
+3. Create database: `turso db create dopadone`
+4. Get URL: `turso db show dopadone --url`
+5. Create token: `turso db tokens create dopadone`
+6. Configure Dopadone with the URL and token
+
+For detailed setup instructions, see [docs/TURSO_SETUP.md](docs/TURSO_SETUP.md).
+
+### Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Database Modes](docs/DATABASE_MODES.md) | Detailed mode explanations and configuration |
+| [Turso Setup Guide](docs/TURSO_SETUP.md) | Step-by-step Turso account and database setup |
+| [Turso Performance](docs/TURSO_PERFORMANCE.md) | Benchmarks, tuning, and optimization |
+| [Turso Troubleshooting](docs/TURSO_TROUBLESHOOTING.md) | Error solutions and diagnostics |
+| [SQLite to Turso Migration](docs/TURSO_DATA_MIGRATION.md) | Migrate existing data to Turso |
+
+---
+
 ## Global Flags
 
 These flags work with all commands:
 
 | Flag | Description | Default |
 |------|-------------|---------|
-| `--db` | Path to SQLite database file | `./dopa.db` |
+| `--db` | Path to local database file | User config directory¹ |
+| `--db-mode` | Database mode: `local`, `remote`, `replica`, `auto` | `auto` |
+| `--turso-url` | Turso database URL | - |
+| `--turso-auth-token` | Turso authentication token | - |
+| `--sync-interval` | Sync interval for replica mode | `60s` |
+| `--config` | Path to YAML config file | Auto-discovered |
 | `-o, --output` | Output format (`table`, `json`) | `table` |
 | `--format` | Extended output format (`table`, `json`, `yaml`) | `table` |
+
+¹ Default database location by platform:
+- Linux: `~/.config/dopadone/dopadone.db`
+- macOS: `~/Library/Application Support/dopadone/dopadone.db`
+- Windows: `%APPDATA%/dopadone/dopadone.db`
 
 Examples:
 
 ```bash
 # Use a custom database location
 dopa --db /path/to/my.db area list
+
+# Connect to Turso remote
+dopa --db-mode remote --turso-url "libsql://db.turso.io" --turso-auth-token "token" tasks list
+
+# Use config file
+dopa --config ./dopadone.yaml tasks list
 
 # Output as JSON for scripting
 dopa -o json project list --status active

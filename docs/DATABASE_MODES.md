@@ -16,10 +16,22 @@ Dopadone supports three database modes to accommodate different workflows:
 
 SQLite mode uses a local database file. This is the default and requires no additional configuration.
 
+### Default Database Location
+
+By default, the database is stored in the user's config directory:
+
+| Platform | Default Path |
+|----------|-------------|
+| **Linux** | `~/.config/dopadone/dopadone.db` |
+| **macOS** | `~/Library/Application Support/dopadone/dopadone.db` |
+| **Windows** | `%APPDATA%/dopadone/dopadone.db` |
+
+The directory is created automatically if it doesn't exist. If the user config directory is unavailable, it falls back to `./dopadone.db` in the current directory.
+
 ### Usage
 
 ```bash
-# Default: uses ./dopadone.db
+# Default: uses user config directory
 dopa tasks list
 
 # Specify custom database path
@@ -137,7 +149,7 @@ dopa --sync-interval 5m tasks list
 
 | Flag | Description | Default |
 |------|-------------|---------|
-| `--db` | Local database path | `./dopadone.db` |
+| `--db` | Local database path | User config directory (see below) |
 | `--turso-url` | Turso database URL | - |
 | `--turso-auth-token` | Turso authentication token | - |
 | `--db-mode` | Database mode: `local`, `remote`, `replica`, `auto` | `auto` |

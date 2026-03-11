@@ -20,9 +20,8 @@ func Connect(dbPath string) (*sql.DB, error) {
 		return nil, WrapError(err, "failed to resolve database path")
 	}
 
-	dir := filepath.Dir(absPath)
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		return nil, NewValidationError("db", fmt.Sprintf("database directory does not exist: %s", dir))
+	if err := EnsureDirExists(absPath); err != nil {
+		return nil, err
 	}
 
 	db, err := sql.Open("sqlite", absPath)

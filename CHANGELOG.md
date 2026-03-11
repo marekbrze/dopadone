@@ -36,6 +36,25 @@ Comprehensive delete functionality for the Terminal User Interface with confirma
 
 ### Changed
 
+#### Database Storage Location (Task-80)
+
+Default database path changed from current working directory to user config directory:
+
+- **New Default Paths**:
+  - Linux: `~/.config/dopadone/dopadone.db`
+  - macOS: `~/Library/Application Support/dopadone/dopadone.db`
+  - Windows: `%APPDATA%/dopadone/dopadone.db`
+- **Automatic Directory Creation**: Directory created automatically if it doesn't exist
+- **Fallback Behavior**: Falls back to `./dopadone.db` if user config directory is unavailable
+- **Backward Compatibility**: Users can still override with `--db` flag, `DOPA_DB_PATH` env, or config file
+- **Migration Support**: `MigrateFromOldPath()` utility function available for future migration
+
+**Implementation Files**:
+- `internal/cli/dbpath.go` - Core path logic (DefaultDBPath, EnsureDirExists, MigrateFromOldPath)
+- `internal/cli/db.go` - Updated Connect() to create directory automatically
+- `cmd/dopa/config.go` - Updated resolveDBPath() to use DefaultDBPath()
+- `cmd/dopa/main.go` - Changed --db flag default to empty string
+
 ### Deprecated
 
 ### Removed

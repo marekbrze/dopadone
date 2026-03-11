@@ -173,7 +173,7 @@ var migrateVerifyCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(&dbPath, "db", "./dopadone.db", "path to database file")
+	rootCmd.PersistentFlags().StringVar(&dbPath, "db", "", "path to database file (default: user config directory)")
 	rootCmd.PersistentFlags().StringVar(&tursoURL, "turso-url", "", "Turso database URL (env: TURSO_DATABASE_URL)")
 	rootCmd.PersistentFlags().StringVar(&tursoToken, "turso-token", "", "Turso auth token (env: TURSO_AUTH_TOKEN)")
 	rootCmd.PersistentFlags().StringVar(&dbMode, "db-mode", "", "Database mode: local|remote|replica|auto (env: DOPA_DB_MODE, default: auto)")

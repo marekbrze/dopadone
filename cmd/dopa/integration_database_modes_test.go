@@ -537,7 +537,7 @@ func TestEnvironmentVariables_Integration(t *testing.T) {
 	origDBPath := dbPath
 	defer func() { dbPath = origDBPath }()
 
-	dbPath = "./dopadone.db"
+	dbPath = ""
 
 	cfg, err := LoadConfig(LoadConfigParams{
 		DBPath:       dbPath,

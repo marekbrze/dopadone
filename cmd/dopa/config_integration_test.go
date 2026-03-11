@@ -82,10 +82,10 @@ func TestResolveDBPath_EnvFallback(t *testing.T) {
 	}
 	defer func() { _ = os.Unsetenv("DOPA_DB_PATH") }()
 
-	path := resolveDBPath("./dopadone.db", nil)
+	path := resolveDBPath("", nil)
 
 	if path != "/env/path.db" {
-		t.Errorf("resolveDBPath = %v, want /env/path.db (env should be used when flag is default)", path)
+		t.Errorf("resolveDBPath = %v, want /env/path.db (env should be used when flag is empty)", path)
 	}
 }
 
@@ -94,10 +94,17 @@ func TestResolveDBPath_Default(t *testing.T) {
 		t.Fatalf("Unsetenv failed: %v", err)
 	}
 
-	path := resolveDBPath("./dopadone.db", nil)
+	path := resolveDBPath("", nil)
 
-	if path != "./dopadone.db" {
-		t.Errorf("resolveDBPath = %v, want ./dopadone.db (default)", path)
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		t.Errorf("resolveDBPath should return a valid path even if UserConfigDir fails")
+		return
+	}
+
+	expectedPath := configDir + "/dopadone/dopadone.db"
+	if path != expectedPath {
+		t.Errorf("resolveDBPath = %v, want %v (default user config directory)", path, expectedPath)
 	}
 }
 
@@ -240,7 +247,7 @@ func TestConfigPrecedence_FullIntegration(t *testing.T) {
 		},
 		{
 			name:           "env_used_when_flag_empty",
-			flagDBPath:     "./dopadone.db",
+			flagDBPath:     "",
 			flagTursoURL:   "",
 			flagTursoToken: "",
 			flagDBMode:     "",
@@ -255,7 +262,7 @@ func TestConfigPrecedence_FullIntegration(t *testing.T) {
 		},
 		{
 			name:           "defaults_when_nothing_set",
-			flagDBPath:     "./dopadone.db",
+			flagDBPath:     "",
 			flagTursoURL:   "",
 			flagTursoToken: "",
 			flagDBMode:     "",
@@ -263,14 +270,14 @@ func TestConfigPrecedence_FullIntegration(t *testing.T) {
 			envTursoURL:    "",
 			envTursoToken:  "",
 			envDBMode:      "",
-			wantDBPath:     "./dopadone.db",
+			wantDBPath:     "",
 			wantTursoURL:   "",
 			wantTursoToken: "",
 			wantDBMode:     "",
 		},
 		{
 			name:           "partial_override_turso_only",
-			flagDBPath:     "./dopadone.db",
+			flagDBPath:     "",
 			flagTursoURL:   "libsql://flag.turso.io",
 			flagTursoToken: "",
 			flagDBMode:     "",
@@ -278,7 +285,7 @@ func TestConfigPrecedence_FullIntegration(t *testing.T) {
 			envTursoURL:    "",
 			envTursoToken:  "env-token",
 			envDBMode:      "",
-			wantDBPath:     "./dopadone.db",
+			wantDBPath:     "",
 			wantTursoURL:   "libsql://flag.turso.io",
 			wantTursoToken: "env-token",
 			wantDBMode:     "",
@@ -321,8 +328,14 @@ func TestConfigPrecedence_FullIntegration(t *testing.T) {
 				t.Fatalf("LoadConfig() error = %v", err)
 			}
 
-			if cfg.DatabasePath != tt.wantDBPath {
-				t.Errorf("DatabasePath = %v, want %v", cfg.DatabasePath, tt.wantDBPath)
+			if tt.wantDBPath != "" {
+				if cfg.DatabasePath != tt.wantDBPath {
+					t.Errorf("DatabasePath = %v, want %v", cfg.DatabasePath, tt.wantDBPath)
+				}
+			} else {
+				if cfg.DatabasePath == "" {
+					t.Error("DatabasePath should not be empty")
+				}
 			}
 			if cfg.TursoURL != tt.wantTursoURL {
 				t.Errorf("TursoURL = %v, want %v", cfg.TursoURL, tt.wantTursoURL)

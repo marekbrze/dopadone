@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/marekbrze/dopadone/internal/cli"
 	"github.com/marekbrze/dopadone/internal/config"
 	"github.com/marekbrze/dopadone/internal/db/driver"
 )
@@ -61,7 +62,7 @@ func loadFileConfig(configPath string) (*config.FileConfig, error) {
 }
 
 func resolveDBPath(cliValue string, fileCfg *config.FileConfig) string {
-	if cliValue != "" && cliValue != "./dopadone.db" {
+	if cliValue != "" {
 		return cliValue
 	}
 	if env := os.Getenv("DOPA_DB_PATH"); env != "" {
@@ -70,7 +71,7 @@ func resolveDBPath(cliValue string, fileCfg *config.FileConfig) string {
 	if fileCfg != nil && fileCfg.Database.Path != "" {
 		return fileCfg.Database.Path
 	}
-	return cliValue
+	return cli.DefaultDBPath()
 }
 
 func resolveTursoURL(cliValue string, fileCfg *config.FileConfig) string {
