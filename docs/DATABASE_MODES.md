@@ -284,7 +284,9 @@ dopa --db ./replica.db \
 
 ## Troubleshooting
 
-### Connection Errors
+For comprehensive troubleshooting, see the [Turso Troubleshooting Guide](TURSO_TROUBLESHOOTING.md).
+
+### Quick Troubleshooting
 
 ```bash
 # Check if Turso credentials are correct
@@ -294,22 +296,20 @@ dopa --turso-url "libsql://your-db.turso.io" \
      areas list
 ```
 
-### Sync Issues (Replica Mode)
+For detailed solutions to:
+- Connection errors and timeouts
+- Authentication failures
+- Sync issues in replica mode
+- Migration errors
+- Database lock errors
 
-If sync is not working:
-1. Check internet connectivity
-2. Verify Turso credentials are valid
-3. Check sync logs in the console output
-
-### Performance Issues
-
-- **SQLite mode is slow**: Check disk I/O, ensure database is on fast storage
-- **Remote mode is slow**: Network latency is expected; consider replica mode
-- **Replica mode sync lag**: Reduce `--sync-interval` for faster syncs
+See: [Turso Troubleshooting Guide](TURSO_TROUBLESHOOTING.md)
 
 ## Related Documentation
 
+- [Turso Troubleshooting Guide](TURSO_TROUBLESHOOTING.md) - Comprehensive error solutions
 - [Turso Setup Guide](TURSO_SETUP.md) - Step-by-step Turso account and database setup
+- [Turso Migrations](TURSO_MIGRATIONS.md) - Migration guide for libSQL/Turso
 - [Database Driver Architecture](architecture/08-database-drivers.md) - Technical implementation details
 - [Architecture Overview](architecture/01-overview.md) - System architecture
 - [TUI Documentation](TUI.md) - Terminal UI features including connection status indicator

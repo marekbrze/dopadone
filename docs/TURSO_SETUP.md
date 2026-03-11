@@ -489,53 +489,37 @@ dopa areas list
 
 ## Troubleshooting
 
-### CLI Installation Fails
+For comprehensive troubleshooting covering all error scenarios, see the [Turso Troubleshooting Guide](TURSO_TROUBLESHOOTING.md).
 
-**Symptom**: `command not found: turso` after installation
+### Quick Fixes
 
-**Solution**:
+**CLI Installation Fails** (`command not found: turso`):
 1. Open a new shell/terminal window
 2. Verify PATH includes the installation directory
 3. Re-run the installer
 
-### Authentication Errors
-
-**Symptom**: `authentication failed` or `unauthorized`
-
-**Solution**:
-1. Verify token is valid: `turso auth token`
+**Authentication Errors** (`authentication failed`):
+1. Verify token: `turso auth token`
 2. Re-login: `turso auth login`
-3. Check token hasn't expired
-4. Ensure token has correct permissions
+3. Create new token: `turso db tokens create <name>`
 
-### Database Connection Issues
+**Connection Issues** (`connection refused`, `timeout`):
+1. Verify database URL: `turso db show <name> --url`
+2. Check connectivity: `curl -I https://turso.io`
+3. Check status: [status.turso.tech](https://status.turso.tech)
 
-**Symptom**: `connection refused` or `timeout`
-
-**Solution**:
-1. Verify database URL is correct
-2. Check internet connectivity
-3. Verify database exists: `turso db list`
-4. Check Turso status page for outages
-
-### Token Not Working
-
-**Symptom**: `invalid token` error
-
-**Solution**:
-1. Verify token format (should be a long JWT)
-2. Ensure token was created for correct database
-3. Check if token was invalidated: `turso db tokens invalidate` removes all tokens
-4. Create a new token
+**Token Not Working** (`invalid token`):
+1. Verify token format (long JWT string)
+2. Create new token
+3. Check if invalidated
 
 ### Headless Authentication
 
-For CI/CD or WSL environments:
-
 ```bash
-# Use headless flag for browser-less auth
 turso auth login --headless
 ```
+
+For detailed diagnostics and error solutions, see [Turso Troubleshooting Guide](TURSO_TROUBLESHOOTING.md).
 
 ---
 

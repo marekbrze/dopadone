@@ -121,33 +121,29 @@ If sync fails after migration:
 
 ## Troubleshooting
 
-### Migration Fails with libSQL
+For comprehensive migration troubleshooting, see the [Turso Troubleshooting Guide](TURSO_TROUBLESHOOTING.md) which covers:
 
-**Symptom**: `goose: migration failed` error
+- Migration errors specific to libSQL
+- Schema drift detection and resolution
+- Rollback procedures
+- Sync failures after migration
 
-**Solution**:
-1. Check the SQL syntax is SQLite-compatible
-2. Verify no unsupported SQLite features are used
-3. Run `dopa migrate status` to see current state
+### Quick Migration Troubleshooting
 
-### Sync Fails After Migration
+**Migration Fails** (`goose: migration failed`):
+1. Check SQL syntax is SQLite-compatible
+2. Run `dopa migrate status` to see current state
+3. See [Migration Errors](TURSO_TROUBLESHOOTING.md#migration-errors) for details
 
-**Symptom**: `failed to sync schema to remote` error
-
-**Solution**:
-1. Check Turso credentials are valid
+**Sync Fails After Migration**:
+1. Check Turso credentials
 2. Verify network connectivity
-3. Check Turso service status
-4. Retry the sync manually
+3. See [Replica Mode Sync Issues](TURSO_TROUBLESHOOTING.md#replica-mode-sync-issues)
 
-### Schema Drift Detected
-
-**Symptom**: `dopa migrate verify` shows inconsistencies
-
-**Solution**:
+**Schema Drift Detected**:
 1. Check `goose_db_version` table versions
-2. Compare table structures
-3. Run missing migrations or restore from backup
+2. Run `dopa migrate verify`
+3. See [Migration Errors](TURSO_TROUBLESHOOTING.md#migration-errors)
 
 ## Migration Files
 
