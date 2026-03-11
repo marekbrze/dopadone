@@ -27,6 +27,7 @@ var (
 	tursoToken   string
 	dbMode       string
 	syncInterval string
+	configPath   string
 )
 
 var rootCmd = &cobra.Command{
@@ -177,6 +178,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&tursoToken, "turso-token", "", "Turso auth token (env: TURSO_AUTH_TOKEN)")
 	rootCmd.PersistentFlags().StringVar(&dbMode, "db-mode", "", "Database mode: local|remote|replica|auto (env: DOPA_DB_MODE, default: auto)")
 	rootCmd.PersistentFlags().StringVar(&syncInterval, "sync-interval", "60s", "Sync interval for embedded replica mode")
+	rootCmd.PersistentFlags().StringVar(&configPath, "config", "", "Path to config file (default: ./dopadone.yaml, ~/.config/dopadone/config.yaml, ~/.dopadone.yaml)")
 	rootCmd.PersistentFlags().StringVarP(&outputFormat, "output", "o", "table", "output format (table|json)")
 	versionCmd.Flags().BoolVar(&showAll, "all", false, "show detailed build information")
 	upgradeCmd.Flags().BoolVar(&skipMigrate, "skip-migrate", false, "skip running migrations after upgrade")
@@ -209,7 +211,17 @@ func GetDriver() (driver.DatabaseDriver, error) {
 		syncDur = 60 * time.Second
 	}
 
-	cfg := LoadConfig(dbPath, tursoURL, tursoToken, dbMode, syncDur)
+	cfg, err := LoadConfig(LoadConfigParams{
+		DBPath:       dbPath,
+		TursoURL:     tursoURL,
+		TursoToken:   tursoToken,
+		DBMode:       dbMode,
+		SyncInterval: syncDur,
+		ConfigPath:   configPath,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to load config: %w", err)
+	}
 	driverCfg := cfg.ToDriverConfig()
 
 	result, err := driver.DetectOrExplicitMode(driverCfg)

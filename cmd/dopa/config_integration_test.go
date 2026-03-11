@@ -9,7 +9,13 @@ import (
 )
 
 func TestLoadConfig_DefaultValues(t *testing.T) {
-	cfg := LoadConfig("./test.db", "", "", "", 60*time.Second)
+	cfg, err := LoadConfig(LoadConfigParams{
+		DBPath:       "./test.db",
+		SyncInterval: 60 * time.Second,
+	})
+	if err != nil {
+		t.Fatalf("LoadConfig() error = %v", err)
+	}
 
 	if cfg.DatabasePath != "./test.db" {
 		t.Errorf("DatabasePath = %v, want ./test.db", cfg.DatabasePath)
@@ -29,13 +35,16 @@ func TestLoadConfig_DefaultValues(t *testing.T) {
 }
 
 func TestLoadConfig_AllFlagsProvided(t *testing.T) {
-	cfg := LoadConfig(
-		"/custom/path.db",
-		"libsql://test.turso.io",
-		"test-token",
-		"replica",
-		30*time.Second,
-	)
+	cfg, err := LoadConfig(LoadConfigParams{
+		DBPath:       "/custom/path.db",
+		TursoURL:     "libsql://test.turso.io",
+		TursoToken:   "test-token",
+		DBMode:       "replica",
+		SyncInterval: 30 * time.Second,
+	})
+	if err != nil {
+		t.Fatalf("LoadConfig() error = %v", err)
+	}
 
 	if cfg.DatabasePath != "/custom/path.db" {
 		t.Errorf("DatabasePath = %v, want /custom/path.db", cfg.DatabasePath)
@@ -54,119 +63,119 @@ func TestLoadConfig_AllFlagsProvided(t *testing.T) {
 	}
 }
 
-func TestGetDatabasePath_FlagPrecedence(t *testing.T) {
+func TestResolveDBPath_FlagPrecedence(t *testing.T) {
 	if err := os.Setenv("DOPA_DB_PATH", "/env/path.db"); err != nil {
 		t.Fatalf("Setenv failed: %v", err)
 	}
 	defer func() { _ = os.Unsetenv("DOPA_DB_PATH") }()
 
-	path := getDatabasePath("/flag/path.db")
+	path := resolveDBPath("/flag/path.db", nil)
 
 	if path != "/flag/path.db" {
-		t.Errorf("getDatabasePath = %v, want /flag/path.db (flag should override env)", path)
+		t.Errorf("resolveDBPath = %v, want /flag/path.db (flag should override env)", path)
 	}
 }
 
-func TestGetDatabasePath_EnvFallback(t *testing.T) {
+func TestResolveDBPath_EnvFallback(t *testing.T) {
 	if err := os.Setenv("DOPA_DB_PATH", "/env/path.db"); err != nil {
 		t.Fatalf("Setenv failed: %v", err)
 	}
 	defer func() { _ = os.Unsetenv("DOPA_DB_PATH") }()
 
-	path := getDatabasePath("./dopadone.db")
+	path := resolveDBPath("./dopadone.db", nil)
 
 	if path != "/env/path.db" {
-		t.Errorf("getDatabasePath = %v, want /env/path.db (env should be used when flag is default)", path)
+		t.Errorf("resolveDBPath = %v, want /env/path.db (env should be used when flag is default)", path)
 	}
 }
 
-func TestGetDatabasePath_Default(t *testing.T) {
+func TestResolveDBPath_Default(t *testing.T) {
 	if err := os.Unsetenv("DOPA_DB_PATH"); err != nil {
 		t.Fatalf("Unsetenv failed: %v", err)
 	}
 
-	path := getDatabasePath("./dopadone.db")
+	path := resolveDBPath("./dopadone.db", nil)
 
 	if path != "./dopadone.db" {
-		t.Errorf("getDatabasePath = %v, want ./dopadone.db (default)", path)
+		t.Errorf("resolveDBPath = %v, want ./dopadone.db (default)", path)
 	}
 }
 
-func TestGetTursoURL_FlagPrecedence(t *testing.T) {
+func TestResolveTursoURL_FlagPrecedence(t *testing.T) {
 	if err := os.Setenv("TURSO_DATABASE_URL", "libsql://env.turso.io"); err != nil {
 		t.Fatalf("Setenv failed: %v", err)
 	}
 	defer func() { _ = os.Unsetenv("TURSO_DATABASE_URL") }()
 
-	url := getTursoURL("libsql://flag.turso.io")
+	url := resolveTursoURL("libsql://flag.turso.io", nil)
 
 	if url != "libsql://flag.turso.io" {
-		t.Errorf("getTursoURL = %v, want libsql://flag.turso.io (flag should override env)", url)
+		t.Errorf("resolveTursoURL = %v, want libsql://flag.turso.io (flag should override env)", url)
 	}
 }
 
-func TestGetTursoURL_EnvFallback(t *testing.T) {
+func TestResolveTursoURL_EnvFallback(t *testing.T) {
 	if err := os.Setenv("TURSO_DATABASE_URL", "libsql://env.turso.io"); err != nil {
 		t.Fatalf("Setenv failed: %v", err)
 	}
 	defer func() { _ = os.Unsetenv("TURSO_DATABASE_URL") }()
 
-	url := getTursoURL("")
+	url := resolveTursoURL("", nil)
 
 	if url != "libsql://env.turso.io" {
-		t.Errorf("getTursoURL = %v, want libsql://env.turso.io (from env)", url)
+		t.Errorf("resolveTursoURL = %v, want libsql://env.turso.io (from env)", url)
 	}
 }
 
-func TestGetTursoToken_FlagPrecedence(t *testing.T) {
+func TestResolveTursoToken_FlagPrecedence(t *testing.T) {
 	if err := os.Setenv("TURSO_AUTH_TOKEN", "env-token"); err != nil {
 		t.Fatalf("Setenv failed: %v", err)
 	}
 	defer func() { _ = os.Unsetenv("TURSO_AUTH_TOKEN") }()
 
-	token := getTursoToken("flag-token")
+	token := resolveTursoToken("flag-token", nil)
 
 	if token != "flag-token" {
-		t.Errorf("getTursoToken = %v, want flag-token (flag should override env)", token)
+		t.Errorf("resolveTursoToken = %v, want flag-token (flag should override env)", token)
 	}
 }
 
-func TestGetTursoToken_EnvFallback(t *testing.T) {
+func TestResolveTursoToken_EnvFallback(t *testing.T) {
 	if err := os.Setenv("TURSO_AUTH_TOKEN", "env-token"); err != nil {
 		t.Fatalf("Setenv failed: %v", err)
 	}
 	defer func() { _ = os.Unsetenv("TURSO_AUTH_TOKEN") }()
 
-	token := getTursoToken("")
+	token := resolveTursoToken("", nil)
 
 	if token != "env-token" {
-		t.Errorf("getTursoToken = %v, want env-token (from env)", token)
+		t.Errorf("resolveTursoToken = %v, want env-token (from env)", token)
 	}
 }
 
-func TestGetDBMode_FlagPrecedence(t *testing.T) {
+func TestResolveDBMode_FlagPrecedence(t *testing.T) {
 	if err := os.Setenv("DOPA_DB_MODE", "remote"); err != nil {
 		t.Fatalf("Setenv failed: %v", err)
 	}
 	defer func() { _ = os.Unsetenv("DOPA_DB_MODE") }()
 
-	mode := getDBMode("replica")
+	mode := resolveDBMode("replica", nil)
 
 	if mode != "replica" {
-		t.Errorf("getDBMode = %v, want replica (flag should override env)", mode)
+		t.Errorf("resolveDBMode = %v, want replica (flag should override env)", mode)
 	}
 }
 
-func TestGetDBMode_EnvFallback(t *testing.T) {
+func TestResolveDBMode_EnvFallback(t *testing.T) {
 	if err := os.Setenv("DOPA_DB_MODE", "remote"); err != nil {
 		t.Fatalf("Setenv failed: %v", err)
 	}
 	defer func() { _ = os.Unsetenv("DOPA_DB_MODE") }()
 
-	mode := getDBMode("")
+	mode := resolveDBMode("", nil)
 
 	if mode != "remote" {
-		t.Errorf("getDBMode = %v, want remote (from env)", mode)
+		t.Errorf("resolveDBMode = %v, want remote (from env)", mode)
 	}
 }
 
@@ -301,7 +310,16 @@ func TestConfigPrecedence_FullIntegration(t *testing.T) {
 				_ = os.Unsetenv("DOPA_DB_MODE")
 			}()
 
-			cfg := LoadConfig(tt.flagDBPath, tt.flagTursoURL, tt.flagTursoToken, tt.flagDBMode, 60*time.Second)
+			cfg, err := LoadConfig(LoadConfigParams{
+				DBPath:       tt.flagDBPath,
+				TursoURL:     tt.flagTursoURL,
+				TursoToken:   tt.flagTursoToken,
+				DBMode:       tt.flagDBMode,
+				SyncInterval: 60 * time.Second,
+			})
+			if err != nil {
+				t.Fatalf("LoadConfig() error = %v", err)
+			}
 
 			if cfg.DatabasePath != tt.wantDBPath {
 				t.Errorf("DatabasePath = %v, want %v", cfg.DatabasePath, tt.wantDBPath)

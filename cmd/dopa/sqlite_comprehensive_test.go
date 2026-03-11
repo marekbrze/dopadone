@@ -563,7 +563,16 @@ func TestDriverDetection_AllModes(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := LoadConfig(tt.dbPath, tt.tursoURL, tt.tursoToken, tt.dbMode, 60*time.Second)
+			cfg, err := LoadConfig(LoadConfigParams{
+				DBPath:       tt.dbPath,
+				TursoURL:     tt.tursoURL,
+				TursoToken:   tt.tursoToken,
+				DBMode:       tt.dbMode,
+				SyncInterval: 60 * time.Second,
+			})
+			if err != nil {
+				t.Fatalf("LoadConfig() error = %v", err)
+			}
 			driverCfg := cfg.ToDriverConfig()
 
 			result, err := driver.DetectOrExplicitMode(driverCfg)

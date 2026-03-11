@@ -142,6 +142,7 @@ dopa --sync-interval 5m tasks list
 | `--turso-auth-token` | Turso authentication token | - |
 | `--db-mode` | Database mode: `local`, `remote`, `replica`, `auto` | `auto` |
 | `--sync-interval` | Sync interval for replica mode | `60s` |
+| `--config` | Path to YAML config file | Auto-discovered |
 
 ### Environment Variables
 
@@ -152,12 +153,93 @@ dopa --sync-interval 5m tasks list
 | `TURSO_AUTH_TOKEN` | `--turso-auth-token` |
 | `DOPA_DB_MODE` | `--db-mode` |
 
+### YAML Configuration File
+
+Dopadone supports configuration via a YAML file for persistent settings. Create a `dopadone.yaml` file:
+
+```yaml
+database:
+  path: ./dopadone.db          # Local database path
+  mode: auto                    # local|remote|replica|auto
+  sync_interval: 60s            # Sync interval for replica mode
+  turso:
+    url: libsql://xxx.turso.io  # Turso database URL
+    token: xxx                  # Turso auth token (or use env)
+```
+
+#### Config File Discovery Order
+
+Dopadone automatically searches for configuration files in this order:
+
+1. **Explicit path** - `--config /path/to/config.yaml`
+2. **Current directory** - `./dopadone.yaml`
+3. **XDG config home** - `$XDG_CONFIG_HOME/dopadone/config.yaml`
+4. **Default XDG** - `~/.config/dopadone/config.yaml`
+5. **Home directory** - `~/.dopadone.yaml`
+
+The first file found is used. If no config file exists, CLI flags and environment variables are used.
+
+#### Example Configurations
+
+**Local SQLite:**
+```yaml
+database:
+  path: ~/projects/my-project/dopadone.db
+  mode: local
+```
+
+**Turso Remote:**
+```yaml
+database:
+  mode: remote
+  turso:
+    url: libsql://my-db.turso.io
+    token: ${TURSO_AUTH_TOKEN}  # Reference env variable
+```
+
+**Turso Replica:**
+```yaml
+database:
+  path: ./local-replica.db
+  mode: replica
+  sync_interval: 30s
+  turso:
+    url: libsql://my-db.turso.io
+    token: ${TURSO_AUTH_TOKEN}
+```
+
 ### Configuration Precedence
 
-When both CLI flags and environment variables are set, CLI flags take precedence:
+When multiple configuration sources are present, Dopadone uses this precedence order:
 
 ```
-CLI flags > Environment variables > Defaults
+CLI flags > Environment variables > Config file > Defaults
+```
+
+This means:
+- CLI flags always override everything else
+- Environment variables override config file values
+- Config file values override defaults
+- If nothing is specified, sensible defaults are used
+
+#### Precedence Examples
+
+```bash
+# Config file has mode: local, but CLI overrides
+dopa --db-mode remote tasks list  # Uses "remote"
+
+# Config file has turso.url, but env overrides
+export TURSO_DATABASE_URL="libsql://other.turso.io"
+dopa tasks list  # Uses env variable, not config file
+
+# Partial config: file provides path, env provides token
+# Config file:
+#   database:
+#     path: ./mydb.db
+#     turso:
+#       url: libsql://my.turso.io
+# Env: TURSO_AUTH_TOKEN=secret
+dopa tasks list  # Uses path and URL from file, token from env
 ```
 
 ## Auto-Detection
