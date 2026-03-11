@@ -307,6 +307,7 @@ See: [Turso Troubleshooting Guide](TURSO_TROUBLESHOOTING.md)
 
 ## Related Documentation
 
+- [Turso Performance Guide](TURSO_PERFORMANCE.md) - Performance optimization, benchmarks, and best practices
 - [Turso Troubleshooting Guide](TURSO_TROUBLESHOOTING.md) - Comprehensive error solutions
 - [Turso Setup Guide](TURSO_SETUP.md) - Step-by-step Turso account and database setup
 - [Turso Migrations](TURSO_MIGRATIONS.md) - Migration guide for libSQL/Turso

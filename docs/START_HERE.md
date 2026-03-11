@@ -105,6 +105,7 @@ The architecture follows **layered design principles** with clear separation of 
 | [Database Modes](DATABASE_MODES.md) | Local SQLite, Turso remote, and embedded replica modes |
 | [Turso Setup Guide](TURSO_SETUP.md) | Turso account signup, CLI installation, and credential setup |
 | [Turso Migrations](TURSO_MIGRATIONS.md) | Migration guide for libSQL/Turso integration |
+| [Turso Performance](TURSO_PERFORMANCE.md) | Performance optimization, benchmarks, and best practices for each mode |
 | [Turso Troubleshooting](TURSO_TROUBLESHOOTING.md) | Comprehensive error solutions and diagnostic toolkit |
 | [Release Process](RELEASE.md) | Versioning, tagging, deployment workflow |
 | [CI/CD Pipeline](CI-CD.md) | GitHub Actions workflows, build process, automation |
