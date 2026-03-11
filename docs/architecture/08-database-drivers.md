@@ -499,13 +499,54 @@ The driver package includes comprehensive tests:
 - **Error tests**: Test error types and wrapping
 - **Turso remote tests**: Connection, retry logic, timeout handling
 - **Integration tests**: Real database tests (build tag: `integration`)
+- **Mock Turso server**: In-process mock server for CI testing without external dependencies
 
-Run tests with:
+### Test Files
+
+| File | Purpose |
+|------|---------|
+| `driver_test.go` | Core interface and registry tests |
+| `turso_remote_test.go` | Turso remote driver unit tests |
+| `turso_replica_test.go` | Turso replica driver unit tests |
+| `mock_turso_server_test.go` | Mock server and integration tests |
+| `turso_remote_integration_test.go` | Real Turso remote tests (requires credentials) |
+| `turso_replica_integration_test.go` | Real Turso replica tests (requires credentials) |
+| `detector_test.go` | Auto-detection logic tests |
+
+### Mock Turso Server
+
+The `MockTursoServer` provides a lightweight HTTP server that simulates Turso for CI testing:
+
+```go
+func TestWithMockServer(t *testing.T) {
+    server := NewMockTursoServer(t)
+    defer server.Close()
+    
+    // Use server.URL() as the Turso URL
+    drv, err := NewTursoRemoteDriver(&Config{
+        Type:       DriverTursoRemote,
+        TursoURL:   server.URL(),
+        TursoToken: "test-token",
+    })
+    // ... test driver behavior
+}
+```
+
+### Running Tests
 
 ```bash
-# Unit tests
+# Unit tests (no external deps)
 go test ./internal/db/driver/... -v
 go test ./internal/db/driver/... -cover
+
+# SQLite integration tests
+go test ./cmd/dopa/... -run SQLite -v
+
+# Config precedence tests
+go test ./cmd/dopa/... -run Config -v
+
+# Mock Turso server tests
+go test ./internal/db/driver/... -run "Mock|Turso" -v
 
 # Integration tests (requires TURSO_TEST_URL and TURSO_TEST_TOKEN)
 TURSO_TEST_URL=libsql://your-db.turso.io \
@@ -513,11 +554,18 @@ TURSO_TEST_TOKEN=your-token \
 go test ./internal/db/driver/... -tags=integration -v
 ```
 
+### Test Coverage
+
+| Package | Target | Current |
+|---------|--------|---------|
+| `internal/db/driver` | 85% | 72.8% |
+
 ## Related Tasks
 
 - **TASK-60.1**: Database abstraction layer (completed)
 - **TASK-60.2**: Turso remote driver implementation (completed)
 - **TASK-60.3**: Turso embedded replica driver implementation (completed)
+- **TASK-60.6**: Integration tests for database modes (completed)
 - **TASK-60.7**: Integration and wiring
 - **TASK-60.8**: Database mode auto-detection (completed)
 

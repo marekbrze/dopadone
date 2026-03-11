@@ -409,6 +409,34 @@ go tool cover -html=coverage.out -o coverage.html
 ```go
 // internal/db/integration_test.go
 // internal/tui/integration_test.go
+// internal/db/driver/mock_turso_server_test.go - Mock Turso server for CI
+// cmd/dopa/sqlite_comprehensive_test.go - SQLite CRUD and concurrency tests
+```
+
+### Database Mode Tests
+The database driver package includes comprehensive tests for all three database modes:
+
+| Test Category | File | Purpose |
+|---------------|------|---------|
+| SQLite CRUD | `cmd/dopa/sqlite_comprehensive_test.go` | All CRUD operations, transactions, concurrency |
+| Config Precedence | `cmd/dopa/config_integration_test.go` | CLI > env > config file precedence |
+| Fail-Fast | `internal/db/driver/mock_turso_server_test.go` | Connection timeout and error handling |
+| Mock Turso Server | `internal/db/driver/mock_turso_server_test.go` | CI testing without external dependencies |
+| Driver Registry | `internal/db/driver/mock_turso_server_test.go` | All driver type registration |
+
+#### Running Database Mode Tests
+```bash
+# SQLite integration tests
+go test ./cmd/dopa/... -run SQLite -v
+
+# Config precedence tests
+go test ./cmd/dopa/... -run Config -v
+
+# Fail-fast and error handling tests
+go test ./internal/db/driver/... -run "Fail|Connection" -v
+
+# All driver tests with coverage
+go test ./internal/db/driver/... -cover
 ```
 
 ### Benchmarks
