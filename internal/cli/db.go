@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/marekbrze/dopadone/internal/db/driver"
 	_ "modernc.org/sqlite"
 )
 
@@ -42,6 +43,21 @@ func Close(db *sql.DB) error {
 		return nil
 	}
 	return db.Close()
+}
+
+func ConnectWithDriver(opts ...driver.Option) (driver.DatabaseDriver, error) {
+	drv, err := driver.NewDriver(opts...)
+	if err != nil {
+		return nil, WrapError(err, "failed to create database driver")
+	}
+	return drv, nil
+}
+
+func CloseDriver(drv driver.DatabaseDriver) error {
+	if drv == nil {
+		return nil
+	}
+	return drv.Close()
 }
 
 func RunMigrations(db *sql.DB, migrationsPath string) error {

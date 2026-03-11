@@ -37,6 +37,8 @@ dopa area update <area-id> --name "Professional Work"
 dopa area delete <area-id>
 ```
 
+> **Note:** All `get`, `update`, and `delete` commands require the entity's **UUID** (e.g., `b3e76f50-3640-4dfa-be85-c5401dd18555`), not its name. Use `list` commands to find UUIDs.
+
 Once you understand areas, the same CRUD pattern applies to subareas, projects, and tasks.
 
 ## Installation
