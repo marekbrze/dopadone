@@ -2,6 +2,16 @@
 
 This document covers migration considerations when using libSQL/Turso with Dopadone.
 
+## Data Migration
+
+To migrate your existing SQLite data to Turso, see the [SQLite to Turso Data Migration Guide](TURSO_DATA_MIGRATION.md).
+
+That guide covers:
+- Exporting data from local SQLite
+- Importing to Turso cloud
+- Verification and rollback procedures
+- Common pitfalls and solutions
+
 ## Overview
 
 Dopadone supports three database modes:

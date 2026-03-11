@@ -310,7 +310,8 @@ See: [Turso Troubleshooting Guide](TURSO_TROUBLESHOOTING.md)
 - [Turso Performance Guide](TURSO_PERFORMANCE.md) - Performance optimization, benchmarks, and best practices
 - [Turso Troubleshooting Guide](TURSO_TROUBLESHOOTING.md) - Comprehensive error solutions
 - [Turso Setup Guide](TURSO_SETUP.md) - Step-by-step Turso account and database setup
-- [Turso Migrations](TURSO_MIGRATIONS.md) - Migration guide for libSQL/Turso
+- [Turso Migrations](TURSO_MIGRATIONS.md) - Schema migration guide for libSQL/Turso
+- [Turso Data Migration](TURSO_DATA_MIGRATION.md) - Step-by-step guide for migrating data from SQLite to Turso
 - [Database Driver Architecture](architecture/08-database-drivers.md) - Technical implementation details
 - [Architecture Overview](architecture/01-overview.md) - System architecture
 - [TUI Documentation](TUI.md) - Terminal UI features including connection status indicator

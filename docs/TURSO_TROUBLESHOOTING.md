@@ -1244,7 +1244,8 @@ echo "========================================="
 
 - [Database Modes](DATABASE_MODES.md) - Mode explanations and configuration
 - [Turso Setup Guide](TURSO_SETUP.md) - Account and credential setup
-- [Turso Migrations](TURSO_MIGRATIONS.md) - Migration procedures
+- [Turso Migrations](TURSO_MIGRATIONS.md) - Schema migration procedures
+- [Turso Data Migration](TURSO_DATA_MIGRATION.md) - Step-by-step guide for migrating data from SQLite to Turso
 - [Architecture Overview](architecture/01-overview.md) - System architecture
 - [Turso Official Docs](https://docs.turso.tech) - Turso documentation
 
