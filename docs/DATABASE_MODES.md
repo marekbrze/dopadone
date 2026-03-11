@@ -309,6 +309,7 @@ If sync is not working:
 
 ## Related Documentation
 
+- [Turso Setup Guide](TURSO_SETUP.md) - Step-by-step Turso account and database setup
 - [Database Driver Architecture](architecture/08-database-drivers.md) - Technical implementation details
 - [Architecture Overview](architecture/01-overview.md) - System architecture
 - [TUI Documentation](TUI.md) - Terminal UI features including connection status indicator

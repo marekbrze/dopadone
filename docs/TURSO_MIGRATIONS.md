@@ -177,6 +177,7 @@ Migrations are stored in `internal/migrate/migrations/`:
 
 ## Related Documentation
 
-- [Database Modes](./architecture/database-modes.md) - Detailed mode explanations
+- [Turso Setup Guide](TURSO_SETUP.md) - Step-by-step Turso account and database setup
+- [Database Modes](DATABASE_MODES.md) - Detailed mode explanations
 - [Turso Documentation](https://docs.turso.tech) - Official Turso docs
 - [Goose Documentation](https://github.com/pressly/goose) - Migration tool docs
