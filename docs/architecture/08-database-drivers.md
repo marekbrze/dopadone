@@ -18,6 +18,8 @@ internal/db/driver/
 ├── registry.go                    # Driver registry for registration
 ├── factory.go                     # Factory pattern for driver creation
 ├── config.go                      # Configuration types and defaults
+├── detector.go                    # Auto-detection logic for driver mode
+├── detector_test.go               # Unit tests for auto-detection
 ├── errors.go                      # Driver-specific error types
 ├── turso_remote.go                # Turso remote driver implementation
 ├── turso_remote_test.go           # Unit tests for Turso remote
@@ -31,7 +33,7 @@ internal/db/driver/
 ### Data Flow
 
 ```
-Configuration → Factory → Registry → Driver → *sql.DB
+Configuration → Auto-Detection → Factory → Registry → Driver → *sql.DB
 ```
 
 ## DatabaseDriver Interface
@@ -235,6 +237,87 @@ driver, err := driver.NewDriver(
 | `WithMaxRetries(n)` | Set max retry attempts (default: 3) |
 | `WithRetryInterval(d)` | Set time between retries (default: 1s) |
 
+## Auto-Detection
+
+The driver package includes automatic mode detection based on configuration presence. This simplifies configuration by automatically selecting the appropriate driver type.
+
+### Detection Logic
+
+The `DetectMode()` function determines the driver type based on which configuration values are present:
+
+| Configuration | Detected Mode |
+|--------------|---------------|
+| `--db` only | SQLite (local) |
+| `--turso-url` + `--turso-token` | Turso Remote |
+| `--db` + `--turso-url` + `--turso-token` | Turso Replica |
+
+### Usage
+
+```go
+cfg := &driver.Config{
+    DatabasePath: "/path/to/local.db",
+    TursoURL:     "libsql://your-db.turso.io",
+    TursoToken:   "your-auth-token",
+}
+
+result := driver.DetectMode(cfg)
+fmt.Printf("Mode: %s (%s)\n", result.Type, result.Reason)
+```
+
+### DetectionResult Structure
+
+```go
+type DetectionResult struct {
+    Type   DriverType  // Detected driver type
+    Reason string      // Human-readable explanation
+}
+```
+
+### Explicit Mode Override
+
+Users can override auto-detection by specifying `--db-mode` explicitly:
+
+```bash
+# Force local SQLite
+dopa --db-mode local
+
+# Force remote Turso
+dopa --db-mode remote --turso-url libsql://db.turso.io --turso-token TOKEN
+
+# Force embedded replica
+dopa --db-mode replica --db ./local.db --turso-url libsql://db.turso.io --turso-token TOKEN
+```
+
+### CLI Flags
+
+| Flag | Environment Variable | Description |
+|------|---------------------|-------------|
+| `--db` | `DOPA_DB_PATH` | Local database path |
+| `--turso-url` | `TURSO_DATABASE_URL` | Turso database URL |
+| `--turso-token` | `TURSO_AUTH_TOKEN` | Turso auth token |
+| `--db-mode` | `DOPA_DB_MODE` | Database mode: local, remote, replica, auto |
+| `--sync-interval` | - | Sync interval for replica mode (default: 60s) |
+
+### Validation
+
+Each mode has specific configuration requirements validated by `ValidateConfigForMode()`:
+
+| Mode | Required Configuration |
+|------|----------------------|
+| SQLite | `DatabasePath` |
+| Turso Remote | `TursoURL`, `TursoToken` |
+| Turso Replica | `DatabasePath`, `TursoURL`, `TursoToken` |
+
+### Startup Logging
+
+The detected mode is logged at startup for observability:
+
+```
+[Database] Mode: sqlite (local SQLite (no Turso configuration found))
+[Database] Mode: turso-remote (remote Turso (Turso URL configured without local path))
+[Database] Mode: turso-replica (embedded replica (Turso URL + local path configured))
+```
+
 ## Driver Registry
 
 Drivers must be registered before use:
@@ -436,7 +519,7 @@ go test ./internal/db/driver/... -tags=integration -v
 - **TASK-60.2**: Turso remote driver implementation (completed)
 - **TASK-60.3**: Turso embedded replica driver implementation (completed)
 - **TASK-60.7**: Integration and wiring
-- **TASK-60.8**: Configuration system
+- **TASK-60.8**: Database mode auto-detection (completed)
 
 ## References
 

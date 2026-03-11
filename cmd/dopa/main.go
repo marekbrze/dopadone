@@ -1,13 +1,17 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"os"
+	"time"
 
 	"github.com/marekbrze/dopadone/internal/cli"
 	"github.com/marekbrze/dopadone/internal/cli/output"
 	"github.com/marekbrze/dopadone/internal/db"
+	"github.com/marekbrze/dopadone/internal/db/driver"
 	"github.com/marekbrze/dopadone/internal/migrate"
 	"github.com/marekbrze/dopadone/internal/service"
 	"github.com/marekbrze/dopadone/internal/version"
@@ -19,6 +23,10 @@ var (
 	outputFormat string
 	showAll      bool
 	skipMigrate  bool
+	tursoURL     string
+	tursoToken   string
+	dbMode       string
+	syncInterval string
 )
 
 var rootCmd = &cobra.Command{
@@ -139,6 +147,10 @@ var migrateResetCmd = &cobra.Command{
 
 func init() {
 	rootCmd.PersistentFlags().StringVar(&dbPath, "db", "./dopadone.db", "path to database file")
+	rootCmd.PersistentFlags().StringVar(&tursoURL, "turso-url", "", "Turso database URL (env: TURSO_DATABASE_URL)")
+	rootCmd.PersistentFlags().StringVar(&tursoToken, "turso-token", "", "Turso auth token (env: TURSO_AUTH_TOKEN)")
+	rootCmd.PersistentFlags().StringVar(&dbMode, "db-mode", "", "Database mode: local|remote|replica|auto (env: DOPA_DB_MODE, default: auto)")
+	rootCmd.PersistentFlags().StringVar(&syncInterval, "sync-interval", "60s", "Sync interval for embedded replica mode")
 	rootCmd.PersistentFlags().StringVarP(&outputFormat, "output", "o", "table", "output format (table|json)")
 	versionCmd.Flags().BoolVar(&showAll, "all", false, "show detailed build information")
 	upgradeCmd.Flags().BoolVar(&skipMigrate, "skip-migrate", false, "skip running migrations after upgrade")
@@ -157,11 +169,51 @@ func init() {
 }
 
 func GetDB() (*sql.DB, error) {
-	db, err := cli.Connect(dbPath)
+	syncDur, err := time.ParseDuration(syncInterval)
 	if err != nil {
-		return nil, err
+		syncDur = 60 * time.Second
 	}
-	return db, nil
+
+	cfg := LoadConfig(dbPath, tursoURL, tursoToken, dbMode, syncDur)
+	driverCfg := cfg.ToDriverConfig()
+
+	result, err := driver.DetectOrExplicitMode(driverCfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to detect database mode: %w", err)
+	}
+
+	log.Printf("[Database] Mode: %s (%s)", result.Type, result.Reason)
+
+	if err := driver.ValidateConfigForMode(driverCfg, result.Type); err != nil {
+		return nil, fmt.Errorf("configuration validation failed: %w", err)
+	}
+
+	switch result.Type {
+	case driver.DriverSQLite:
+		return cli.Connect(cfg.DatabasePath)
+	case driver.DriverTursoRemote, driver.DriverTursoReplica:
+		drv, err := cli.ConnectWithDriver(
+			driver.WithDriverType(result.Type),
+			driver.WithDatabasePath(cfg.DatabasePath),
+			driver.WithTurso(cfg.TursoURL, cfg.TursoToken),
+			driver.WithSyncInterval(cfg.SyncInterval),
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		if err := drv.Connect(ctx); err != nil {
+			return nil, fmt.Errorf("failed to connect to database: %w", err)
+		}
+
+		log.Printf("[Database] Connected successfully in %s mode", result.Type)
+		return drv.GetDB(), nil
+	default:
+		return nil, fmt.Errorf("unsupported database mode: %s", result.Type)
+	}
 }
 
 func GetFormatter() (output.Formatter, error) {
