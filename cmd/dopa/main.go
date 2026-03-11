@@ -145,6 +145,32 @@ var migrateResetCmd = &cobra.Command{
 	},
 }
 
+var migrateVerifyCmd = &cobra.Command{
+	Use:   "verify",
+	Short: "Verify database schema consistency",
+	Long:  "Check that all expected tables exist and schema is consistent with migrations",
+	Run: func(cmd *cobra.Command, args []string) {
+		drv, err := GetDriver()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to get database driver: %v\n", err)
+			os.Exit(1)
+		}
+		defer func() { _ = drv.Close() }()
+
+		verification, err := migrate.VerifyConsistency(drv)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Schema verification failed: %v\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Print(verification.String())
+
+		if !verification.Consistent {
+			os.Exit(1)
+		}
+	},
+}
+
 func init() {
 	rootCmd.PersistentFlags().StringVar(&dbPath, "db", "./dopadone.db", "path to database file")
 	rootCmd.PersistentFlags().StringVar(&tursoURL, "turso-url", "", "Turso database URL (env: TURSO_DATABASE_URL)")
@@ -162,6 +188,7 @@ func init() {
 	migrateCmd.AddCommand(migrateDownCmd)
 	migrateCmd.AddCommand(migrateStatusCmd)
 	migrateCmd.AddCommand(migrateResetCmd)
+	migrateCmd.AddCommand(migrateVerifyCmd)
 	rootCmd.AddCommand(areasCmd)
 	rootCmd.AddCommand(subareasCmd)
 	rootCmd.AddCommand(projectsCmd)
@@ -169,6 +196,14 @@ func init() {
 }
 
 func GetDB() (*sql.DB, error) {
+	drv, err := GetDriver()
+	if err != nil {
+		return nil, err
+	}
+	return drv.GetDB(), nil
+}
+
+func GetDriver() (driver.DatabaseDriver, error) {
 	syncDur, err := time.ParseDuration(syncInterval)
 	if err != nil {
 		syncDur = 60 * time.Second
@@ -190,7 +225,11 @@ func GetDB() (*sql.DB, error) {
 
 	switch result.Type {
 	case driver.DriverSQLite:
-		return cli.Connect(cfg.DatabasePath)
+		db, err := cli.Connect(cfg.DatabasePath)
+		if err != nil {
+			return nil, err
+		}
+		return &sqlDriverWrapper{db: db}, nil
 	case driver.DriverTursoRemote, driver.DriverTursoReplica:
 		drv, err := cli.ConnectWithDriver(
 			driver.WithDriverType(result.Type),
@@ -210,11 +249,22 @@ func GetDB() (*sql.DB, error) {
 		}
 
 		log.Printf("[Database] Connected successfully in %s mode", result.Type)
-		return drv.GetDB(), nil
+		return drv, nil
 	default:
 		return nil, fmt.Errorf("unsupported database mode: %s", result.Type)
 	}
 }
+
+type sqlDriverWrapper struct {
+	db *sql.DB
+}
+
+func (w *sqlDriverWrapper) Connect(ctx context.Context) error { return nil }
+func (w *sqlDriverWrapper) Close() error                      { return w.db.Close() }
+func (w *sqlDriverWrapper) GetDB() *sql.DB                    { return w.db }
+func (w *sqlDriverWrapper) Ping(ctx context.Context) error    { return w.db.PingContext(ctx) }
+func (w *sqlDriverWrapper) Type() driver.DriverType           { return driver.DriverSQLite }
+func (w *sqlDriverWrapper) Status() driver.ConnectionStatus   { return driver.StatusConnected }
 
 func GetFormatter() (output.Formatter, error) {
 	return output.NewFormatter(outputFormat)

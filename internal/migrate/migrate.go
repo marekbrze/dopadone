@@ -5,7 +5,9 @@ import (
 	"embed"
 	"fmt"
 	"io/fs"
+	"log"
 
+	"github.com/marekbrze/dopadone/internal/db/driver"
 	"github.com/pressly/goose/v3"
 )
 
@@ -42,6 +44,29 @@ func Run(db *sql.DB, command string) error {
 		}
 	default:
 		return fmt.Errorf("unknown migration command: %s", command)
+	}
+
+	return nil
+}
+
+func RunOnDriver(d driver.DatabaseDriver, command string) error {
+	db := d.GetDB()
+	if db == nil {
+		return fmt.Errorf("driver not connected")
+	}
+
+	if err := Run(db, command); err != nil {
+		return err
+	}
+
+	if d.Type() == driver.DriverTursoReplica {
+		if syncer, ok := d.(interface{ Sync() error }); ok {
+			log.Printf("[Migration] Syncing schema to remote for embedded replica")
+			if err := syncer.Sync(); err != nil {
+				return fmt.Errorf("failed to sync schema to remote: %w", err)
+			}
+			log.Printf("[Migration] Schema sync completed")
+		}
 	}
 
 	return nil
