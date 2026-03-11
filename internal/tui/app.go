@@ -6,6 +6,7 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/marekbrze/dopadone/internal/db/driver"
 	"github.com/marekbrze/dopadone/internal/domain"
 	"github.com/marekbrze/dopadone/internal/service"
 	"github.com/marekbrze/dopadone/internal/tui/areamodal"
@@ -24,6 +25,7 @@ type Model struct {
 	subareaSvc  service.SubareaServiceInterface
 	projectSvc  service.ProjectServiceInterface
 	taskSvc     service.TaskServiceInterface
+	dbDriver    driver.DatabaseDriver
 	theme       theme.ColorTheme
 	focus       FocusColumn
 	width       int
@@ -31,6 +33,8 @@ type Model struct {
 	ready       bool
 	tabs        []views.Tab
 	selectedTab int
+
+	connectionStatus ConnectionStatusView
 
 	areas    []domain.Area
 	subareas []domain.Subarea
@@ -83,6 +87,7 @@ func InitialModel(
 	subareaSvc service.SubareaServiceInterface,
 	projectSvc service.ProjectServiceInterface,
 	taskSvc service.TaskServiceInterface,
+	dbDriver driver.DatabaseDriver,
 ) Model {
 	s := spinner.New()
 	s.Spinner = spinner.Dot
@@ -93,6 +98,7 @@ func InitialModel(
 		subareaSvc:  subareaSvc,
 		projectSvc:  projectSvc,
 		taskSvc:     taskSvc,
+		dbDriver:    dbDriver,
 		theme:       theme.Default,
 		focus:       FocusSubareas,
 		width:       0,
@@ -135,6 +141,8 @@ func InitialModel(
 		subareaLoadError: nil,
 		projectLoadError: nil,
 		taskLoadError:    nil,
+
+		connectionStatus: NewConnectionStatusView(dbDriver),
 	}
 }
 
@@ -142,17 +150,25 @@ func (m Model) Init() tea.Cmd {
 	if m.areaSvc == nil {
 		return nil
 	}
-	return tea.Batch(
+	cmds := []tea.Cmd{
 		m.spinner.Tick,
 		LoadAreasCmd(m.areaSvc),
 		tea.Tick(time.Second, func(t time.Time) tea.Msg {
 			return ToastTickMsg{}
 		}),
-	)
+	}
+	if m.dbDriver != nil {
+		cmds = append(cmds, PollConnectionStatusCmd(m.dbDriver))
+	}
+	return tea.Batch(cmds...)
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if model, cmd, handled := m.handleAreaMessages(msg); handled {
+		return model, cmd
+	}
+
+	if model, cmd, handled := m.handleConnectionMessages(msg); handled {
 		return model, cmd
 	}
 

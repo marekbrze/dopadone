@@ -1,7 +1,10 @@
 package tui
 
 import (
+	"fmt"
+
 	"github.com/charmbracelet/lipgloss"
+	"github.com/marekbrze/dopadone/internal/tui/statusindicator"
 	"github.com/marekbrze/dopadone/internal/tui/theme"
 	"github.com/marekbrze/dopadone/internal/tui/toast"
 )
@@ -38,6 +41,15 @@ func (m *Model) RenderFooter() string {
 		Background(theme.Default.FooterBackground()).
 		Padding(0, 1)
 
+	indicator := statusindicator.New(
+		m.connectionStatus.Mode,
+		m.connectionStatus.Status,
+		m.connectionStatus.SyncStatus,
+	)
+
+	statusPart := indicator.Render()
 	shortcuts := "h/l: columns | j/k: navigate | a: add | d: delete | ?: help | q: quit"
-	return footerStyle.Render(shortcuts)
+
+	footer := fmt.Sprintf("%s | %s", statusPart, shortcuts)
+	return footerStyle.Render(footer)
 }

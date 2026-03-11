@@ -2,11 +2,30 @@ package tui
 
 import (
 	"context"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/marekbrze/dopadone/internal/db/driver"
 	"github.com/marekbrze/dopadone/internal/domain"
 	"github.com/marekbrze/dopadone/internal/service"
 )
+
+const connectionStatusPollInterval = 2 * time.Second
+
+func PollConnectionStatusCmd(drv driver.DatabaseDriver) tea.Cmd {
+	return tea.Tick(connectionStatusPollInterval, func(t time.Time) tea.Msg {
+		msg := ConnectionStatusUpdatedMsg{
+			Status:     drv.Status(),
+			DriverType: drv.Type(),
+		}
+
+		if replica, ok := drv.(interface{ SyncInfo() driver.SyncInfo }); ok {
+			msg.SyncInfo = replica.SyncInfo()
+		}
+
+		return msg
+	})
+}
 
 func LoadAreasCmd(areaSvc service.AreaServiceInterface) tea.Cmd {
 	return func() tea.Msg {

@@ -57,7 +57,7 @@ func TestTUI_WithSQLite(t *testing.T) {
 
 	areaSvc, subareaSvc, projectSvc, taskSvc := createTestServices(t, database)
 
-	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc)
+	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc, nil)
 
 	if len(model.areas) != 0 {
 		t.Errorf("Expected empty areas initially, got %d", len(model.areas))
@@ -107,7 +107,7 @@ func TestTUI_ModelUpdate(t *testing.T) {
 
 	areaSvc, subareaSvc, projectSvc, taskSvc := createTestServices(t, database)
 
-	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc)
+	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc, nil)
 
 	loadedMsg := AreasLoadedMsg{
 		Areas: []domain.Area{
@@ -134,7 +134,7 @@ func TestTUI_KeyboardNavigation(t *testing.T) {
 
 	areaSvc, subareaSvc, projectSvc, taskSvc := createTestServices(t, database)
 
-	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc)
+	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc, nil)
 
 	loadedMsg := AreasLoadedMsg{
 		Areas: []domain.Area{
@@ -164,7 +164,7 @@ func TestTUI_View(t *testing.T) {
 
 	areaSvc, subareaSvc, projectSvc, taskSvc := createTestServices(t, database)
 
-	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc)
+	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc, nil)
 
 	newModel, _ := model.Update(tea.WindowSizeMsg{Width: 100, Height: 30})
 	model = *newModel.(*Model)
@@ -182,7 +182,7 @@ func TestTUI_QuitCommand(t *testing.T) {
 
 	areaSvc, subareaSvc, projectSvc, taskSvc := createTestServices(t, database)
 
-	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc)
+	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc, nil)
 
 	quitMsg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}}
 	_, cmd := model.Update(quitMsg)
@@ -204,7 +204,7 @@ func TestTUI_WithMultipleAreas(t *testing.T) {
 
 	areaSvc, subareaSvc, projectSvc, taskSvc := createTestServices(t, database)
 
-	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc)
+	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc, nil)
 
 	areas := make([]domain.Area, 5)
 	for i := 0; i < 5; i++ {
@@ -229,7 +229,7 @@ func TestTUI_EmptyState(t *testing.T) {
 
 	areaSvc, subareaSvc, projectSvc, taskSvc := createTestServices(t, database)
 
-	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc)
+	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc, nil)
 
 	loadedMsg := AreasLoadedMsg{Areas: []domain.Area{}}
 	newModel, _ := model.Update(loadedMsg)
@@ -251,7 +251,7 @@ func TestTUI_WindowResize(t *testing.T) {
 
 	areaSvc, subareaSvc, projectSvc, taskSvc := createTestServices(t, database)
 
-	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc)
+	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc, nil)
 
 	newModel, _ := model.Update(tea.WindowSizeMsg{Width: 120, Height: 40})
 	model = *newModel.(*Model)
@@ -346,7 +346,7 @@ func TestTUI_ErrorHandling(t *testing.T) {
 
 	areaSvc, subareaSvc, projectSvc, taskSvc := createTestServices(t, database)
 
-	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc)
+	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc, nil)
 
 	errorMsg := AreasLoadedMsg{
 		Err: context.DeadlineExceeded,
@@ -367,7 +367,7 @@ func TestTUI_New(t *testing.T) {
 
 	areaSvc, subareaSvc, projectSvc, taskSvc := createTestServices(t, database)
 
-	program := New(areaSvc, subareaSvc, projectSvc, taskSvc)
+	program := New(areaSvc, subareaSvc, projectSvc, taskSvc, nil)
 	if program == nil {
 		t.Fatal("New() returned nil program")
 	}
@@ -428,7 +428,7 @@ func TestTUI_InitReturnsCommands(t *testing.T) {
 
 	areaSvc, subareaSvc, projectSvc, taskSvc := createTestServices(t, database)
 
-	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc)
+	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc, nil)
 	cmd := model.Init()
 
 	if cmd == nil {
@@ -442,7 +442,7 @@ func TestTUI_AreaStatesInitialization(t *testing.T) {
 
 	areaSvc, subareaSvc, projectSvc, taskSvc := createTestServices(t, database)
 
-	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc)
+	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc, nil)
 
 	if model.areaStates == nil {
 		t.Error("areaStates should be initialized")
@@ -455,7 +455,7 @@ func TestTUI_DefaultFocus(t *testing.T) {
 
 	areaSvc, subareaSvc, projectSvc, taskSvc := createTestServices(t, database)
 
-	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc)
+	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc, nil)
 
 	if model.focus != FocusSubareas {
 		t.Errorf("Default focus = %v, want FocusSubareas", model.focus)
@@ -468,7 +468,7 @@ func TestTUI_SpinnerInitialization(t *testing.T) {
 
 	areaSvc, subareaSvc, projectSvc, taskSvc := createTestServices(t, database)
 
-	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc)
+	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc, nil)
 
 	_ = model.spinner
 }
@@ -479,7 +479,7 @@ func TestTUI_ToastsInitialization(t *testing.T) {
 
 	areaSvc, subareaSvc, projectSvc, taskSvc := createTestServices(t, database)
 
-	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc)
+	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc, nil)
 
 	if model.toasts == nil {
 		t.Error("toasts should be initialized")
@@ -492,7 +492,7 @@ func TestTUI_ModelReadyState(t *testing.T) {
 
 	areaSvc, subareaSvc, projectSvc, taskSvc := createTestServices(t, database)
 
-	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc)
+	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc, nil)
 
 	if model.ready {
 		t.Error("Model should not be ready initially")
@@ -512,7 +512,7 @@ func TestTUI_InitialModelNotReady(t *testing.T) {
 
 	areaSvc, subareaSvc, projectSvc, taskSvc := createTestServices(t, database)
 
-	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc)
+	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc, nil)
 
 	view := model.View()
 	if view != "\n  Initializing..." {

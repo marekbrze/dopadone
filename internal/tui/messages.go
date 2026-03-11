@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"github.com/marekbrze/dopadone/internal/db/driver"
 	"github.com/marekbrze/dopadone/internal/domain"
 )
 
@@ -105,4 +106,10 @@ type DeleteErrorMsg struct {
 	Err        error
 	EntityName string
 	EntityType string
+}
+
+type ConnectionStatusUpdatedMsg struct {
+	Status     driver.ConnectionStatus
+	SyncInfo   driver.SyncInfo
+	DriverType driver.DriverType
 }

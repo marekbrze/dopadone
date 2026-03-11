@@ -684,6 +684,58 @@ This ensures:
 - **Consistent UX**: Users see confirmation before deletion
 - **Safety**: Accidental deletion prevented by requiring explicit confirmation
 
+### 11. Connection Status Indicator
+
+Visual indicator showing database connection mode and sync status in the footer.
+
+**Implementation**: `internal/tui/connection_status.go`, `internal/tui/statusindicator/component.go`
+
+**Features**:
+- Shows database mode (local/remote/replica) with colored symbol
+- Updates status every 2 seconds via polling
+- Displays sync state for replica mode
+- Thread-safe status access using driver's RWMutex
+
+**Visual Indicators**:
+
+| Mode | Status | Symbol | Color | Description |
+|------|--------|--------|-------|-------------|
+| Local | - | ■ | Gray | Local SQLite database (no sync) |
+| Remote | Connected | ● | Green | Connected to Turso remote |
+| Remote | Connecting | ◐ | Yellow | Connecting to Turso... |
+| Remote | Disconnected | ○ | Red | Disconnected from Turso |
+| Replica | Connected + Idle | ● | Green | Connected, synced |
+| Replica | Connected + Syncing | ◐ | Yellow | Syncing with Turso... |
+| Replica | Offline | ○ | Red | Offline, changes will sync later |
+
+**Footer Display**: `● local | h/l: columns | j/k: navigate | a: add | d: delete | ?: help | q: quit`
+
+**Architecture**:
+```
+┌───────────────────────────────────────────────────────────┐
+│                      TUI Layer                             │
+│  Model.connectionStatus → ConnectionStatusView            │
+│          ↓                                                 │
+│  PollConnectionStatusCmd (2s interval)                    │
+│          ↓                                                 │
+│  ConnectionStatusUpdatedMsg → Update Model                │
+└───────────────────────────────────────────────────────────┘
+                           ↑
+              driver.Status() / driver.SyncInfo()
+                           ↓
+┌───────────────────────────────────────────────────────────┐
+│                  Database Driver Layer                     │
+│  DatabaseDriver.Status() → ConnectionStatus               │
+│  TursoReplicaDriver.SyncInfo() → SyncStatus               │
+└───────────────────────────────────────────────────────────┘
+```
+
+**Integration Points**:
+- Model needs: `dbDriver driver.DatabaseDriver`, `connectionStatus ConnectionStatusView`
+- TUI initialization receives driver via `tui.New(..., driver)`
+- Status polling starts in `Init()` command
+- Footer renders via `statusindicator.New().Render()`
+
 ## Keyboard Shortcuts
 
 ### Navigation

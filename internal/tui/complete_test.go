@@ -36,7 +36,7 @@ func TestTUICompleteFlow(t *testing.T) {
 	projectSvc := service.NewProjectService(repo, nil)
 	taskSvc := service.NewTaskService(repo, nil, nil)
 
-	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc)
+	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc, nil)
 
 	areaMsg := LoadAreasCmd(areaSvc)().(AreasLoadedMsg)
 	t.Logf("Loaded %d areas", len(areaMsg.Areas))

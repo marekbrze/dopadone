@@ -13,7 +13,7 @@ import (
 
 func TestInitialModel(t *testing.T) {
 	mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc := mocks.NewMockServices()
-	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc)
+	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc, nil)
 
 	if model.areaSvc == nil {
 		t.Error("Expected areaSvc to not be nil")
@@ -45,7 +45,7 @@ func TestInitialModel(t *testing.T) {
 }
 
 func TestModelInitWithNilServices(t *testing.T) {
-	model := InitialModel(nil, nil, nil, nil)
+	model := InitialModel(nil, nil, nil, nil, nil)
 	cmd := model.Init()
 
 	if cmd != nil {
@@ -55,7 +55,7 @@ func TestModelInitWithNilServices(t *testing.T) {
 
 func TestModelUpdateAreasLoaded(t *testing.T) {
 	mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc := mocks.NewMockServices()
-	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc)
+	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc, nil)
 	areas := []domain.Area{
 		{ID: "1", Name: "Area 1"},
 		{ID: "2", Name: "Area 2"},
@@ -75,7 +75,7 @@ func TestModelUpdateAreasLoaded(t *testing.T) {
 
 func TestModelUpdateAreasLoadedWithError(t *testing.T) {
 	mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc := mocks.NewMockServices()
-	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc)
+	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc, nil)
 
 	msg := AreasLoadedMsg{Err: errors.New("database error")}
 	updatedModel, _ := model.Update(msg)
@@ -91,7 +91,7 @@ func TestModelUpdateAreasLoadedWithError(t *testing.T) {
 
 func TestModelUpdateSubareasLoaded(t *testing.T) {
 	mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc := mocks.NewMockServices()
-	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc)
+	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc, nil)
 	subareas := []domain.Subarea{
 		{ID: "1", Name: "Subarea 1", AreaID: "area-1"},
 	}
@@ -110,7 +110,7 @@ func TestModelUpdateSubareasLoaded(t *testing.T) {
 
 func TestModelUpdateProjectsLoaded(t *testing.T) {
 	mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc := mocks.NewMockServices()
-	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc)
+	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc, nil)
 	projects := []domain.Project{
 		{ID: "1", Name: "Project 1"},
 	}
@@ -129,7 +129,7 @@ func TestModelUpdateProjectsLoaded(t *testing.T) {
 
 func TestModelUpdateTasksLoaded(t *testing.T) {
 	mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc := mocks.NewMockServices()
-	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc)
+	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc, nil)
 	tasks := []domain.Task{
 		{ID: "1", Title: "Task 1", ProjectID: "project-1"},
 	}
@@ -163,7 +163,7 @@ func TestModelUpdateKeyPress(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc := mocks.NewMockServices()
-			model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc)
+			model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc, nil)
 			model.focus = tt.initial
 
 			msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(tt.key)}
@@ -179,7 +179,7 @@ func TestModelUpdateKeyPress(t *testing.T) {
 
 func TestRenderSubareasEmpty(t *testing.T) {
 	mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc := mocks.NewMockServices()
-	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc)
+	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc, nil)
 	result := model.RenderSubareas()
 
 	if result != EmptyStateNoSubareas {
@@ -189,7 +189,7 @@ func TestRenderSubareasEmpty(t *testing.T) {
 
 func TestRenderProjectsEmpty(t *testing.T) {
 	mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc := mocks.NewMockServices()
-	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc)
+	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc, nil)
 	result := model.RenderProjects()
 
 	if result != EmptyStateNoProjects {
@@ -199,7 +199,7 @@ func TestRenderProjectsEmpty(t *testing.T) {
 
 func TestRenderTasksEmpty(t *testing.T) {
 	mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc := mocks.NewMockServices()
-	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc)
+	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc, nil)
 	result := model.RenderTasks()
 
 	if result != EmptyStateNoTasks {
@@ -209,7 +209,7 @@ func TestRenderTasksEmpty(t *testing.T) {
 
 func TestRenderSubareasWithSelection(t *testing.T) {
 	mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc := mocks.NewMockServices()
-	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc)
+	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc, nil)
 	model.subareas = []domain.Subarea{
 		{ID: "1", Name: "Subarea 1"},
 		{ID: "2", Name: "Subarea 2"},
@@ -244,7 +244,7 @@ func TestJoinLinesEmpty(t *testing.T) {
 
 func TestModelViewInit(t *testing.T) {
 	mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc := mocks.NewMockServices()
-	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc)
+	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc, nil)
 	model.ready = true
 	result := model.View()
 
@@ -258,7 +258,7 @@ func TestModelViewInit(t *testing.T) {
 
 func TestModelViewNotReady(t *testing.T) {
 	mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc := mocks.NewMockServices()
-	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc)
+	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc, nil)
 	model.ready = false
 	result := model.View()
 
@@ -269,7 +269,7 @@ func TestModelViewNotReady(t *testing.T) {
 
 func TestRenderSubareasLoading(t *testing.T) {
 	mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc := mocks.NewMockServices()
-	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc)
+	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc, nil)
 	model.isLoadingSubareas = true
 	result := model.RenderSubareas()
 
@@ -280,7 +280,7 @@ func TestRenderSubareasLoading(t *testing.T) {
 
 func TestRenderProjectsLoading(t *testing.T) {
 	mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc := mocks.NewMockServices()
-	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc)
+	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc, nil)
 	model.isLoadingProjects = true
 	result := model.RenderProjects()
 
@@ -291,7 +291,7 @@ func TestRenderProjectsLoading(t *testing.T) {
 
 func TestRenderTasksLoading(t *testing.T) {
 	mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc := mocks.NewMockServices()
-	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc)
+	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc, nil)
 	model.isLoadingTasks = true
 	result := model.RenderTasks()
 
@@ -302,7 +302,7 @@ func TestRenderTasksLoading(t *testing.T) {
 
 func TestRenderProjectsWithData(t *testing.T) {
 	mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc := mocks.NewMockServices()
-	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc)
+	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc, nil)
 	model.projects = []domain.Project{
 		{ID: "1", Name: "Project 1"},
 		{ID: "2", Name: "Project 2"},
@@ -318,7 +318,7 @@ func TestRenderProjectsWithData(t *testing.T) {
 
 func TestRenderTasksWithData(t *testing.T) {
 	mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc := mocks.NewMockServices()
-	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc)
+	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc, nil)
 	model.tasks = []domain.Task{
 		{ID: "1", Title: "Task 1", ProjectID: "p1"},
 		{ID: "2", Title: "Task 2", ProjectID: "p1"},
@@ -334,7 +334,7 @@ func TestRenderTasksWithData(t *testing.T) {
 
 func TestCascadeLoadingAreasToSubareas(t *testing.T) {
 	mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc := mocks.NewMockServices()
-	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc)
+	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc, nil)
 	model.areas = []domain.Area{
 		{ID: "area-1", Name: "Area 1"},
 	}
@@ -350,7 +350,7 @@ func TestCascadeLoadingAreasToSubareas(t *testing.T) {
 
 func TestCascadeLoadingSubareasToProjects(t *testing.T) {
 	mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc := mocks.NewMockServices()
-	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc)
+	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc, nil)
 	model.subareas = []domain.Subarea{
 		{ID: "subarea-1", Name: "Subarea 1", AreaID: "area-1"},
 	}
@@ -366,7 +366,7 @@ func TestCascadeLoadingSubareasToProjects(t *testing.T) {
 
 func TestCascadeLoadingProjectsToTasks(t *testing.T) {
 	mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc := mocks.NewMockServices()
-	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc)
+	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc, nil)
 	model.projects = []domain.Project{
 		{ID: "project-1", Name: "Project 1"},
 	}
@@ -382,7 +382,7 @@ func TestCascadeLoadingProjectsToTasks(t *testing.T) {
 
 func TestModelUpdateWindowSize(t *testing.T) {
 	mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc := mocks.NewMockServices()
-	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc)
+	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc, nil)
 
 	msg := tea.WindowSizeMsg{Width: 100, Height: 50}
 	updatedModel, _ := model.Update(msg)
@@ -401,7 +401,7 @@ func TestModelUpdateWindowSize(t *testing.T) {
 
 func TestModelUpdateQuitCommand(t *testing.T) {
 	mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc := mocks.NewMockServices()
-	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc)
+	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc, nil)
 
 	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")}
 	updatedModel, cmd := model.Update(msg)
@@ -414,7 +414,7 @@ func TestModelUpdateQuitCommand(t *testing.T) {
 
 func TestModelUpdateCtrlC(t *testing.T) {
 	mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc := mocks.NewMockServices()
-	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc)
+	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc, nil)
 
 	msg := tea.KeyMsg{Type: tea.KeyCtrlC}
 	updatedModel, cmd := model.Update(msg)
@@ -427,7 +427,7 @@ func TestModelUpdateCtrlC(t *testing.T) {
 
 func TestModelUpdateSubareasLoadedWithError(t *testing.T) {
 	mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc := mocks.NewMockServices()
-	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc)
+	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc, nil)
 
 	msg := SubareasLoadedMsg{Err: errors.New("database error")}
 	updatedModel, _ := model.Update(msg)
@@ -443,7 +443,7 @@ func TestModelUpdateSubareasLoadedWithError(t *testing.T) {
 
 func TestModelUpdateProjectsLoadedWithError(t *testing.T) {
 	mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc := mocks.NewMockServices()
-	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc)
+	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc, nil)
 
 	msg := ProjectsLoadedMsg{Err: errors.New("database error")}
 	updatedModel, _ := model.Update(msg)
@@ -459,7 +459,7 @@ func TestModelUpdateProjectsLoadedWithError(t *testing.T) {
 
 func TestModelUpdateTasksLoadedWithError(t *testing.T) {
 	mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc := mocks.NewMockServices()
-	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc)
+	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc, nil)
 
 	msg := TasksLoadedMsg{Err: errors.New("database error")}
 	updatedModel, _ := model.Update(msg)
@@ -475,7 +475,7 @@ func TestModelUpdateTasksLoadedWithError(t *testing.T) {
 
 func TestGetParentContextForSubprojects(t *testing.T) {
 	mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc := mocks.NewMockServices()
-	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc)
+	model := InitialModel(mockAreaSvc, mockSubareaSvc, mockProjectSvc, mockTaskSvc, nil)
 	model.focus = FocusProjects
 	model.subareas = []domain.Subarea{
 		{ID: "subarea-1", Name: "Test Subarea"},

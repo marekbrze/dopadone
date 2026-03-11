@@ -229,3 +229,20 @@ If sync is not working:
 
 - [Database Driver Architecture](architecture/08-database-drivers.md) - Technical implementation details
 - [Architecture Overview](architecture/01-overview.md) - System architecture
+- [TUI Documentation](TUI.md) - Terminal UI features including connection status indicator
+
+## TUI Connection Status
+
+When using the TUI interface (`dopa tui`), a connection status indicator is displayed in the footer:
+
+| Indicator | Meaning |
+|-----------|---------|
+| `■ local` | SQLite local mode (gray) |
+| `● remote` | Connected to Turso remote (green) |
+| `◐ remote` | Connecting to Turso (yellow) |
+| `○ remote` | Disconnected from Turso (red) |
+| `● replica` | Replica synced with Turso (green) |
+| `◐ replica` | Replica syncing with Turso (yellow) |
+| `○ replica` | Replica offline (red) |
+
+The status updates automatically every 2 seconds to reflect the current connection state.

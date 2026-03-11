@@ -12,7 +12,7 @@ import (
 func TestSpaceMenuIntegration(t *testing.T) {
 	t.Run("Space key opens spacemenu when no modal is open", func(t *testing.T) {
 		areaSvc, subareaSvc, projectSvc, taskSvc := mocks.NewMockServices()
-		model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc)
+		model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc, nil)
 
 		newModel, _ := model.Update(tea.WindowSizeMsg{Width: 100, Height: 30})
 		model = *newModel.(*Model)
@@ -35,7 +35,7 @@ func TestSpaceMenuIntegration(t *testing.T) {
 
 	t.Run("Space key does not open spacemenu when modal is open", func(t *testing.T) {
 		areaSvc, subareaSvc, projectSvc, taskSvc := mocks.NewMockServices()
-		model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc)
+		model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc, nil)
 
 		newModel, _ := model.Update(tea.WindowSizeMsg{Width: 100, Height: 30})
 		model = *newModel.(*Model)
@@ -53,7 +53,7 @@ func TestSpaceMenuIntegration(t *testing.T) {
 
 	t.Run("spacemenu closes on Space key", func(t *testing.T) {
 		areaSvc, subareaSvc, projectSvc, taskSvc := mocks.NewMockServices()
-		model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc)
+		model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc, nil)
 
 		newModel, _ := model.Update(tea.WindowSizeMsg{Width: 100, Height: 30})
 		model = *newModel.(*Model)
@@ -86,7 +86,7 @@ func TestSpaceMenuIntegration(t *testing.T) {
 
 	t.Run("spacemenu closes on Escape key", func(t *testing.T) {
 		areaSvc, subareaSvc, projectSvc, taskSvc := mocks.NewMockServices()
-		model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc)
+		model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc, nil)
 
 		newModel, _ := model.Update(tea.WindowSizeMsg{Width: 100, Height: 30})
 		model = *newModel.(*Model)
@@ -115,7 +115,7 @@ func TestSpaceMenuIntegration(t *testing.T) {
 
 	t.Run("spacemenu navigates to config on c key", func(t *testing.T) {
 		areaSvc, subareaSvc, projectSvc, taskSvc := mocks.NewMockServices()
-		model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc)
+		model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc, nil)
 
 		newModel, _ := model.Update(tea.WindowSizeMsg{Width: 100, Height: 30})
 		model = *newModel.(*Model)

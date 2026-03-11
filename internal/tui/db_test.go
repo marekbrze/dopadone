@@ -86,7 +86,7 @@ func TestTUILoadAreasFromDB(t *testing.T) {
 	projectSvc := service.NewProjectService(repo, nil)
 	taskSvc := service.NewTaskService(repo, nil, nil)
 
-	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc)
+	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc, nil)
 
 	cmd := LoadAreasCmd(areaSvc)
 	msg := cmd()
@@ -153,7 +153,7 @@ func TestFullTUIFlowFromDB(t *testing.T) {
 	projectSvc := service.NewProjectService(repo, nil)
 	taskSvc := service.NewTaskService(repo, nil, nil)
 
-	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc)
+	model := InitialModel(areaSvc, subareaSvc, projectSvc, taskSvc, nil)
 
 	areaCmd := LoadAreasCmd(areaSvc)
 	areaMsg := areaCmd()
