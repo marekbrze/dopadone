@@ -44,11 +44,11 @@ jobs:
             -e CGO_ENABLED=1 \
             -e CC=gcc \
             golang:1.24-bookworm \
-            sh -c 'go build -trimpath -ldflags "-s -w \
+            go build -trimpath -ldflags "-s -w \
               -X github.com/marekbrze/dopadone/internal/version.Version=${{ github.ref_name }} \
               -X github.com/marekbrze/dopadone/internal/version.GitCommit=$(git rev-parse HEAD) \
               -X github.com/marekbrze/dopadone/internal/version.BuildDate=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-              -o /workspace/dist/linux-build/dopa ./cmd/dopa'
+              -o /workspace/dist/linux-build/dopa ./cmd/dopa
 
       - name: Create Linux archive
         run: |
