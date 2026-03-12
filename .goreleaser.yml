@@ -60,7 +60,7 @@ release:
     
     ### Quick Install (Linux/macOS)
     ```bash
-    curl -sSL https://raw.githubusercontent.com/marekbrze/dopadone/main/scripts/install.sh | sh
+    curl -sSL https://raw.githubusercontent.com/marekbrze/dopadone/main/scripts/install.sh | bash
     ```
     
     ### Manual Download

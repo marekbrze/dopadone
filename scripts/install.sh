@@ -1,7 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Install script for dopa
-# Usage: curl -sSL https://raw.githubusercontent.com/marekbrze/dopadone/main/scripts/install.sh | sh
+# Usage: curl -sSL https://raw.githubusercontent.com/marekbrze/dopadone/main/scripts/install.sh | bash
 #
 # Flags:
 #   --dry-run    Simulate platform detection and download URL without installing
@@ -44,40 +44,40 @@ Environment Variables:
 
 Examples:
     # Standard installation
-    curl -sSL https://raw.githubusercontent.com/marekbrze/dopadone/main/scripts/install.sh | sh
+    curl -sSL https://raw.githubusercontent.com/marekbrze/dopadone/main/scripts/install.sh | bash
 
     # Dry run to see what would be installed
-    curl -sSL https://raw.githubusercontent.com/marekbrze/dopadone/main/scripts/install.sh | sh -s -- --dry-run
+    curl -sSL https://raw.githubusercontent.com/marekbrze/dopadone/main/scripts/install.sh | bash -s -- --dry-run
 
     # Install to custom directory
-    INSTALL_DIR=~/.local/bin curl -sSL https://raw.githubusercontent.com/marekbrze/dopadone/main/scripts/install.sh | sh
+    INSTALL_DIR=~/.local/bin curl -sSL https://raw.githubusercontent.com/marekbrze/dopadone/main/scripts/install.sh | bash
 
     # Unattended installation (skip prompts)
-    curl -sSL https://raw.githubusercontent.com/marekbrze/dopadone/main/scripts/install.sh | sh -s -- --yes
+    curl -sSL https://raw.githubusercontent.com/marekbrze/dopadone/main/scripts/install.sh | bash -s -- --yes
 EOF
 }
 
 check_dependencies() {
-    local missing=()
+    local missing=""
     
-    if ! command -v curl &> /dev/null; then
-        missing+=("curl")
+    if ! command -v curl > /dev/null 2>&1; then
+        missing="$missing curl"
     fi
     
-    if ! command -v tar &> /dev/null; then
-        missing+=("tar")
+    if ! command -v tar > /dev/null 2>&1; then
+        missing="$missing tar"
     fi
     
-    if ! command -v unzip &> /dev/null; then
-        missing+=("unzip")
+    if ! command -v unzip > /dev/null 2>&1; then
+        missing="$missing unzip"
     fi
     
-    if [ ${#missing[@]} -ne 0 ]; then
-        echo "Error: Missing required dependencies: ${missing[*]}" >&2
+    if [ -n "$missing" ]; then
+        echo "Error: Missing required dependencies:$missing" >&2
         echo "" >&2
         echo "Please install the missing tools:" >&2
         
-        for dep in "${missing[@]}"; do
+        for dep in $missing; do
             case "$dep" in
                 curl)
                     echo "  - curl: Usually available via package manager (apt, brew, etc.)" >&2
