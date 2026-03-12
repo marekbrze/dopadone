@@ -180,82 +180,21 @@ dopa --sync-interval 5m tasks list
 - Working with large datasets (local reads are fast)
 
 ## Configuration Reference
-
-### CLI Flags
-
-| Flag | Description | Default |
-|------|-------------|---------|
-| `--db` | Local database path | User config directory (see below) |
-| `--turso-url` | Turso database URL | - |
-| `--turso-auth-token` | Turso authentication token | - |
-| `--db-mode` | Database mode: `local`, `remote`, `replica`, `auto` | `auto` |
-| `--sync-interval` | Sync interval for replica mode | `60s` |
-| `--config` | Path to YAML config file | Auto-discovered |
-| `-D, --dev` | Use `./dopa.db` in current directory | `false` |
-| `--skip-migrate` | Skip auto-migrations on startup | `false` |
-
-### Environment Variables
-
-| Variable | Equivalent Flag |
-|----------|-----------------|
-| `DOPA_DB_PATH` | `--db` |
-| `TURSO_DATABASE_URL` | `--turso-url` |
-| `TURSO_AUTH_TOKEN` | `--turso-auth-token` |
-| `DOPA_DB_MODE` | `--db-mode` |
-
-### YAML Configuration File
-
-Dopadone supports configuration via a YAML file for persistent settings. Create a `dopadone.yaml` file:
-
-```yaml
-database:
-  path: ./dopadone.db          # Local database path
-  mode: auto                    # local|remote|replica|auto
-  sync_interval: 60s            # Sync interval for replica mode
-  turso:
-    url: libsql://xxx.turso.io  # Turso database URL
-    token: xxx                  # Turso auth token (or use env)
-```
-
-#### Config File Discovery Order
-
-Dopadone automatically searches for configuration files in this order:
-
-1. **Explicit path** - `--config /path/to/config.yaml`
-2. **Current directory** - `./dopadone.yaml`
-3. **XDG config home** - `$XDG_CONFIG_HOME/dopadone/config.yaml`
-4. **Default XDG** - `~/.config/dopadone/config.yaml`
-5. **Home directory** - `~/.dopadone.yaml`
-
-The first file found is used. If no config file exists, CLI flags and environment variables are used.
-
-#### Example Configurations
-
-**Local SQLite:**
-```yaml
-database:
-  path: ~/projects/my-project/dopadone.db
-  mode: local
-```
-
-**Turso Remote:**
-```yaml
-database:
-  mode: remote
-  turso:
-    url: libsql://my-db.turso.io
-    token: ${TURSO_AUTH_TOKEN}  # Reference env variable
-```
-
-**Turso Replica:**
-```yaml
-database:
-  path: ./local-replica.db
-  mode: replica
-  sync_interval: 30s
-  turso:
-    url: libsql://my-db.turso.io
-    token: ${TURSO_AUTH_TOKEN}
+185) 
+186) | Flag | Description | Default |
+187: | `------|-------------|---------|
+188: | `--db` | Local database path | User config directory (see below) |
+189: | `--turso-url` | Turso database URL | - |
+190: | `--turso-auth-token` | Turso authentication token | - |
+191: | `--db-mode` | Database mode: `local`, `remote`, `replica`, `auto` | `auto` | `auto` |
+192) | `--sync-interval` | Sync interval for replica mode | `60s` |
+193) | `--config`    Path to YAML config file | auto-discovered
+194  | `-D, --dev`    Use `./dopa.db` in current directory
+                            # See below for details
+                            # Uses first file found is use below)                            # Uses XDG config home, then fallback to `~/.dopadone/config.yaml`
+                    path: ./dopa.db
+                    url: libsql://your-db.turso.io
+                    token: ${TURSO_AUTH_TOKEN}
 ```
 
 ### Configuration Precedence

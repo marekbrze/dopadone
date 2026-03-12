@@ -18,7 +18,11 @@ import (
 
 func TestMockTursoServer(t *testing.T) {
 	server := NewMockTursoServer(t)
-	defer server.Close()
+	defer func() {
+		if err := server.Close(); err != nil {
+			t.Logf("Failed to close mock server: %v", err)
+		}
+	}()
 
 	t.Run("starts and stops", func(t *testing.T) {
 		if server.URL() == "" {
@@ -81,7 +85,9 @@ func (m *MockTursoServer) handleRoot(w http.ResponseWriter, _ *http.Request) {
 	defer m.mu.Unlock()
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	if err := json.NewEncoder(w).Encode(map[string]string{"status": "ok"}); err != nil {
+		m.t.Logf("Failed to encode response: %v", err)
+	}
 }
 
 func (m *MockTursoServer) handlePipeline(w http.ResponseWriter, r *http.Request) {
@@ -99,7 +105,7 @@ func (m *MockTursoServer) handlePipeline(w http.ResponseWriter, r *http.Request)
 			} `json:"stmt"`
 		} `json:"requests"`
 	}
-	json.Unmarshal(body, &req)
+	_ = json.Unmarshal(body, &req)
 
 	results := make([]map[string]interface{}, len(req.Requests))
 	for i := range req.Requests {
@@ -112,9 +118,11 @@ func (m *MockTursoServer) handlePipeline(w http.ResponseWriter, r *http.Request)
 		}
 	}
 
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	if err := json.NewEncoder(w).Encode(map[string]interface{}{
 		"results": results,
-	})
+	}); err != nil {
+		m.t.Logf("Failed to encode response: %v", err)
+	}
 }
 
 func (m *MockTursoServer) SetResponse(path string, handler http.HandlerFunc) {
@@ -125,7 +133,11 @@ func (m *MockTursoServer) SetResponse(path string, handler http.HandlerFunc) {
 
 func TestTursoRemote_WithMockServer(t *testing.T) {
 	server := NewMockTursoServer(t)
-	defer server.Close()
+	defer func() {
+		if err := server.Close(); err != nil {
+			t.Logf("Failed to close mock server: %v", err)
+		}
+	}()
 
 	t.Run("connect with mock server", func(t *testing.T) {
 		drv, err := NewTursoRemoteDriver(&Config{
@@ -151,7 +163,11 @@ func TestTursoRemote_WithMockServer(t *testing.T) {
 
 func TestTursoReplica_WithMockServer(t *testing.T) {
 	server := NewMockTursoServer(t)
-	defer server.Close()
+	defer func() {
+		if err := server.Close(); err != nil {
+			t.Logf("Failed to close mock server: %v", err)
+		}
+	}()
 
 	tmpDir := t.TempDir()
 	dbPath := filepath.Join(tmpDir, "replica.db")

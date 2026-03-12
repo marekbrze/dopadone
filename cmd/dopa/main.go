@@ -8,12 +8,15 @@ import (
 	"os"
 	"time"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/marekbrze/dopadone/internal/cli"
 	"github.com/marekbrze/dopadone/internal/cli/output"
+	"github.com/marekbrze/dopadone/internal/config"
 	"github.com/marekbrze/dopadone/internal/db"
 	"github.com/marekbrze/dopadone/internal/db/driver"
 	"github.com/marekbrze/dopadone/internal/migrate"
 	"github.com/marekbrze/dopadone/internal/service"
+	"github.com/marekbrze/dopadone/internal/tui/configwizard"
 	"github.com/marekbrze/dopadone/internal/version"
 	"github.com/spf13/cobra"
 )
@@ -29,6 +32,7 @@ var (
 	syncInterval string
 	configPath   string
 	devMode      bool
+	skipInit     bool
 )
 
 var rootCmd = &cobra.Command{
@@ -183,6 +187,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&outputFormat, "output", "o", "table", "output format (table|json)")
 	rootCmd.PersistentFlags().BoolVar(&skipMigrate, "skip-migrate", false, "skip running auto-migrations on startup")
 	rootCmd.PersistentFlags().BoolVarP(&devMode, "dev", "D", false, "use ./dopa.db in current directory (for testing)")
+	rootCmd.PersistentFlags().BoolVar(&skipInit, "skip-init", false, "skip first-run initialization wizard")
 	versionCmd.Flags().BoolVar(&showAll, "all", false, "show detailed build information")
 
 	rootCmd.AddCommand(versionCmd)
@@ -341,8 +346,43 @@ func GetServices() (*ServiceContainer, error) {
 }
 
 func main() {
+	if devMode {
+		skipInit = true
+	}
+
+	if !skipInit && config.IsFirstRun() {
+		if !isInteractiveTerminal() {
+			fmt.Fprintln(os.Stderr, "First run detected but terminal is not interactive.")
+			fmt.Fprintln(os.Stderr, "Run with --skip-init to use defaults or set up manually.")
+			os.Exit(cli.ExitError)
+		}
+
+		if err := runInitWizard(); err != nil {
+			fmt.Fprintf(os.Stderr, "Initialization failed: %v\n", err)
+			os.Exit(cli.ExitError)
+		}
+	}
+
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(cli.ExitError)
 	}
+}
+
+func isInteractiveTerminal() bool {
+	fi, err := os.Stdin.Stat()
+	if err != nil {
+		return false
+	}
+	return (fi.Mode() & os.ModeCharDevice) != 0
+}
+
+func runInitWizard() error {
+	wizard := configwizard.New()
+	p := tea.NewProgram(wizard)
+	_, err := p.Run()
+	if err != nil {
+		return fmt.Errorf("config wizard failed: %w", err)
+	}
+	return nil
 }

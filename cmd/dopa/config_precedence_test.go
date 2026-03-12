@@ -71,10 +71,10 @@ func TestLoadConfig_File_Overrides_Env(t *testing.T) {
 	os.Setenv("TURSO_AUTH_TOKEN", "env-token")
 	os.Setenv("DOPA_DB_MODE", "local")
 	defer func() {
-		os.Unsetenv("DOPA_DB_PATH")
-		os.Unsetenv("TURSO_DATABASE_URL")
-		os.Unsetenv("TURSO_AUTH_TOKEN")
-		os.Unsetenv("DOPA_DB_MODE")
+		_ = os.Unsetenv("DOPA_DB_PATH")
+		_ = os.Unsetenv("TURSO_DATABASE_URL")
+		_ = os.Unsetenv("TURSO_AUTH_TOKEN")
+		_ = os.Unsetenv("DOPA_DB_MODE")
 	}()
 
 	cfg, err := LoadConfig(LoadConfigParams{
@@ -109,10 +109,10 @@ func TestLoadConfig_CLI_Overrides_Env(t *testing.T) {
 	os.Setenv("TURSO_AUTH_TOKEN", "env-token")
 	os.Setenv("DOPA_DB_MODE", "local")
 	defer func() {
-		os.Unsetenv("DOPA_DB_PATH")
-		os.Unsetenv("TURSO_DATABASE_URL")
-		os.Unsetenv("TURSO_AUTH_TOKEN")
-		os.Unsetenv("DOPA_DB_MODE")
+		_ = os.Unsetenv("DOPA_DB_PATH")
+		_ = os.Unsetenv("TURSO_DATABASE_URL")
+		_ = os.Unsetenv("TURSO_AUTH_TOKEN")
+		_ = os.Unsetenv("DOPA_DB_MODE")
 	}()
 
 	cfg, err := LoadConfig(LoadConfigParams{
@@ -155,7 +155,7 @@ func TestLoadConfig_PartialMerge(t *testing.T) {
 	}
 
 	os.Setenv("TURSO_AUTH_TOKEN", "env-token")
-	defer os.Unsetenv("TURSO_AUTH_TOKEN")
+	defer func() { _ = os.Unsetenv("TURSO_AUTH_TOKEN") }()
 
 	cfg, err := LoadConfig(LoadConfigParams{
 		DBPath:       "",
@@ -326,9 +326,9 @@ func TestPrecedence_CLI_Over_File_Over_Env(t *testing.T) {
 	os.Setenv("TURSO_DATABASE_URL", "libsql://env.turso.io")
 	os.Setenv("TURSO_AUTH_TOKEN", "env-token")
 	defer func() {
-		os.Unsetenv("DOPA_DB_PATH")
-		os.Unsetenv("TURSO_DATABASE_URL")
-		os.Unsetenv("TURSO_AUTH_TOKEN")
+		_ = os.Unsetenv("DOPA_DB_PATH")
+		_ = os.Unsetenv("TURSO_DATABASE_URL")
+		_ = os.Unsetenv("TURSO_AUTH_TOKEN")
 	}()
 
 	cfg, err := LoadConfig(LoadConfigParams{

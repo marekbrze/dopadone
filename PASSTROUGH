@@ -1,0 +1,2 @@
+level=error msg="[linters_context] typechecking error: directory /dev/null outside main module or its selected dependencies"
+0 issues.

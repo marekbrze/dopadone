@@ -20,7 +20,11 @@ var tuiCmd = &cobra.Command{
 			_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "Failed to get database driver: %v\n", err)
 			return
 		}
-		defer cli.CloseDriver(drv)
+		defer func() {
+			if err := cli.CloseDriver(drv); err != nil {
+				_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "Failed to close driver: %v\n", err)
+			}
+		}()
 
 		dbConn := drv.GetDB()
 		queries := db.New(dbConn)
