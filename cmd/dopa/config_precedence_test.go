@@ -66,16 +66,10 @@ func TestLoadConfig_File_Overrides_Env(t *testing.T) {
 		t.Fatalf("failed to write config: %v", err)
 	}
 
-	os.Setenv("DOPA_DB_PATH", "./env-path.db")
-	os.Setenv("TURSO_DATABASE_URL", "libsql://env.turso.io")
-	os.Setenv("TURSO_AUTH_TOKEN", "env-token")
-	os.Setenv("DOPA_DB_MODE", "local")
-	defer func() {
-		_ = os.Unsetenv("DOPA_DB_PATH")
-		_ = os.Unsetenv("TURSO_DATABASE_URL")
-		_ = os.Unsetenv("TURSO_AUTH_TOKEN")
-		_ = os.Unsetenv("DOPA_DB_MODE")
-	}()
+	t.Setenv("DOPA_DB_PATH", "./env-path.db")
+	t.Setenv("TURSO_DATABASE_URL", "libsql://env.turso.io")
+	t.Setenv("TURSO_AUTH_TOKEN", "env-token")
+	t.Setenv("DOPA_DB_MODE", "local")
 
 	cfg, err := LoadConfig(LoadConfigParams{
 		DBPath:       "",
@@ -104,16 +98,10 @@ func TestLoadConfig_File_Overrides_Env(t *testing.T) {
 }
 
 func TestLoadConfig_CLI_Overrides_Env(t *testing.T) {
-	os.Setenv("DOPA_DB_PATH", "./env-path.db")
-	os.Setenv("TURSO_DATABASE_URL", "libsql://env.turso.io")
-	os.Setenv("TURSO_AUTH_TOKEN", "env-token")
-	os.Setenv("DOPA_DB_MODE", "local")
-	defer func() {
-		_ = os.Unsetenv("DOPA_DB_PATH")
-		_ = os.Unsetenv("TURSO_DATABASE_URL")
-		_ = os.Unsetenv("TURSO_AUTH_TOKEN")
-		_ = os.Unsetenv("DOPA_DB_MODE")
-	}()
+	t.Setenv("DOPA_DB_PATH", "./env-path.db")
+	t.Setenv("TURSO_DATABASE_URL", "libsql://env.turso.io")
+	t.Setenv("TURSO_AUTH_TOKEN", "env-token")
+	t.Setenv("DOPA_DB_MODE", "local")
 
 	cfg, err := LoadConfig(LoadConfigParams{
 		DBPath:       "./cli-path.db",
@@ -154,8 +142,7 @@ func TestLoadConfig_PartialMerge(t *testing.T) {
 		t.Fatalf("failed to write config: %v", err)
 	}
 
-	os.Setenv("TURSO_AUTH_TOKEN", "env-token")
-	defer func() { _ = os.Unsetenv("TURSO_AUTH_TOKEN") }()
+	t.Setenv("TURSO_AUTH_TOKEN", "env-token")
 
 	cfg, err := LoadConfig(LoadConfigParams{
 		DBPath:       "",
@@ -322,14 +309,9 @@ func TestPrecedence_CLI_Over_File_Over_Env(t *testing.T) {
 		t.Fatalf("failed to write config: %v", err)
 	}
 
-	os.Setenv("DOPA_DB_PATH", "./env-path.db")
-	os.Setenv("TURSO_DATABASE_URL", "libsql://env.turso.io")
-	os.Setenv("TURSO_AUTH_TOKEN", "env-token")
-	defer func() {
-		_ = os.Unsetenv("DOPA_DB_PATH")
-		_ = os.Unsetenv("TURSO_DATABASE_URL")
-		_ = os.Unsetenv("TURSO_AUTH_TOKEN")
-	}()
+	t.Setenv("DOPA_DB_PATH", "./env-path.db")
+	t.Setenv("TURSO_DATABASE_URL", "libsql://env.turso.io")
+	t.Setenv("TURSO_AUTH_TOKEN", "env-token")
 
 	cfg, err := LoadConfig(LoadConfigParams{
 		DBPath:       "./cli-path.db",
