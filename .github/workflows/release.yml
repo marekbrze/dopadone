@@ -22,7 +22,7 @@ jobs:
           MAC_PASSWORD: ${{ secrets.MAC_MINI_PASSWORD }}
         run: |
           security unlock-keychain -p "$MAC_PASSWORD" ~/Library/Keychains/login.keychain-db
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$MAC_PASSWORD" ~/Library/Keychains/login.keychain-db
+          security set-keypartition-list -S apple-tool:,apple:,codesign: -s -k "$MAC_PASSWORD" ~/Library/Keychains/login.keychain-db
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -36,11 +36,25 @@ jobs:
             brew install goreleaser/tap/goreleaser
           fi
 
-      - name: Install musl-cross (for Linux cross-compilation)
+      - name: Build Linux AMD64 in Docker
         run: |
-          if ! command -v x86_64-linux-musl-gcc &> /dev/null; then
-            brew install FiloSottile/musl-cross/musl-cross
-          fi
+          docker run --rm \
+            -v "${{ github.workspace }}:/workspace" \
+            -w /workspace \
+            -e CGO_ENABLED=1 \
+            -e CC=gcc \
+            golang:1.24-bookworm \
+            sh -c 'go build -trimpath -ldflags "-s -w \
+              -X github.com/marekbrze/dopadone/internal/version.Version=${{ github.ref_name }} \
+              -X github.com/marekbrze/dopadone/internal/version.GitCommit=$(git rev-parse HEAD) \
+              -X github.com/marekbrze/dopadone/internal/version.BuildDate=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+              -o /workspace/dist/linux-build/dopa ./cmd/dopa'
+
+      - name: Create Linux archive
+        run: |
+          cd dist
+          tar -czvf dopadone-linux-amd64.tar.gz -C linux-build dopa
+          shasum -a 256 dopadone-linux-amd64.tar.gz > dopadone-linux-amd64.tar.gz.sha256
 
       - name: Run GoReleaser
         run: goreleaser release --clean

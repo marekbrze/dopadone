@@ -25,37 +25,19 @@ builds:
       - -X github.com/marekbrze/dopadone/internal/version.GitCommit={{.Commit}}
       - -X github.com/marekbrze/dopadone/internal/version.BuildDate={{.Date}}
 
-  - id: dopa-linux
-    main: ./cmd/dopa
-    binary: dopa
-    goos:
-      - linux
-    goarch:
-      - amd64
-    env:
-      - CGO_ENABLED=1
-      - CC=x86_64-linux-musl-cc
-    flags:
-      - -trimpath
-    ldflags:
-      - -s -w
-      - -linkmode external
-      - -extldflags "-static"
-      - -X github.com/marekbrze/dopadone/internal/version.Version={{.Version}}
-      - -X github.com/marekbrze/dopadone/internal/version.GitCommit={{.Commit}}
-      - -X github.com/marekbrze/dopadone/internal/version.BuildDate={{.Date}}
-
 archives:
-  - id: default
+  - id: darwin
     ids:
       - dopa-darwin
-      - dopa-linux
     format: tar.gz
-    name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}"
+    name_template: "{{ .ProjectName }}-darwin-arm64"
 
 checksum:
   name_template: "{{ .ProjectName }}-{{ .Version }}-checksums.txt"
   algorithm: sha256
+  extra_files:
+    - glob: ./dist/dopadone-linux-amd64.tar.gz
+      name_template: dopadone-linux-amd64.tar.gz
 
 changelog:
   sort: asc
@@ -76,6 +58,9 @@ release:
   prerelease: auto
   mode: replace
   name_template: "Release {{ .Version }}"
+  extra_files:
+    - glob: ./dist/dopadone-linux-amd64.tar.gz
+      name_template: dopadone-linux-amd64.tar.gz
   footer: |
     ## Installation
     
