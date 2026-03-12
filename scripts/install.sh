@@ -20,6 +20,7 @@
 set -e
 
 REPO="marekbrze/dopadone"
+PROJECT_NAME="dopadone"
 BINARY_NAME="dopa"
 INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
 
@@ -154,7 +155,7 @@ get_download_url() {
         ext="zip"
     fi
     
-    echo "https://github.com/${REPO}/releases/download/${version}/${BINARY_NAME}-${platform}.${ext}"
+    echo "https://github.com/${REPO}/releases/download/${version}/${PROJECT_NAME}-${platform}.${ext}"
 }
 
 download_and_extract() {
@@ -163,7 +164,6 @@ download_and_extract() {
     local ext="tar.gz"
     local tmp_dir
     local archive_name
-    local binary_in_archive
     local extracted_binary
     
     if [ "$(echo "$platform" | cut -d'-' -f1)" = "windows" ]; then
@@ -172,7 +172,7 @@ download_and_extract() {
     
     local url
     url=$(get_download_url "$version" "$platform")
-    archive_name="${BINARY_NAME}-${platform}.${ext}"
+    archive_name="${PROJECT_NAME}-${platform}.${ext}"
     
     tmp_dir=$(mktemp -d)
     trap 'rm -rf "$tmp_dir"' EXIT
@@ -191,19 +191,17 @@ download_and_extract() {
             echo "Error: Failed to extract archive" >&2
             exit 1
         fi
-        binary_in_archive="${BINARY_NAME}-${platform}.exe"
         extracted_binary="${BINARY_NAME}.exe"
     else
         if ! tar xzf "$archive_name"; then
             echo "Error: Failed to extract archive" >&2
             exit 1
         fi
-        binary_in_archive="${BINARY_NAME}-${platform}"
         extracted_binary="${BINARY_NAME}"
     fi
     
-    if [ ! -f "$binary_in_archive" ]; then
-        echo "Error: Expected binary '$binary_in_archive' not found in archive" >&2
+    if [ ! -f "$extracted_binary" ]; then
+        echo "Error: Expected binary '$extracted_binary' not found in archive" >&2
         echo "Archive contents:" >&2
         ls -la >&2
         exit 1
