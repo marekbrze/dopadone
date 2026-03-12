@@ -9,6 +9,22 @@ import (
 )
 
 func TestLoadConfig_DefaultValues(t *testing.T) {
+	_ = os.Unsetenv("DOPA_DB_PATH")
+	_ = os.Unsetenv("TURSO_DATABASE_URL")
+	_ = os.Unsetenv("TURSO_AUTH_TOKEN")
+	_ = os.Unsetenv("DOPA_DB_MODE")
+
+	originalXDG := os.Getenv("XDG_CONFIG_HOME")
+	tmpDir := t.TempDir()
+	_ = os.Setenv("XDG_CONFIG_HOME", tmpDir)
+	defer func() {
+		if originalXDG == "" {
+			_ = os.Unsetenv("XDG_CONFIG_HOME")
+		} else {
+			_ = os.Setenv("XDG_CONFIG_HOME", originalXDG)
+		}
+	}()
+
 	cfg, err := LoadConfig(LoadConfigParams{
 		DBPath:       "./test.db",
 		SyncInterval: 60 * time.Second,
@@ -17,35 +33,9 @@ func TestLoadConfig_DefaultValues(t *testing.T) {
 		t.Fatalf("LoadConfig() error = %v", err)
 	}
 
-	t.Setenv("DOPA_DB_PATH", "./env-path.db")
-	t.Setenv("TURSO_DATABASE_URL", "libsql://env.turso.io")
-	t.Setenv("TURSO_AUTH_TOKEN", "env-token")
-	t.Setenv("DOPA_DB_MODE", "local")
-    cfg, err := LoadConfig(LoadConfigParams{
-        DBPath:       "./test.db"
-        TursoURL:     ""
-        TursoToken:   ""
-        DBMode:       ""
-        SyncInterval: 60 * time.Second,
-    })
-    if err != nil {
-        t.Fatalf("LoadConfig() error = %v", err)
-    }
-
-    if cfg.DatabasePath != "./test.db" {
-        t.Errorf("database path = %v, want ./test.db", cfg.database.path)
-    }
-
-    if cfg.Database.Turso.URL != "" {
-        t.Errorf("TursoURL = %v, want empty", cfg.TursoURL)
-    }
-    if cfg.Database.Turso.Token != "" {
-        t.Errorf("TursoToken= %v, want env-token", cfg.tursoToken)
-    }
-    if cfg.Database.Mode != "" {
-        t.Errorf("database mode = %v, want empty", cfg.DBMode)
-    }
-}
+	if cfg.DatabasePath != "./test.db" {
+		t.Errorf("DatabasePath = %v, want ./test.db", cfg.DatabasePath)
+	}
 	if cfg.TursoURL != "" {
 		t.Errorf("TursoURL = %v, want empty", cfg.TursoURL)
 	}
@@ -241,6 +231,17 @@ func TestConfig_ToDriverConfig(t *testing.T) {
 }
 
 func TestConfigPrecedence_FullIntegration(t *testing.T) {
+	originalXDG := os.Getenv("XDG_CONFIG_HOME")
+	tmpDir := t.TempDir()
+	_ = os.Setenv("XDG_CONFIG_HOME", tmpDir)
+	defer func() {
+		if originalXDG == "" {
+			_ = os.Unsetenv("XDG_CONFIG_HOME")
+		} else {
+			_ = os.Setenv("XDG_CONFIG_HOME", originalXDG)
+		}
+	}()
+
 	tests := []struct {
 		name           string
 		flagDBPath     string
@@ -320,23 +321,26 @@ func TestConfigPrecedence_FullIntegration(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-func setOrUnsetEnv(key, value string) {
-				t.Helper()
-				if value != "" {
-                    _ = os.Unsetenv(key)
-                } else {
-                    if err := os.Setenv(key, value); err != nil {
-                        t.Fatalf("Setenv(%s) failed: %v", key, err)
-                    }
-                }
-            }(t.Setenv(key, value))
-            return
-        }
-    } else {
-        t.Helper()
-    }
-    _ = os.Unsetenv(key)
-}}()
+			if tt.envDBPath != "" {
+				t.Setenv("DOPA_DB_PATH", tt.envDBPath)
+			} else {
+				_ = os.Unsetenv("DOPA_DB_PATH")
+			}
+			if tt.envTursoURL != "" {
+				t.Setenv("TURSO_DATABASE_URL", tt.envTursoURL)
+			} else {
+				_ = os.Unsetenv("TURSO_DATABASE_URL")
+			}
+			if tt.envTursoToken != "" {
+				t.Setenv("TURSO_AUTH_TOKEN", tt.envTursoToken)
+			} else {
+				_ = os.Unsetenv("TURSO_AUTH_TOKEN")
+			}
+			if tt.envDBMode != "" {
+				t.Setenv("DOPA_DB_MODE", tt.envDBMode)
+			} else {
+				_ = os.Unsetenv("DOPA_DB_MODE")
+			}
 
 			cfg, err := LoadConfig(LoadConfigParams{
 				DBPath:       tt.flagDBPath,
