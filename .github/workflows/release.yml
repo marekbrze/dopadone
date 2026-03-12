@@ -38,7 +38,6 @@ jobs:
 
       - name: Build Linux AMD64 in Docker
         run: |
-          mkdir -p /tmp/linux-build
           docker run --rm \
             -v "${{ github.workspace }}:/workspace" \
             -w /workspace \
@@ -49,12 +48,11 @@ jobs:
               -X github.com/marekbrze/dopadone/internal/version.Version=${{ github.ref_name }} \
               -X github.com/marekbrze/dopadone/internal/version.GitCommit=$(git rev-parse HEAD) \
               -X github.com/marekbrze/dopadone/internal/version.BuildDate=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-              -o /workspace/bin/dopa ./cmd/dopa
+              -o /tmp/dopa ./cmd/dopa
 
       - name: Create Linux archive
         run: |
-          mkdir -p bin
-          cd bin
+          cd /tmp
           tar -czvf dopadone-linux-amd64.tar.gz dopa
           shasum -a 256 dopadone-linux-amd64.tar.gz > dopadone-linux-amd64.tar.gz.sha256
 
@@ -64,4 +62,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.MY_GORELEASER_PAT }}
 
       - name: Copy Linux archive to dist
-        run: cp bin/dopadone-linux-amd64.tar.gz dist/
+        run: cp /tmp/dopadone-linux-amd64.tar.gz dist/
