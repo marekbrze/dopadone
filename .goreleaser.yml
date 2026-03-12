@@ -35,9 +35,6 @@ archives:
 checksum:
   name_template: "{{ .ProjectName }}-{{ .Version }}-checksums.txt"
   algorithm: sha256
-  extra_files:
-    - glob: ./dist/dopadone-linux-amd64.tar.gz
-      name_template: dopadone-linux-amd64.tar.gz
 
 changelog:
   sort: asc
@@ -58,9 +55,6 @@ release:
   prerelease: auto
   mode: replace
   name_template: "Release {{ .Version }}"
-  extra_files:
-    - glob: ./dist/dopadone-linux-amd64.tar.gz
-      name_template: dopadone-linux-amd64.tar.gz
   footer: |
     ## Installation
     
