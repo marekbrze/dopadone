@@ -38,6 +38,12 @@ jobs:
             brew install goreleaser/tap/goreleaser
           fi
 
+      - name: Install Zig (for CGO cross-compilation)
+        run: |
+          if ! command -v zig &> /dev/null; then
+            brew install zig
+          fi
+
       - name: Run GoReleaser
         run: goreleaser release --clean
         env:
