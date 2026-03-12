@@ -40,6 +40,7 @@ jobs:
         run: |
           docker run --rm \
             -v "${{ github.workspace }}:/workspace" \
+            -v "/tmp:/tmp" \
             -w /workspace \
             -e CGO_ENABLED=1 \
             -e CC=gcc \
