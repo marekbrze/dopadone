@@ -29,6 +29,10 @@ const (
 )
 
 func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.isWelcomeOpen && m.welcomeModal != nil {
+		return m.handleWelcomeKeyPress(msg)
+	}
+
 	if m.isHelpOpen {
 		return m.handleHelpModalKeyPress(msg)
 	}

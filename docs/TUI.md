@@ -736,6 +736,147 @@ Visual indicator showing database connection mode and sync status in the footer.
 - Status polling starts in `Init()` command
 - Footer renders via `statusindicator.New().Render()`
 
+### 12. Welcome Modal
+
+First-time user onboarding modal for creating the initial area when no areas exist.
+
+**Implementation**: `internal/tui/welcome/`
+
+**Files**:
+- `welcome.go`: Modal logic (New, Init, Update, View)
+- `types.go`: Message types (SubmitMsg, ExitMsg)
+- `styles.go`: Lipgloss styling
+- `validation.go`: Input validation
+
+**Features**:
+- Dopadone branding with welcome message
+- Text input for area name with validation
+- Color selection via Tab key cycling
+- Cannot be dismissed without creating an area (ESC exits the application)
+- Clean, centered modal design
+
+**Message Types**:
+```go
+type SubmitMsg struct {
+    Name  string
+    Color domain.Color
+}
+
+type ExitMsg struct{}  // User pressed ESC to exit app
+```
+
+**Usage**:
+```go
+// Create welcome modal
+modal := welcome.New()
+
+// Handle messages in Update()
+case welcome.SubmitMsg:
+    // Create first area
+    return m, CreateAreaCmd(m.areaSvc, msg.Name, msg.Color)
+    
+case welcome.ExitMsg:
+    // Exit application
+    return m, tea.Quit
+```
+
+**Keyboard Shortcuts**:
+
+| Key | Action |
+|-----|--------|
+| `Enter` | Create area with entered name |
+| `Tab` | Cycle to next color |
+| `Shift+Tab` | Cycle to previous color |
+| `ESC` | Exit application |
+
+**Validation**:
+- Name required (non-empty after trimming)
+- Maximum 100 characters
+- Error message displayed on invalid submit
+
+**Theme Integration**:
+- Border uses `theme.Default.Primary`
+- Error text uses `theme.Default.Error`
+- Hints use `theme.Default.Muted`
+- Automatic adaptation to light/dark terminal themes
+
+**Integration Points**:
+- Displayed when `len(areas) == 0` on initial load
+- On successful area creation, transitions to main TUI
+- ESC triggers application exit (returns ExitMsg)
+
+### First-Time User Flow
+
+When a user starts Dopadone for the first time with an empty database:
+
+**User Experience**:
+1. TUI loads and detects no areas exist
+2. Welcome modal appears immediately instead of main UI
+3. User must create their first area to proceed
+4. After creation, area is auto-selected and subareas load
+5. Main TUI appears with the new area active
+
+**Implementation Flow**:
+```
+┌──────────────────────────────────────────────┐
+│  InitialModel()                              │
+│  - welcomeModal = nil                        │
+│  - isWelcomeOpen = false                     │
+└────────────────────┬─────────────────────────┘
+                     │
+                     ▼
+┌──────────────────────────────────────────────┐
+│  Init() → LoadAreasCmd()                     │
+└────────────────────┬─────────────────────────┘
+                     │
+                     ▼
+┌──────────────────────────────────────────────┐
+│  AreasLoadedMsg{Areas: []}                   │
+│  - len(msg.Areas) == 0                       │
+│  - Initialize welcome modal                  │
+│  - Set isWelcomeOpen = true                  │
+└────────────────────┬─────────────────────────┘
+                     │
+                     ▼
+┌──────────────────────────────────────────────┐
+│  User creates area in welcome modal          │
+│  - welcome.SubmitMsg                         │
+│  - CreateAreaCmd()                           │
+│  - isFromWelcomeFlow = true                  │
+└────────────────────┬─────────────────────────┘
+                     │
+                     ▼
+┌──────────────────────────────────────────────┐
+│  AreaCreatedMsg                              │
+│  - LoadAreasCmd() (refresh list)             │
+└────────────────────┬─────────────────────────┘
+                     │
+                     ▼
+┌──────────────────────────────────────────────┐
+│  AreasLoadedMsg{Areas: [newArea]}            │
+│  - Auto-select first area                    │
+│  - LoadSubareasCmd()                         │
+│  - isFromWelcomeFlow = false                 │
+│  - Transition to main TUI                    │
+└──────────────────────────────────────────────┘
+```
+
+**Key Implementation Files**:
+- `internal/tui/app.go`: Model fields (`welcomeModal`, `isWelcomeOpen`, `isFromWelcomeFlow`)
+- `internal/tui/data_loader_handlers.go`: `handleAreasLoaded()` shows welcome modal on empty
+- `internal/tui/welcome_handlers.go`: Message handlers for Submit/Exit/Auto-selection
+- `internal/tui/keyboard_handler.go`: Routes key events to welcome modal
+- `internal/tui/window_handler.go`: Passes window size to welcome modal
+
+**Testing**:
+- `internal/tui/welcome_integration_test.go`: Comprehensive tests for welcome flow
+- Tests cover: empty areas, submit, exit, auto-selection, Space menu compatibility
+
+**ESC Behavior**:
+- In welcome modal: Exits the application (cannot skip onboarding)
+- In main TUI: Closes modals/cancels operations
+- This distinction ensures users complete initial setup
+
 ## Keyboard Shortcuts
 
 ### Navigation
@@ -769,6 +910,15 @@ Visual indicator showing database connection mode and sync status in the footer.
 | `?` | Help | Show help modal with all shortcuts |
 | `q`, `Ctrl+C` | Quit | Exit the TUI |
 | `Escape` | Cancel/Close | Close modal or cancel operation |
+
+### Welcome Modal (First-Time Users)
+
+| Key | Action | Description |
+|-----|--------|-------------|
+| `Enter` | Create Area | Create first area with entered name |
+| `Tab` | Next Color | Cycle to next predefined color |
+| `Shift+Tab` | Previous Color | Cycle to previous predefined color |
+| `Escape` | Exit App | Exit the application (cannot skip welcome) |
 
 ## State Management
 

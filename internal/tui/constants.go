@@ -19,12 +19,16 @@ const (
 )
 
 const (
+	EntityTask = "Task"
+)
+
+const (
+	MessageInitializing = "\n  Initializing..."
+)
+
+const (
 	ErrMsgDatabase  = "Unable to load data. Please restart the application."
 	ErrMsgTimeout   = "Loading took too long. Please try again."
 	ErrMsgCancelled = "Operation cancelled"
 	ErrMsgNotFound  = "Resource not found"
-)
-
-const (
-	EntityTask = "Task"
 )

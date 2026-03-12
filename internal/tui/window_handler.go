@@ -20,5 +20,8 @@ func (m *Model) handleWindowSize(msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
 	if m.confirmModal != nil {
 		m.confirmModal, _ = m.confirmModal.Update(msg)
 	}
+	if m.welcomeModal != nil {
+		m.welcomeModal, _ = m.welcomeModal.Update(msg)
+	}
 	return m, nil
 }

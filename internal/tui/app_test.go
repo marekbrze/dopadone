@@ -251,7 +251,7 @@ func TestModelViewInit(t *testing.T) {
 	if result == "" {
 		t.Error("Expected non-empty view")
 	}
-	if result == "\n  Initializing..." {
+	if result == MessageInitializing {
 		t.Error("View should not show initializing message when ready")
 	}
 }

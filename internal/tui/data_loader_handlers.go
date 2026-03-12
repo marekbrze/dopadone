@@ -4,6 +4,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/marekbrze/dopadone/internal/tui/toast"
 	"github.com/marekbrze/dopadone/internal/tui/tree"
+	"github.com/marekbrze/dopadone/internal/tui/welcome"
 )
 
 func (m *Model) handleAreasLoaded(msg AreasLoadedMsg) (tea.Model, tea.Cmd) {
@@ -15,6 +16,14 @@ func (m *Model) handleAreasLoaded(msg AreasLoadedMsg) (tea.Model, tea.Cmd) {
 		m.addToast(toast.NewError("Failed to load areas: " + msg.Err.Error()))
 		return m, nil
 	}
+
+	if len(msg.Areas) == 0 {
+		m.welcomeModal = welcome.New()
+		m.isWelcomeOpen = true
+		m.welcomeModal, _ = m.welcomeModal.Update(tea.WindowSizeMsg{Width: m.width, Height: m.height})
+		return m, nil
+	}
+
 	m.areaLoadError = nil
 	m.areas = msg.Areas
 	m.tabs = updateTabsFromAreas(m.areas, m.selectedAreaIndex)

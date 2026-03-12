@@ -18,6 +18,7 @@ import (
 	"github.com/marekbrze/dopadone/internal/tui/toast"
 	"github.com/marekbrze/dopadone/internal/tui/tree"
 	"github.com/marekbrze/dopadone/internal/tui/views"
+	"github.com/marekbrze/dopadone/internal/tui/welcome"
 )
 
 type Model struct {
@@ -79,6 +80,10 @@ type Model struct {
 	confirmModal       *confirmmodal.Modal
 	isConfirmModalOpen bool
 
+	welcomeModal      *welcome.Modal
+	isWelcomeOpen     bool
+	isFromWelcomeFlow bool
+
 	toasts []toast.Toast
 }
 
@@ -135,6 +140,10 @@ func InitialModel(
 		areaModal:       nil,
 		isAreaModalOpen: false,
 
+		welcomeModal:      nil,
+		isWelcomeOpen:     false,
+		isFromWelcomeFlow: false,
+
 		toasts: []toast.Toast{},
 
 		areaLoadError:    nil,
@@ -169,6 +178,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	if model, cmd, handled := m.handleConnectionMessages(msg); handled {
+		return model, cmd
+	}
+
+	if model, cmd, handled := m.handleWelcomeMessages(msg); handled {
 		return model, cmd
 	}
 
@@ -283,7 +296,11 @@ func (m Model) handleSpaceMenuAction(msg spacemenu.ActionMsg) (tea.Model, tea.Cm
 
 func (m Model) View() string {
 	if !m.ready {
-		return "\n  Initializing..."
+		return MessageInitializing
+	}
+
+	if m.isWelcomeOpen && m.welcomeModal != nil {
+		return m.welcomeModal.View()
 	}
 
 	tabs := views.TabsView(m.tabs, m.selectedTab)

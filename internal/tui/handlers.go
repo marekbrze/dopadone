@@ -161,6 +161,7 @@ func (m *Model) handleOpenAreaModal() (tea.Model, tea.Cmd) {
 		}
 	}
 	m.areaModal = areamodal.New(areas)
+	m.areaModal, _ = m.areaModal.Update(tea.WindowSizeMsg{Width: m.width, Height: m.height})
 	m.isAreaModalOpen = true
 	return m, nil
 }

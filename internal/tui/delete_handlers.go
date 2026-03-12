@@ -10,6 +10,12 @@ import (
 	"github.com/marekbrze/dopadone/internal/tui/tree"
 )
 
+const (
+	entityTypeSubarea = "Subarea"
+	entityTypeProject = "Project"
+	entityTypeTask    = "Task"
+)
+
 func (m *Model) handleDeleteKey() tea.Cmd {
 	switch m.focus {
 	case FocusSubareas:
@@ -93,7 +99,7 @@ func (m *Model) handleConfirmModalCancel() {
 func (m *Model) handleDeleteSuccess(msg DeleteSuccessMsg) (tea.Model, tea.Cmd) {
 	m.addToast(toast.NewSuccess(fmt.Sprintf("%s '%s' deleted successfully", msg.EntityType, msg.EntityName)))
 	switch msg.EntityType {
-	case "Subarea":
+	case entityTypeSubarea:
 		m.subareas = nil
 		m.projects = nil
 		m.tasks = nil
@@ -102,7 +108,7 @@ func (m *Model) handleDeleteSuccess(msg DeleteSuccessMsg) (tea.Model, tea.Cmd) {
 			m.isLoadingSubareas = true
 			return m, LoadSubareasCmd(m.subareaSvc, m.areas[m.selectedTab].ID)
 		}
-	case "Project":
+	case entityTypeProject:
 		m.projects = nil
 		m.tasks = nil
 		m.projectTree = nil
@@ -110,7 +116,7 @@ func (m *Model) handleDeleteSuccess(msg DeleteSuccessMsg) (tea.Model, tea.Cmd) {
 			m.isLoadingProjects = true
 			return m, LoadProjectsCmd(m.projectSvc, &m.subareas[m.selectedSubareaIndex].ID)
 		}
-	case "Task":
+	case entityTypeTask:
 		m.tasks = nil
 		if m.selectedProjectID != "" {
 			m.isLoadingTasks = true
