@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"runtime/debug"
 	"strings"
 	"time"
 
@@ -23,6 +24,25 @@ var (
 	GitCommit = "unknown"
 	BuildDate = "unknown"
 )
+
+func init() {
+	if info, ok := debug.ReadBuildInfo(); ok {
+		if Version == "dev" && info.Main.Version != "" && info.Main.Version != "(devel)" {
+			Version = info.Main.Version
+		}
+		for _, setting := range info.Settings {
+			if setting.Key == "vcs.revision" && GitCommit == "unknown" {
+				GitCommit = setting.Value
+				if len(setting.Value) > 7 {
+					GitCommit = setting.Value[:7]
+				}
+			}
+			if setting.Key == "vcs.time" && BuildDate == "unknown" {
+				BuildDate = setting.Value
+			}
+		}
+	}
+}
 
 type GitHubRelease struct {
 	TagName string `json:"tag_name"`
