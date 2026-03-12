@@ -151,6 +151,10 @@ func (m *Model) handleHelp() *Model {
 }
 
 func (m *Model) handleOpenAreaModal() (tea.Model, tea.Cmd) {
+	return m.handleOpenAreaModalWithMode(areamodal.ModeList)
+}
+
+func (m *Model) handleOpenAreaModalWithMode(mode areamodal.Mode) (tea.Model, tea.Cmd) {
 	areas := make([]areamodal.Area, len(m.areas))
 	for i, a := range m.areas {
 		areas[i] = areamodal.Area{
@@ -161,8 +165,28 @@ func (m *Model) handleOpenAreaModal() (tea.Model, tea.Cmd) {
 		}
 	}
 	m.areaModal = areamodal.New(areas)
+
+	if len(m.areas) > 0 && m.selectedAreaIndex < len(m.areas) {
+		m.areaModal.SetSelectedIndex(m.selectedAreaIndex)
+	}
+
+	switch mode {
+	case areamodal.ModeCreate:
+		m.areaModal.SetupForCreate()
+	case areamodal.ModeEdit:
+		m.areaModal.SetupForEdit()
+	case areamodal.ModeDeleteConfirm:
+		m.areaModal.SetupForDelete()
+	}
+
 	m.areaModal, _ = m.areaModal.Update(tea.WindowSizeMsg{Width: m.width, Height: m.height})
 	m.isAreaModalOpen = true
+
+	if mode == areamodal.ModeDeleteConfirm && len(m.areas) > 0 {
+		areaID := m.areas[m.selectedAreaIndex].ID
+		return m, LoadAreaStatsCmd(m.areaSvc, areaID)
+	}
+
 	return m, nil
 }
 

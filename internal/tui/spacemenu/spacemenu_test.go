@@ -94,6 +94,91 @@ func TestSpaceMenu_Navigation(t *testing.T) {
 	})
 }
 
+func TestSpaceMenu_ConfigActions(t *testing.T) {
+	tests := []struct {
+		name           string
+		key            string
+		expectedAction MenuAction
+	}{
+		{"n key emits ActionCreateArea", "n", ActionCreateArea},
+		{"e key emits ActionEditArea", "e", ActionEditArea},
+		{"d key emits ActionDeleteArea", "d", ActionDeleteArea},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sm := New()
+			sm.state = StateConfig
+
+			_, cmd := sm.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(tt.key)})
+
+			if cmd == nil {
+				t.Errorf("expected command for key %q, got nil", tt.key)
+				return
+			}
+
+			msg := cmd()
+			actionMsg, ok := msg.(ActionMsg)
+			if !ok {
+				t.Errorf("expected ActionMsg for key %q, got %T", tt.key, msg)
+				return
+			}
+
+			if actionMsg.Action != tt.expectedAction {
+				t.Errorf("expected action %v, got %v", tt.expectedAction, actionMsg.Action)
+			}
+		})
+	}
+
+	t.Run("n key does nothing in StateMain", func(t *testing.T) {
+		sm := New()
+		sm.state = StateMain
+
+		_, cmd := sm.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("n")})
+
+		if cmd != nil {
+			t.Errorf("expected no command for 'n' key in StateMain, got %v", cmd)
+		}
+	})
+
+	t.Run("e key does nothing in StateMain", func(t *testing.T) {
+		sm := New()
+		sm.state = StateMain
+
+		_, cmd := sm.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("e")})
+
+		if cmd != nil {
+			t.Errorf("expected no command for 'e' key in StateMain, got %v", cmd)
+		}
+	})
+
+	t.Run("d key does nothing in StateMain", func(t *testing.T) {
+		sm := New()
+		sm.state = StateMain
+
+		_, cmd := sm.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("d")})
+
+		if cmd != nil {
+			t.Errorf("expected no command for 'd' key in StateMain, got %v", cmd)
+		}
+	})
+
+	t.Run("c key still switches to config from main", func(t *testing.T) {
+		sm := New()
+		sm.state = StateMain
+
+		updated, cmd := sm.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("c")})
+
+		if cmd != nil {
+			t.Errorf("expected no command for 'c' key in StateMain, got %v", cmd)
+		}
+
+		if updated.State() != StateConfig {
+			t.Errorf("expected state StateConfig, got %v", updated.State())
+		}
+	})
+}
+
 func TestSpaceMenu_View(t *testing.T) {
 	t.Run("renders main menu", func(t *testing.T) {
 		sm := New()

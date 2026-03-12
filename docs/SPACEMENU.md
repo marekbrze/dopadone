@@ -26,9 +26,9 @@ The Space Menu is a command palette feature inspired by LazyVim's which-key func
 
 | Key | Command | Description |
 |-----|---------|-------------|
-| `c` | Create Area | Create a new area |
-| `e` | Edit Area | Edit selected area |
-| `d` | Delete Area | Delete selected area |
+| `n` | New Area | Create a new area (opens area modal in create mode) |
+| `e` | Edit Area | Edit the currently selected area (opens area modal in edit mode with pre-filled data) |
+| `d` | Delete Area | Delete the currently selected area (opens area modal in delete confirm mode) |
 
 ### Dismissal Options
 
@@ -210,9 +210,13 @@ go test ./internal/tui/spacemenu/... -cover
 
 1. User presses `Space` in normal view → Menu opens
 2. User presses `c` → Config submenu opens
-3. User presses `c` again → Create Area modal opens
+3. User presses `n` → Create Area modal opens (in create mode with empty input)
 4. User creates area → Returns to normal view
 5. Alternatively: User presses `Escape` at any point → Menu closes without action
+
+**Other Config Flows**:
+- **Edit Area**: Space → c → e → (opens area modal with current area name pre-filled)
+- **Delete Area**: Space → c → d → (opens delete confirmation modal)
 
 ## Future Enhancements
 

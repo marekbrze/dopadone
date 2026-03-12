@@ -173,6 +173,46 @@ func (m *Modal) UpdateAreas(areas []Area) {
 	}
 }
 
+func (m *Modal) SetMode(mode Mode) {
+	m.mode = mode
+}
+
+func (m *Modal) SetSelectedIndex(index int) {
+	if index >= 0 && index < len(m.areas) {
+		m.selectedIndex = index
+	}
+}
+
+func (m *Modal) SetupForEdit() {
+	if len(m.areas) == 0 || m.selectedIndex >= len(m.areas) {
+		return
+	}
+	area := m.areas[m.selectedIndex]
+	m.mode = ModeEdit
+	m.editAreaID = area.ID
+	m.input.SetValue(area.Name)
+	m.input.Focus()
+	for i, c := range PredefinedColors {
+		if c == area.Color {
+			m.colorIndex = i
+			break
+		}
+	}
+}
+
+func (m *Modal) SetupForCreate() {
+	m.mode = ModeCreate
+	m.input.SetValue("")
+	m.input.Focus()
+	m.colorIndex = 0
+}
+
+func (m *Modal) SetupForDelete() {
+	m.mode = ModeDeleteConfirm
+	m.deleteChoice = DeleteChoiceNone
+	m.statsLoaded = false
+}
+
 func (m *Modal) Update(msg tea.Msg) (*Modal, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
@@ -209,12 +249,6 @@ func (m *Modal) handleListKeys(msg tea.KeyMsg) (*Modal, tea.Cmd) {
 			m.selectedIndex++
 		}
 	case "a":
-		if len(m.areas) == 0 {
-			m.mode = ModeCreate
-			m.input.SetValue("")
-			m.colorIndex = 0
-			return m, nil
-		}
 		m.mode = ModeCreate
 		m.input.SetValue("")
 		m.input.Focus()

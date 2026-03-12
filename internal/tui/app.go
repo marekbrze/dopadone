@@ -287,8 +287,12 @@ func (m Model) handleSpaceMenuAction(msg spacemenu.ActionMsg) (tea.Model, tea.Cm
 		return m, tea.Quit
 	case spacemenu.ActionConfig:
 		return m.handleOpenAreaModal()
-	case spacemenu.ActionCreateArea, spacemenu.ActionEditArea, spacemenu.ActionDeleteArea:
-		return m.handleOpenAreaModal()
+	case spacemenu.ActionCreateArea:
+		return m.handleOpenAreaModalWithMode(areamodal.ModeCreate)
+	case spacemenu.ActionEditArea:
+		return m.handleOpenAreaModalWithMode(areamodal.ModeEdit)
+	case spacemenu.ActionDeleteArea:
+		return m.handleOpenAreaModalWithMode(areamodal.ModeDeleteConfirm)
 	}
 
 	return m, nil

@@ -53,6 +53,18 @@ func (sm *SpaceMenu) Update(msg tea.Msg) (*SpaceMenu, tea.Cmd) {
 				sm.state = StateConfig
 				return sm, nil
 			}
+		case "n":
+			if sm.state == StateConfig {
+				return sm, func() tea.Msg { return ActionMsg{Action: ActionCreateArea} }
+			}
+		case "e":
+			if sm.state == StateConfig {
+				return sm, func() tea.Msg { return ActionMsg{Action: ActionEditArea} }
+			}
+		case "d":
+			if sm.state == StateConfig {
+				return sm, func() tea.Msg { return ActionMsg{Action: ActionDeleteArea} }
+			}
 		}
 	}
 
