@@ -60,8 +60,8 @@ jobs:
 
       - name: Run GoReleaser
         run: goreleaser release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.MY_GORELEASER_PAT }}
 
       - name: Copy Linux archive to dist
         run: cp bin/dopadone-linux-amd64.tar.gz dist/
-        env:
-          GITHUB_TOKEN: ${{ secrets.MY_GORELEASER_PAT }}
