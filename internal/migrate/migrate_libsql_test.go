@@ -154,6 +154,10 @@ func TestMigrationDownAndReset(t *testing.T) {
 		t.Fatalf("Migration reset failed: %v", err)
 	}
 
+	if err := Run(db, "up"); err != nil {
+		t.Fatalf("Migration up after reset failed: %v", err)
+	}
+
 	verifyExpectedTables(t, db)
 }
 

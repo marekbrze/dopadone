@@ -333,11 +333,16 @@ func TestDiscoverConfig_XDGPath(t *testing.T) {
 
 func TestDiscoverConfig_NoFile(t *testing.T) {
 	originalWd, _ := os.Getwd()
+	originalXdg := os.Getenv("XDG_CONFIG_HOME")
 	tmpDir := t.TempDir()
 
 	defer func() {
 		_ = os.Chdir(originalWd)
-		_ = os.Unsetenv("XDG_CONFIG_HOME")
+		if originalXdg == "" {
+			_ = os.Unsetenv("XDG_CONFIG_HOME")
+		} else {
+			_ = os.Setenv("XDG_CONFIG_HOME", originalXdg)
+		}
 	}()
 
 	emptyDir := filepath.Join(tmpDir, "empty")
@@ -348,7 +353,7 @@ func TestDiscoverConfig_NoFile(t *testing.T) {
 		t.Fatalf("failed to chdir: %v", err)
 	}
 
-	_ = os.Unsetenv("XDG_CONFIG_HOME")
+	_ = os.Setenv("XDG_CONFIG_HOME", filepath.Join(tmpDir, "xdg-config"))
 
 	_, err := DiscoverConfig()
 	if err != ErrNoConfigFile {
@@ -381,16 +386,23 @@ func TestDiscoverConfigWithExplicit_NonExistent(t *testing.T) {
 
 func TestDiscoverConfigWithExplicit_EmptyString(t *testing.T) {
 	originalWd, _ := os.Getwd()
+	originalXdg := os.Getenv("XDG_CONFIG_HOME")
 	tmpDir := t.TempDir()
 
 	defer func() {
 		_ = os.Chdir(originalWd)
-		_ = os.Unsetenv("XDG_CONFIG_HOME")
+		if originalXdg == "" {
+			_ = os.Unsetenv("XDG_CONFIG_HOME")
+		} else {
+			_ = os.Setenv("XDG_CONFIG_HOME", originalXdg)
+		}
 	}()
 
 	if err := os.Chdir(tmpDir); err != nil {
 		t.Fatalf("failed to chdir: %v", err)
 	}
+
+	_ = os.Setenv("XDG_CONFIG_HOME", filepath.Join(tmpDir, "xdg-config"))
 
 	_, err := DiscoverConfigWithExplicit("")
 	if err != ErrNoConfigFile {
