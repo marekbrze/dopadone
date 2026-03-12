@@ -177,7 +177,7 @@ download_and_extract() {
     tmp_dir=$(mktemp -d)
     trap 'rm -rf "$tmp_dir"' EXIT
     
-    echo "Downloading ${BINARY_NAME} ${version} for ${platform}..."
+    echo "Downloading ${BINARY_NAME} ${version} for ${platform}..." >&2
     
     if ! curl -sSL -f -o "${tmp_dir}/${archive_name}" "$url"; then
         echo "Error: Failed to download from $url" >&2
@@ -193,7 +193,7 @@ download_and_extract() {
         fi
         extracted_binary="${BINARY_NAME}.exe"
     else
-        if ! tar xzf "$archive_name"; then
+        if ! tar xzf "$archive_name" 2>/dev/null; then
             echo "Error: Failed to extract archive" >&2
             exit 1
         fi
@@ -206,8 +206,6 @@ download_and_extract() {
         ls -la >&2
         exit 1
     fi
-    
-    mv "$binary_in_archive" "$extracted_binary"
     
     echo "$tmp_dir/$extracted_binary"
 }
