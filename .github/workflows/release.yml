@@ -19,10 +19,10 @@ jobs:
 
       - name: Unlock macOS Keychain
         env:
-          MAC_MINI_PASSWORD: ${{ secrets.MAC_MINI_PASSWORD }}
+          MAC_PASSWORD: ${{ secrets.MAC_MINI_PASSWORD }}
         run: |
-          security unlock-keychain -p "$MAC_MINI_PASSWORD" ~/Library/Keychains/login.keychain-db
-          security set-keypartition-list -S apple-tool:,apple:,codesign: -s -k "$MAC_MINI_PASSWORD" ~/Library/Keychains/login.keychain-db
+          security unlock-keychain -p "$MAC_PASSWORD" ~/Library/Keychains/login.keychain-db
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$MAC_PASSWORD" ~/Library/Keychains/login.keychain-db
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -52,6 +52,7 @@ jobs:
 
       - name: Create Linux archive
         run: |
+          mkdir -p dist
           cd dist
           tar -czvf dopadone-linux-amd64.tar.gz -C linux-build dopa
           shasum -a 256 dopadone-linux-amd64.tar.gz > dopadone-linux-amd64.tar.gz.sha256
