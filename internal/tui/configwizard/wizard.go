@@ -26,7 +26,8 @@ type Wizard struct {
 	tursoToken  textinput.Model
 	replicaPath textinput.Model
 
-	selectedModeIndex int
+	selectedModeIndex     int
+	selectedWelcomeOption int
 
 	errorMsg    string
 	spinner     spinner.Model
@@ -166,8 +167,17 @@ func (w *Wizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (w *Wizard) handleEnter() (tea.Model, tea.Cmd) {
 	switch w.step {
 	case stepWelcome:
-		w.step = stepModeSelection
-		return w, nil
+		switch w.selectedWelcomeOption {
+		case int(WelcomeOptionQuickStart):
+			w.mode = ModeLocal
+			w.localPath.SetValue(cli.DefaultDBPath())
+			return w, w.verifyAndSave()
+		case int(WelcomeOptionCustomSetup):
+			w.step = stepModeSelection
+			return w, nil
+		case int(WelcomeOptionExit):
+			return w, tea.Quit
+		}
 
 	case stepModeSelection:
 		modes := []DatabaseMode{ModeLocal, ModeRemote, ModeReplica}
@@ -209,7 +219,15 @@ func (w *Wizard) handleBack() (tea.Model, tea.Cmd) {
 }
 
 func (w *Wizard) handleUp() (tea.Model, tea.Cmd) {
-	if w.step == stepModeSelection {
+	switch w.step {
+	case stepWelcome:
+		numOptions := 3
+		if w.selectedWelcomeOption > 0 {
+			w.selectedWelcomeOption--
+		} else {
+			w.selectedWelcomeOption = numOptions - 1
+		}
+	case stepModeSelection:
 		modes := []DatabaseMode{ModeLocal, ModeRemote, ModeReplica}
 		if w.selectedModeIndex > 0 {
 			w.selectedModeIndex--
@@ -221,7 +239,15 @@ func (w *Wizard) handleUp() (tea.Model, tea.Cmd) {
 }
 
 func (w *Wizard) handleDown() (tea.Model, tea.Cmd) {
-	if w.step == stepModeSelection {
+	switch w.step {
+	case stepWelcome:
+		numOptions := 3
+		if w.selectedWelcomeOption < numOptions-1 {
+			w.selectedWelcomeOption++
+		} else {
+			w.selectedWelcomeOption = 0
+		}
+	case stepModeSelection:
 		modes := []DatabaseMode{ModeLocal, ModeRemote, ModeReplica}
 		if w.selectedModeIndex < len(modes)-1 {
 			w.selectedModeIndex++
@@ -442,12 +468,48 @@ func (w *Wizard) renderWelcome() string {
 	content.WriteString(subtitleStyle.Render("Your ADHD-friendly project management companion"))
 	content.WriteString("\n\n")
 
-	content.WriteString("Let's set up your database configuration.")
-	content.WriteString("\n")
-	content.WriteString("This will only take a moment.")
+	content.WriteString("How would you like to get started?")
 	content.WriteString("\n\n")
 
-	content.WriteString(hintStyle.Render("Press Enter to continue • ESC to exit"))
+	options := []struct {
+		name        string
+		description string
+	}{
+		{
+			name:        "Quick Start",
+			description: "Use local SQLite with defaults (recommended)",
+		},
+		{
+			name:        "Custom Setup",
+			description: "Choose database mode and configure",
+		},
+		{
+			name:        "Exit",
+			description: "Quit without configuring",
+		},
+	}
+
+	for i, opt := range options {
+		prefix := "  "
+		if i == w.selectedWelcomeOption {
+			prefix = modeSelectedStyle.Render("▸ ")
+		}
+
+		line := fmt.Sprintf("%s%s", prefix, opt.name)
+		if i == w.selectedWelcomeOption {
+			line = modeSelectedStyle.Render(line)
+		} else {
+			line = modeTitleStyle.Render(line)
+		}
+		content.WriteString(line)
+		content.WriteString("\n")
+
+		desc := fmt.Sprintf("%s%s", strings.Repeat(" ", 4), opt.description)
+		content.WriteString(modeDescStyle.Render(desc))
+		content.WriteString("\n\n")
+	}
+
+	content.WriteString(hintStyle.Render("↑/↓: Navigate • Enter: Select"))
 
 	return content.String()
 }

@@ -68,3 +68,11 @@ const (
 	stepVerifying
 	stepSuccess
 )
+
+type WelcomeOption int
+
+const (
+	WelcomeOptionQuickStart WelcomeOption = iota
+	WelcomeOptionCustomSetup
+	WelcomeOptionExit
+)

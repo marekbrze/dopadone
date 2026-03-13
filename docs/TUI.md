@@ -877,6 +877,168 @@ When a user starts Dopadone for the first time with an empty database:
 - In main TUI: Closes modals/cancels operations
 - This distinction ensures users complete initial setup
 
+### 13. Config Wizard
+
+First-run database configuration wizard for setting up Dopadone storage.
+
+**Implementation**: `internal/tui/configwizard/`
+
+**Files**:
+- `wizard.go`: Main wizard logic (New, Init, Update, View)
+- `types.go`: Types, enums, message types
+- `styles.go`: Lipgloss styling
+- `wizard_test.go`: Comprehensive test coverage
+
+**Features**:
+- Welcome screen with Quick Start option for simplified onboarding
+- Three database modes: Local SQLite, Turso Remote, Embedded Replica
+- Quick Start bypasses all configuration screens using defaults
+- Custom Setup allows full mode and path configuration
+- Automatic database verification and migration
+- Fallback configuration on Ctrl+C
+
+**Welcome Screen Options**:
+
+| Option | Description |
+|--------|-------------|
+| **Quick Start** | Use local SQLite with defaults (recommended) |
+| **Custom Setup** | Choose database mode and configure manually |
+| **Exit** | Exit without configuring |
+
+**Navigation Keys**:
+- `↑`/`↓` or `k`/`j`: Navigate between options
+- `Enter`: Select highlighted option
+- `ESC`: Exit wizard (on welcome screen) or go back
+
+**Database Modes** (Custom Setup):
+
+| Mode | Description | Use Case |
+|------|-------------|----------|
+| **Local SQLite** | Single device, offline-first | Personal use, no sync needed |
+| **Turso Remote** | Cloud-only database | Multi-device, always online |
+| **Turso Replica** | Local storage + cloud sync | Multi-device, offline-capable |
+
+**Configuration Inputs by Mode**:
+
+| Mode | Input Fields |
+|------|--------------|
+| **Local** | Database path |
+| **Remote** | Turso URL, Auth token |
+| **Replica** | Local replica path, Turso URL, Auth token |
+
+**Quick Start Flow**:
+```
+┌─────────────────────────────────────┐
+│  Welcome Screen                      │
+│  → Quick Start (Enter)               │
+└──────────────┬──────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────┐
+│  Verification                        │
+│  - Sets mode to Local                │
+│  - Uses default path                 │
+│  - Creates database                  │
+│  - Runs migrations                   │
+└──────────────┬──────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────┐
+│  Success Screen                      │
+│  Press Enter to start Dopadone       │
+└─────────────────────────────────────┘
+```
+
+**Custom Setup Flow**:
+```
+┌─────────────────────────────────────┐
+│  Welcome Screen                      │
+│  → Custom Setup (Enter)              │
+└──────────────┬──────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────┐
+│  Mode Selection                      │
+│  Select: Local/Remote/Replica        │
+└──────────────┬──────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────┐
+│  Configuration                       │
+│  Enter mode-specific settings        │
+└──────────────┬──────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────┐
+│  Verification → Success              │
+└─────────────────────────────────────┘
+```
+
+**Message Types**:
+```go
+type SubmitMsg struct {
+    Result *ConfigResult
+}
+
+type CancelMsg struct{}
+
+type VerificationSuccessMsg struct{}
+
+type VerificationErrorMsg struct {
+    Error error
+}
+
+type FallbackCreatedMsg struct {
+    ConfigPath string
+}
+```
+
+**WelcomeOption Enum**:
+```go
+type WelcomeOption int
+
+const (
+    WelcomeOptionQuickStart WelcomeOption = iota
+    WelcomeOptionCustomSetup
+    WelcomeOptionExit
+)
+```
+
+**Error Handling**:
+- Connection errors displayed inline with retry option
+- Input validation for all required fields
+- Empty field validation with clear error messages
+- Database connection verification before saving
+
+**Fallback Behavior**:
+When user presses `Ctrl+C` or `q`, the wizard creates a fallback local configuration:
+- Mode: Local SQLite
+- Path: Default database path (`~/.dopadone/dopadone.db`)
+- Ensures application can start even if wizard is interrupted
+
+**Theme Integration**:
+- Borders and text adapt to terminal theme
+- Success states in green, errors in red
+- Dimmed text for descriptions and hints
+
+**Testing**:
+```bash
+# Run config wizard tests
+go test ./internal/tui/configwizard/... -v
+
+# Coverage
+go test ./internal/tui/configwizard/... -cover
+```
+
+**Integration Points**:
+- Called from `cmd/dopa/` when no config exists
+- Creates `~/.dopadone/config.yml` on completion
+- Returns `SubmitMsg` with `ConfigResult` on success
+
+**Related Documentation**:
+- [Database Modes](DATABASE_MODES.md) - Detailed mode explanations
+- [Turso Setup Guide](TURSO_SETUP.md) - Turso account and credentials
+
 ## Keyboard Shortcuts
 
 ### Navigation
