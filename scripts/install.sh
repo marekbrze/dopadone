@@ -281,7 +281,7 @@ install_binary() {
     
     echo "Installing to ${install_path}..."
     
-    if [ -w "$INSTALL_DIR" ] || [ ! -e "$install_path" ]; then
+    if [ -w "$INSTALL_DIR" ]; then
         mv "$binary_path" "$install_path"
         chmod +x "$install_path"
     else
