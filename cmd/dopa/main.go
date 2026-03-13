@@ -345,12 +345,24 @@ func GetServices() (*ServiceContainer, error) {
 	}, nil
 }
 
+// commandNeedsInit returns false for commands that should work without initialization.
+func commandNeedsInit() bool {
+	if len(os.Args) < 2 {
+		return true
+	}
+	switch os.Args[1] {
+	case "version", "upgrade", "migrate", "--version", "-v", "help", "--help", "-h", "completion":
+		return false
+	}
+	return true
+}
+
 func main() {
 	if devMode {
 		skipInit = true
 	}
 
-	if !skipInit && config.IsFirstRun() {
+	if !skipInit && commandNeedsInit() && config.IsFirstRun() {
 		if !isInteractiveTerminal() {
 			fmt.Fprintln(os.Stderr, "First run detected but terminal is not interactive.")
 			fmt.Fprintln(os.Stderr, "Run with --skip-init to use defaults or set up manually.")
