@@ -77,7 +77,7 @@ jobs:
 
       - name: Build macOS AMD64 (Intel)
         env:
-          CGO_ENABLED: 1
+          CGO_ENABLED: 0
           GOOS: darwin
           GOARCH: amd64
         run: |
