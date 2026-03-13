@@ -111,9 +111,9 @@ func getPlatformString() string {
 func getAssetName() string {
 	platform := getPlatformString()
 	if runtime.GOOS == constants.OSWindows {
-		return fmt.Sprintf("dopa-%s.zip", platform)
+		return fmt.Sprintf("dopadone-%s.zip", platform)
 	}
-	return fmt.Sprintf("dopa-%s.tar.gz", platform)
+	return fmt.Sprintf("dopadone-%s.tar.gz", platform)
 }
 
 func findAssetURL(release *GitHubRelease, assetName string) (string, error) {

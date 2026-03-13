@@ -75,6 +75,26 @@ jobs:
           zip dopadone-windows-amd64.zip dopa.exe
           shasum -a 256 dopadone-windows-amd64.zip > dopadone-windows-amd64.zip.sha256
 
+      - name: Build macOS AMD64 (Intel)
+        env:
+          CGO_ENABLED: 1
+          GOOS: darwin
+          GOARCH: amd64
+        run: |
+          go build -trimpath -ldflags "-s -w \
+            -X github.com/marekbrze/dopadone/internal/version.Version=${{ github.ref_name }} \
+            -X github.com/marekbrze/dopadone/internal/version.GitCommit=$(git rev-parse HEAD) \
+            -X github.com/marekbrze/dopadone/internal/version.BuildDate=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            -o /tmp/dopa-darwin-amd64 ./cmd/dopa
+
+      - name: Create macOS AMD64 archive
+        run: |
+          cp /tmp/dopa-darwin-amd64 /tmp/dopa
+          cd /tmp
+          tar -czvf dopadone-darwin-amd64.tar.gz dopa
+          shasum -a 256 dopadone-darwin-amd64.tar.gz > dopadone-darwin-amd64.tar.gz.sha256
+          rm -f dopa
+
       - name: Run GoReleaser
         run: goreleaser release --clean
         env:
@@ -84,4 +104,4 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.MY_GORELEASER_PAT }}
         run: |
-          gh release upload ${{ github.ref_name }} /tmp/dopadone-linux-amd64.tar.gz /tmp/dopadone-windows-amd64.zip --clobber
+          gh release upload ${{ github.ref_name }} /tmp/dopadone-linux-amd64.tar.gz /tmp/dopadone-darwin-amd64.tar.gz /tmp/dopadone-windows-amd64.zip --clobber

@@ -69,10 +69,6 @@ check_dependencies() {
         missing="$missing tar"
     fi
     
-    if ! command -v unzip > /dev/null 2>&1; then
-        missing="$missing unzip"
-    fi
-    
     if [ -n "$missing" ]; then
         echo "Error: Missing required dependencies:$missing" >&2
         echo "" >&2
@@ -85,11 +81,6 @@ check_dependencies() {
                     ;;
                 tar)
                     echo "  - tar: Usually pre-installed on most systems" >&2
-                    ;;
-                unzip)
-                    echo "  - unzip: Required for Windows archives" >&2
-                    echo "           Ubuntu/Debian: sudo apt install unzip" >&2
-                    echo "           macOS: brew install unzip" >&2
                     ;;
             esac
         done
@@ -247,7 +238,16 @@ prompt_upgrade() {
         return 0
     fi
     
-    read -r -p "Replace existing installation? [y/N] " response
+    if [ ! -t 0 ]; then
+        if [ -e /dev/tty ]; then
+            read -r -p "Replace existing installation? [y/N] " response < /dev/tty
+        else
+            echo "Error: Cannot prompt in non-interactive mode. Use --yes flag." >&2
+            return 1
+        fi
+    else
+        read -r -p "Replace existing installation? [y/N] " response
+    fi
     case "$response" in
         [yY][eE][sS]|[yY])
             return 0
