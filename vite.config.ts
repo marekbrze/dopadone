@@ -13,5 +13,5 @@ export default defineConfig({
       },
     },
   ],
-  base: '/dopadone-web/',
+  base: '/dopadone/',
 })
